@@ -34,7 +34,7 @@ fn log_file(dir: &PathBuf, name: &str) -> Result<std::fs::File, Value> {
 
 fn python(p: &Paths, module: &str) -> Command {
     let mut c = Command::new(p.python());
-    c.args(["-B", "-X", "utf8", "-m", module]).creation_flags(NO_WINDOW).stdin(Stdio::null());
+    c.args(["-B", "-X", "utf8", "-m", module]).args(Paths::test_args(module)).creation_flags(NO_WINDOW).stdin(Stdio::null());
     c
 }
 

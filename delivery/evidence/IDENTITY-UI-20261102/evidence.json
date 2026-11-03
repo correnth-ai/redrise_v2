@@ -6,7 +6,7 @@
   "source_tree_sha256_before": "395f5bf3159c6e76b94233a88286743dfc8088df61178b9e2b9f8c94533df500",
   "source_tree_sha256_after_code": "a0cb32cc5c35082282cb021c40ccacefe602cf6bd11577a1f6db5cac776caea9",
   "code_version": {
-    "desktop": "0.1.0-beta.16",
+    "desktop": "0.1.0-beta.17",
     "runner": "0.3.3",
     "core": "0.3.1"
   },
@@ -170,6 +170,13 @@
       "command": "contracts, runtime, cargo test --lib, build:ui, validate-base after the simplification",
       "result": "passed; 4 native tests",
       "exit": 0
+    },
+    {
+      "kind": "practical_check",
+      "command": "lab-test/tools/t4_flow.ps1 on the isolated instance",
+      "scope": "real desktop UI, Core and PostgreSQL, synthetic accounts",
+      "result": "access screen without footer; sign-up recorded; refused before activation (AUTH-INVALID); admin activated in Equipe; new account signed in as operator, opens Empresa, profile name with accents, no team admin; sign-out; wrong login refused",
+      "exit": 0
     }
   ],
   "notes": [
@@ -200,7 +207,7 @@
     "graph": "not used"
   },
   "review": null,
-  "next_action": "Update the installed app to beta.16 through the app on user order; then automations.",
+  "next_action": "Automations, as the user directed; user names which one first.",
   "remote_read_only": {
     "when": "2026-11-02",
     "call": "GET /auth/v1/settings with the publishable key (user authorized)",
@@ -233,8 +240,10 @@
   ],
   "open_points": [
     "F2 stays open: no remembered session.",
-    "Installed app is beta.15 until updated through the app; the channel offers beta.16.",
-    "Sign-up and login on the installed beta.16 not exercised."
+    "An inactive account gets the same message as a wrong password.",
+    "Update offer appears only after sign-in.",
+    "Source has test isolation after beta.17; test executable built, not a new candidate.",
+    "Not committed since f496b5f."
   ],
   "simplification": {
     "sign_up": "POST /api/v1/register on the Core: inactive operator, migration 004, no e-mail.",
@@ -269,5 +278,33 @@
     },
     "signed_lab_channel": true,
     "installed": false
+  },
+  "candidate_beta17": {
+    "version": "0.1.0-beta.17",
+    "installer_sha256": "daeb784259d0a71502af51970aa09ed34cf94048aac0486b4e368a1326297fff",
+    "files": 3741,
+    "engine_sha256": "057ed44544548b5c5f2a4bf838e36635b46f9d331fa93c61937aaf6ffbd81c0d",
+    "gate": {
+      "passed": true,
+      "at": "2026-11-02T23:06",
+      "record_sha256": "f60e2c90d60173df5396f419326654ea9fa32ef871e67ebd92b4a7ede5a5430d"
+    },
+    "signed_lab_channel": true,
+    "installed": "2026-11-02 23:08 with the gated installer, beta.15 -> beta.17: beta.15 offers updates only after sign-in. Core backup before migration 004."
+  },
+  "lab_incident_2": {
+    "when": "2026-11-02 23:10",
+    "cause": "First test instance had its own vault but no --data-root, so its Core used the installed app's data folder, failed authentication and stopped the installed PostgreSQL.",
+    "effect": "Installed team server unavailable for about a minute (heartbeat 503). Clean shutdown with checkpoint; host.json unchanged.",
+    "recovery": "Installed app closed and reopened 23:11; PostgreSQL ready, Runner connected.",
+    "fix": "Paths::test_args passes --vault-namespace and --data-root together, only when both REDRISE_TEST_VAULT and REDRISE_DATA_ROOT are set. Leftover vault entries RedRise/rrtest-host* are synthetic and unused."
+  },
+  "test_instance": {
+    "exe": "target/desktop/release/redrise-desktop.exe (sha256 92583cc0136d1320e493a00fa6ad701421cb7d6d80b05e14700b989d2cdabfd7) with REDRISE_INSTALL_ROOT on the beta.17 stage",
+    "data": "C:/Users/raulv/RedRise-v2-dev/lab-test",
+    "account_file": "lab-test/test-account.json (generated, outside the repository, never printed)",
+    "tools": "lab-test/tools",
+    "port": 47810,
+    "isolation_checked": "test pgdata in lab-test; installed postgres log unchanged during the run"
   }
 }

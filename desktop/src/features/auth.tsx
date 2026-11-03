@@ -1,6 +1,5 @@
 // Access screens. login-03 and signup-03 (shadcn, MIT) adapted to RedRise over
-// the landscape supplied by the user: centered brand and card, footer below,
-// no split panel. Everything goes to the team Core: sign-up only records the
+// the landscape supplied by the user: centered brand and card, no split panel. Everything goes to the team Core: sign-up only records the
 // account (no e-mail, no confirmation), and an administrator activates it.
 // External identity is out for now (user decision of 02/11/2026).
 // The team bootstrap (create team / connect to a team) is unchanged.
@@ -24,7 +23,6 @@ export function AccessFrame({ children }: { children: React.ReactNode }) {
         <img src="assets/redrise-icon-32x32.png" alt="" className="size-6 rounded-md" />RedRise
       </div>
       <div className="w-full max-w-sm">{children}</div>
-      <p className="max-w-sm rounded-md bg-black/45 px-3 py-1 text-center text-xs text-white backdrop-blur-sm">{T("footer")}</p>
     </div>
   );
 }

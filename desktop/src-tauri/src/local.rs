@@ -46,7 +46,7 @@ pub fn runner(p: &Paths, args: &[String]) -> Result<Value, Value> {
     if !RUNNER_ALLOWED.contains(&sub) {
         return Err(fail("CONTRACT-PAYLOAD", "Local operation not allowed.", format!("subcommand {sub:?}")));
     }
-    let out = Command::new(p.python()).args(["-B", "-X", "utf8", "-m", "redrise_runner"]).args(args)
+    let out = Command::new(p.python()).args(["-B", "-X", "utf8", "-m", "redrise_runner"]).args(Paths::test_args("redrise_runner")).args(args)
         .creation_flags(NO_WINDOW).stdin(Stdio::null()).output()
         .map_err(|e| fail("RUNTIME-NOT-PRIVATE", "The local runner could not be started.", e.to_string()))?;
     let v = parse_out(&out.stdout, "O executor local respondeu em formato inesperado.")?;
@@ -56,7 +56,7 @@ pub fn runner(p: &Paths, args: &[String]) -> Result<Value, Value> {
 pub fn join(p: &Paths, code: &str, username: &str, password: &str, station: &str, is_host: bool,
             host_override: Option<&str>) -> Result<Value, Value> {
     let mut c = Command::new(p.python());
-    c.args(["-B", "-X", "utf8", "-m", "redrise_runner", "join", "--code"]);
+    c.args(["-B", "-X", "utf8", "-m", "redrise_runner"]).args(Paths::test_args("redrise_runner")).args(["join", "--code"]);
     // The host joins itself over loopback; the advertised code keeps the LAN name.
     let code = match host_override {
         Some(h) => {

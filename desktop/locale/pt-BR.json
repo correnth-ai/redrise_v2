@@ -63,7 +63,6 @@
     "auth.restore.retry": "Tentar novamente",
     "auth.restore.other": "Entrar de outra forma",
     "auth.remember_failed": "Você entrou, mas este computador não pôde ser lembrado. Será preciso entrar de novo no próximo início.",
-    "auth.footer": "Seus dados ficam no servidor da sua equipe.",
     "close": "Fechar",
     "auth.expired": "A sessão lembrada expirou. Entre novamente.",
     "identity_unavailable": "A entrada por e-mail não está disponível nesta versão. Use o usuário da equipe.",

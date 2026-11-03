@@ -47,6 +47,21 @@ impl Paths {
         Self { install_root, data_root }
     }
 
+    /// Testing only. An isolated instance needs REDRISE_TEST_VAULT and REDRISE_DATA_ROOT together: the Core and
+    /// the Runner resolve their own data folder, so without --data-root they would use the installed app's.
+    pub fn test_args(module: &str) -> Vec<String> {
+        let role = match module {
+            "redrise_core" => "host",
+            "redrise_runner" => "station",
+            _ => return vec![],
+        };
+        match (std::env::var("REDRISE_TEST_VAULT"), std::env::var("REDRISE_DATA_ROOT")) {
+            (Ok(ns), Ok(data)) if !ns.is_empty() && !data.is_empty() =>
+                vec!["--vault-namespace".into(), format!("{ns}-{role}"), "--data-root".into(), data],
+            _ => vec![],
+        }
+    }
+
     pub fn python(&self) -> PathBuf {
         self.install_root.join("runtime").join("python").join("python.exe")
     }
