@@ -1,0 +1,23 @@
+﻿{
+  "template": "gmail-acessar",
+  "version": "1.0.0",
+  "verified": false,
+  "inputs": {},
+  "job": {
+    "job_id": "tpl-gmail-acessar-20261027-091235",
+    "state": "completed_unverified",
+    "code": null,
+    "failed_step": null
+  },
+  "verification": {
+    "verified": false,
+    "state": "login_required",
+    "final_url_origin": "https://accounts.google.com",
+    "reason": "Entre na sua conta Google na janela do navegador do RedRise e execute novamente.",
+    "code": "login_required"
+  },
+  "state": "login_required",
+  "code": "login_required",
+  "reason": "Entre na sua conta Google na janela do navegador do RedRise e execute novamente.",
+  "result_file": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\data\\template-runs\\gmail-acessar-20261027-091242.json"
+}

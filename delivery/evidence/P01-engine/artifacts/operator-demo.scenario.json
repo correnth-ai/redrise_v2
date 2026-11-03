@@ -1,0 +1,51 @@
+﻿[
+    {
+        "click_rel":  [
+                          600,
+                          450
+                      ]
+    },
+    {
+        "sleep":  600
+    },
+    {
+        "keys":  "^{HOME}"
+    },
+    {
+        "keys":  "{RIGHT}"
+    },
+    {
+        "keys":  "{DOWN}"
+    },
+    {
+        "text":  "Cliente Teste 01"
+    },
+    {
+        "keys":  "{ENTER}"
+    },
+    {
+        "text":  "1500"
+    },
+    {
+        "keys":  "{ENTER}"
+    },
+    {
+        "keys":  "{F12}"
+    },
+    {
+        "timeout_ms":  15000,
+        "wait_class":  "#32770"
+    },
+    {
+        "sleep":  800
+    },
+    {
+        "text":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p01-engine\\run-20261027-000410\\saida\\resultado_gravado.xlsx"
+    },
+    {
+        "keys":  "{ENTER}"
+    },
+    {
+        "sleep":  3000
+    }
+]

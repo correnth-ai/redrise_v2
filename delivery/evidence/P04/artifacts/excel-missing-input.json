@@ -1,0 +1,15 @@
+﻿{
+  "template": "excel-pedido",
+  "version": "1.1.0",
+  "verified": false,
+  "inputs": {
+    "input_path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\excel\\nao-existe.xlsx",
+    "output_path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\excel\\x.xlsx",
+    "cliente": "Cliente Teste 01",
+    "valor": "1500"
+  },
+  "state": "precondition_missing",
+  "code": "input_missing",
+  "detail": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\excel\\nao-existe.xlsx",
+  "result_file": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\data\\template-runs\\excel-pedido-20261027-091234.json"
+}

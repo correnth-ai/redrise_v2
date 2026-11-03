@@ -1,0 +1,11 @@
+{
+  "schema": "redrise.release/1",
+  "version": "0.1.0-beta.4",
+  "notes": "Teste de atualização do closed beta",
+  "published_at": "2026-10-29T01:13:49+00:00",
+  "installer": {
+    "file": "RedRise-Setup-0.1.0-beta.4.exe",
+    "size": 308357106,
+    "sha256": "f9a9dff0e41a4bf9eecf5852cebb344f8d3e2a9c737eb8256048e1f8cfc34c73"
+  }
+}

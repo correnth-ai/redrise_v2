@@ -1,0 +1,36 @@
+# Dependencies, toolchains, private runtime and generated binaries.
+node_modules/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+target/
+dist/
+build/
+.runtime/
+.cache/
+
+# Local data and captures; only reviewed synthetic evidence belongs in Git.
+.local/
+data/
+recordings/
+captures/
+raw/
+logs/
+tmp/
+*.log
+*.env
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+
+# OS/editor state.
+.DS_Store
+Thumbs.db
+.idea/
+
+# Local demo assets copied by desktop/scripts/copy-static.mjs public
+desktop/public/

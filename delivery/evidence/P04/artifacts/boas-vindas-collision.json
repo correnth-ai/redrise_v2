@@ -1,0 +1,12 @@
+﻿{
+  "template": "boas-vindas",
+  "version": "1.1.0",
+  "verified": false,
+  "inputs": {
+    "output_path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\Desktop\\Boas_Vindas.txt"
+  },
+  "state": "refused",
+  "code": "output_exists",
+  "detail": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\Desktop\\Boas_Vindas.txt already exists; it is never overwritten",
+  "result_file": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\data\\template-runs\\boas-vindas-20261027-091200.json"
+}

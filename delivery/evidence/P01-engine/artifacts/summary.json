@@ -1,0 +1,17 @@
+﻿{
+    "run_dir":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p01-engine\\run-20261027-000410",
+    "started":  "2026-10-27T00:04:10.1064867-03:00",
+    "template_sha256":  "ab7c2a40933b7d2a38b54f0b4636a604407b676e4a4c731bfc1de370a58668b6",
+    "demo":  "completed",
+    "record_exit":  0,
+    "recorded_sha256_before_replay":  "39d638872aefdbf16edb3aa717ce69a93e74351678df8a75d78bb7b43ac3bbd3",
+    "compile_exit":  0,
+    "run_exit":  0,
+    "template_sha256_after":  "ab7c2a40933b7d2a38b54f0b4636a604407b676e4a4c731bfc1de370a58668b6",
+    "recorded_sha256_after":  "39d638872aefdbf16edb3aa717ce69a93e74351678df8a75d78bb7b43ac3bbd3",
+    "verifier_exit":  0,
+    "template_unchanged":  true,
+    "recorded_unchanged_by_replay":  true,
+    "verified":  true,
+    "ended":  "2026-10-27T00:05:20.3406192-03:00"
+}

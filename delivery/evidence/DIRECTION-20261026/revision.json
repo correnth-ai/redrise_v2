@@ -1,0 +1,90 @@
+{
+  "task_id": "TASK-REDRISE-V2-ENGINE-20261026",
+  "scope": "direction-and-roadmap-only",
+  "status": "verified",
+  "date": "2026-10-26",
+  "decision": "U26-ENGINE/U26-INSTALL with user annotations U26-RECORDS/U26-VALIDATION-SCOPE",
+  "checks": [
+    {
+      "command": "node --check scripts/validate-base.mjs",
+      "result": "passed",
+      "exit_code": 0
+    },
+    {
+      "command": "node scripts/validate-base.mjs --check-sources",
+      "result": "passed",
+      "exit_code": 0,
+      "structural_checks": 294,
+      "cwd": "C:/Users/raulv/RedRise-v2-dev"
+    },
+    {
+      "command": "Test-Json product manifest against product.schema.json",
+      "result": "passed"
+    },
+    {
+      "command": "Manifest registry and normative reference SHA256 checks",
+      "result": "passed"
+    },
+    {
+      "command": "Explicit deleted record paths absent; proof source hashes unchanged",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check scoped to affected roots/files",
+      "result": "passed",
+      "exit_code": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/ENGINE.md",
+      "sha256": "ca95bad1b94387dbe519e0ae9524dc9b6dfe0f4dce826c596c31407dae000b9f"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "2d4ef0e8b005622887858af969b8311bc17462f405c002bef4f2b421746d5c20"
+    },
+    {
+      "path": "docs/BASELINE.md",
+      "sha256": "0cb05d8c0cd3f39bf9ac72f5ef62494fbbdd67fd9252252e249bedc7f969fac8"
+    },
+    {
+      "path": "docs/requirements.json",
+      "sha256": "7fb992d46677354edc4f2335ede8e08eb8df0c9774c8cd8003c20c8db515a9e2"
+    },
+    {
+      "path": "docs/sources.lock.json",
+      "sha256": "d7dec61de61bf85b7f177ccd3a7e5dd3aa43663ce66cd7b92903ab68c850b837"
+    },
+    {
+      "path": "docs/BETA-ACCEPTANCE.md",
+      "sha256": "893a3c75de3382f4981a2262d0d22e4a9a2363663055f83fb0f28b9ac30afe7f"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "b973f5d20facabb8755a931474130dba26e3aeaba07accbe8af40ed43d0a2274"
+    },
+    {
+      "path": "README.md",
+      "sha256": "0663e3cd8aea57ea0429b85084dee7ef0ac096da48c2a637de6b059668327c2a"
+    },
+    {
+      "path": "project.json",
+      "sha256": "8fee9317a71f599f7742eacf1698b8bce8fdce84f4790e91b3af123abe45a60c"
+    },
+    {
+      "path": "scripts/validate-base.mjs",
+      "sha256": "1202ba8bf603f521e144ae031226f79244c1df5890de405dbdc8b5fe47c87b9e"
+    }
+  ],
+  "review": {
+    "reviewer": "/root/engine_plan_review",
+    "scope": "documentation only",
+    "findings": "One stale P00 next-step reference corrected to E01; no other documentary blocker reported",
+    "runtime_qa": false
+  },
+  "engine_implemented": false,
+  "beta_ready": false,
+  "published": false,
+  "next_action": "E01 under a corresponding authorized task"
+}

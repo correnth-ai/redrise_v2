@@ -1,0 +1,696 @@
+{
+  "schema": "redrise.ui-locale/1",
+  "locale": "pt-BR",
+  "note": "UI mask: user texts by error_code. Backend codes/messages stay English ASCII (contracts/errors.json).",
+  "labels": {
+    "what": "O que aconteceu",
+    "result": "Resultado",
+    "next": "Próxima ação",
+    "details": "Detalhes para diagnóstico",
+    "reference": "Referência",
+    "effect_unknown": "Há efeito cujo resultado é desconhecido.",
+    "effect_partial": "Parte da operação já foi realizada.",
+    "footer": "Código: {code} | Módulos para investigação: {modules}",
+    "copy": "Copiar diagnóstico",
+    "copied": "Copiado",
+    "copy_failed": "Não foi possível copiar",
+    "auth.login.title": "Bem-vindo de volta",
+    "auth.login.subtitle": "Entre com a sua conta RedRise",
+    "auth.email": "E-mail",
+    "auth.email.placeholder": "voce@empresa.com.br",
+    "auth.password": "Senha",
+    "auth.remember": "Lembrar de mim neste computador",
+    "auth.login.submit": "Entrar",
+    "auth.login.busy": "Entrando…",
+    "auth.forgot": "Esqueceu a senha?",
+    "auth.no_account": "Não tem uma conta?",
+    "auth.create_account": "Criar conta",
+    "auth.or": "Ou continue com",
+    "auth.google": "Continuar com Google",
+    "auth.github": "Continuar com GitHub",
+    "auth.social_unavailable": "Indisponível nesta versão",
+    "auth.unconfirmed": "Confirme o e-mail para fazer o login.",
+    "auth.resend": "Reenviar confirmação.",
+    "auth.resent": "Se o e-mail e a senha estiverem corretos e a conta estiver pendente, enviamos uma nova mensagem de confirmação.",
+    "auth.signup.title": "Crie sua conta",
+    "auth.signup.subtitle": "Informe seus dados para criar a conta RedRise",
+    "auth.full_name": "Nome completo",
+    "auth.full_name.placeholder": "Maria da Conceição",
+    "auth.confirm_password": "Confirmar senha",
+    "auth.password_hint": "A senha deve ter no mínimo 8 caracteres.",
+    "auth.password_short": "A senha deve ter no mínimo 8 caracteres.",
+    "auth.password_mismatch": "As senhas não conferem.",
+    "auth.signup.submit": "Criar conta",
+    "auth.signup.busy": "Criando…",
+    "auth.have_account": "Já tem uma conta?",
+    "auth.sign_in": "Entrar",
+    "auth.signup.sent": "Cadastro recebido. Enviamos uma mensagem de confirmação para {email}. Abra a mensagem e clique em Confirmar; depois volte aqui para entrar.",
+    "auth.recover.title": "Recuperar a senha",
+    "auth.recover.subtitle": "Informe o e-mail da conta para receber as instruções",
+    "auth.recover.submit": "Enviar instruções",
+    "auth.recover.busy": "Enviando…",
+    "auth.back": "Voltar para entrar",
+    "auth.recover.sent": "Se existir uma conta com este e-mail, enviamos as instruções de recuperação.",
+    "auth.team_user": "Entrar com o usuário da equipe",
+    "auth.team_user.title": "Usuário da equipe",
+    "auth.team_user.subtitle": "Use o usuário e a senha que você recebeu da sua equipe",
+    "auth.username": "Usuário",
+    "auth.link.title": "Vincular à equipe",
+    "auth.link.submit": "Vincular e entrar",
+    "auth.link.busy": "Vinculando…",
+    "auth.link.subtitle": "Sua conta foi verificada, mas ainda não faz parte desta equipe. Informe o usuário e a senha que você recebeu da equipe. O vínculo é feito uma única vez e não altera seu perfil.",
+    "auth.restore.title": "Não foi possível restaurar a sessão",
+    "auth.restore.retry": "Tentar novamente",
+    "auth.restore.other": "Entrar de outra forma",
+    "auth.remember_failed": "Você entrou, mas este computador não pôde ser lembrado. Será preciso entrar de novo no próximo início.",
+    "auth.footer": "Seus dados ficam no servidor da sua equipe.",
+    "close": "Fechar",
+    "auth.expired": "A sessão lembrada expirou. Entre novamente.",
+    "identity_unavailable": "A entrada por e-mail não está disponível nesta versão. Use o usuário da equipe.",
+    "auth.login_id": "E-mail ou usuário",
+    "auth.signup.received": "Conta criada para {email}. Um administrador da equipe precisa ativá-la em Configuração › Equipe; depois é só entrar."
+  },
+  "errors": {
+    "EXCEL-NOT-FOUND": {
+      "what": "O Excel desktop não foi encontrado nesta máquina.",
+      "completed": "A verificação terminou.",
+      "pending": "Nenhuma planilha foi aberta; a etapa de inicialização não começou.",
+      "next": "Confira se o Excel desktop está instalado e disponível para este usuário e execute a verificação novamente.",
+      "details": "Localização retornou NotFound. Pré-condição não satisfeita; defeito no módulo não confirmado."
+    },
+    "EXCEL-DISCOVERY-FAILED": {
+      "what": "Não foi possível verificar se o Excel está instalado.",
+      "completed": "A consulta à instalação falhou antes de terminar.",
+      "pending": "Não se sabe se o Excel está instalado; nenhuma planilha foi aberta.",
+      "next": "Tente novamente. Se persistir, copie o diagnóstico e encaminhe ao suporte.",
+      "details": "A consulta de localização falhou ({reason}). A falha não foi convertida em NotFound."
+    },
+    "CONTRACT-EXCEL-DESCRIPTOR": {
+      "what": "Não foi possível usar a resposta da localização do Excel para iniciar a planilha.",
+      "completed": "A resposta foi recebida, mas o contrato foi recusado.",
+      "pending": "A inicialização não foi executada.",
+      "next": "Copie o diagnóstico e encaminhe ao suporte. Repetir a mesma operação pode não resolver.",
+      "details": "Descritor incompatível na fronteira localizar → iniciar ({reason}). A origem precisa ser investigada no produtor, consumidor ou composição."
+    },
+    "EXCEL-EXECUTABLE-MISSING": {
+      "what": "O Excel indicado pela localização não está mais disponível.",
+      "completed": "O descritor foi aceito, mas o executável não existe no caminho informado.",
+      "pending": "O Excel não foi iniciado.",
+      "next": "Execute a verificação do Excel novamente; se o Excel foi removido ou reparado, aguarde o término e repita.",
+      "details": "Executável ausente no momento da inicialização. Pode ser mudança no ambiente após a localização."
+    },
+    "EXCEL-START-FAILED": {
+      "what": "O Excel não pôde ser iniciado.",
+      "completed": "O pedido de inicialização foi recusado pelo Windows.",
+      "pending": "Nenhuma planilha foi aberta.",
+      "next": "Confira se o Excel abre manualmente para este usuário e tente novamente.",
+      "details": "Falha ao criar o processo ({reason})."
+    },
+    "EXCEL-START-TIMEOUT": {
+      "what": "O Excel foi iniciado, mas não ficou pronto no prazo.",
+      "completed": "O processo do Excel foi iniciado (último estado observado: {observed}).",
+      "pending": "A nova planilha não foi confirmada.",
+      "next": "Confira a janela do Excel aberta por esta tentativa e feche-a antes de tentar novamente.",
+      "details": "Prontidão não confirmada em {timeout_ms} ms. Lentidão ou diálogo inesperado não são distinguíveis sem investigação."
+    },
+    "EXCEL-START-SCREEN-UNRESOLVED": {
+      "what": "O Excel abriu na tela inicial e a nova planilha não pôde ser criada.",
+      "completed": "O Excel foi iniciado; o comando para sair da tela inicial terminou como {engine_outcome}.",
+      "pending": "A nova planilha não foi confirmada.",
+      "next": "Confira a janela do Excel aberta por esta tentativa antes de repetir.",
+      "details": "Engine retornou {engine_outcome} ({engine_code})."
+    },
+    "SESSION-UNAVAILABLE": {
+      "what": "A sessão do Windows não está disponível para automação.",
+      "completed": "A verificação de sessão terminou antes de qualquer ação.",
+      "pending": "Nada foi executado na tela.",
+      "next": "Desbloqueie a sessão deste usuário e mantenha-a conectada; depois execute novamente.",
+      "details": "Sessão não pronta: {reason}."
+    },
+    "SESSION-BUSY": {
+      "what": "Outra automação já está usando esta sessão.",
+      "completed": "A execução foi recusada antes de qualquer ação.",
+      "pending": "Esta execução não começou.",
+      "next": "Aguarde a automação em andamento terminar e execute novamente.",
+      "details": "Bloqueio exclusivo da sessão em uso."
+    },
+    "RUNTIME-NOT-PRIVATE": {
+      "what": "Os componentes internos do RedRise não estão íntegros.",
+      "completed": "A verificação de integridade terminou.",
+      "pending": "Nenhuma automação foi executada.",
+      "next": "Use a opção de reparo da instalação e tente novamente.",
+      "details": "Runtime privado com verificações falhas: {failed_checks}."
+    },
+    "ENGINE-MISSING": {
+      "what": "O motor de automação do RedRise não foi encontrado.",
+      "completed": "A verificação terminou.",
+      "pending": "Nenhuma automação foi executada.",
+      "next": "Use a opção de reparo da instalação e tente novamente.",
+      "details": "Executável da Engine ausente."
+    },
+    "ENGINE-NO-RESPONSE": {
+      "what": "O motor de automação não respondeu como esperado.",
+      "completed": "O pedido foi enviado ao motor; a resposta não foi utilizável.",
+      "pending": "O resultado da operação é desconhecido.",
+      "next": "Confira o que aparece na tela antes de executar novamente.",
+      "details": "Resposta ausente ou inválida da Engine ({reason}). Isso não comprova defeito no motor."
+    },
+    "JOB-ALREADY-EXISTS": {
+      "what": "Esta execução já foi feita antes e não é repetida automaticamente.",
+      "completed": "Nada foi executado agora.",
+      "pending": "O resultado anterior continua registrado ({prior_state}).",
+      "next": "Confira o resultado anterior; para executar de novo, crie uma nova execução.",
+      "details": "Identificador de job já registrado."
+    },
+    "JOB-INVALID": {
+      "what": "O pedido de execução recebido não é válido.",
+      "completed": "O pedido foi recusado antes de qualquer ação.",
+      "pending": "Nada foi executado.",
+      "next": "Copie o diagnóstico e encaminhe ao suporte.",
+      "details": "Pedido de job recusado na validação ({reason})."
+    },
+    "PROCEDURE-INCOMPATIBLE": {
+      "what": "Esta rotina não é compatível com este computador.",
+      "completed": "A compatibilidade foi verificada antes de qualquer ação.",
+      "pending": "Nada foi executado.",
+      "next": "Execute a rotina em uma estação compatível com a categoria e o sistema indicados.",
+      "details": "{reason}"
+    },
+    "STEP-FAILED": {
+      "what": "A automação parou antes de concluir.",
+      "completed": "A falha ocorreu antes de ações com efeito ({failed_step}).",
+      "pending": "Os passos restantes não foram executados.",
+      "next": "Confira se o aplicativo estava aberto e visível como esperado e execute novamente.",
+      "details": "Engine: {engine_code}."
+    },
+    "STEP-UNCERTAIN": {
+      "what": "A automação foi interrompida depois de ações que podem ter alterado algo.",
+      "completed": "Parte dos passos foi enviada ao aplicativo ({failed_step}).",
+      "pending": "Não se sabe se a última alteração foi aplicada.",
+      "next": "Confira o arquivo ou a tela antes de executar novamente para evitar repetir alterações.",
+      "details": "Engine: {engine_code}. Efeito incerto; nenhuma repetição automática."
+    },
+    "RUN-INTERRUPTED-BY-INPUT": {
+      "what": "A automação parou porque o teclado ou o mouse foi usado durante a execução.",
+      "completed": "A RedRise parou de digitar e clicar assim que percebeu o uso ({failed_step}).",
+      "pending": "Os passos seguintes não foram executados; o que já foi digitado pode ter se misturado com o que foi usado.",
+      "next": "Confira o arquivo ou a tela e execute novamente sem usar o teclado e o mouse até a execução terminar.",
+      "details": "Engine: {engine_code}. {reason}."
+    },
+    "RUN-CANCELLED": {
+      "what": "A execução foi cancelada.",
+      "completed": "O cancelamento foi aplicado entre passos.",
+      "pending": "Os passos seguintes não foram executados; confira o que já foi feito.",
+      "next": "Confira o estado do aplicativo antes de executar novamente.",
+      "details": "Cancelamento solicitado."
+    },
+    "OUTPUT-EXISTS": {
+      "what": "O arquivo de saída já existe e não é substituído.",
+      "completed": "A verificação foi feita antes de abrir qualquer aplicativo.",
+      "pending": "Nada foi gravado; o arquivo existente não foi alterado.",
+      "next": "Escolha outro nome ou mova o arquivo existente e execute novamente.",
+      "details": "Destino ocupado: {path}."
+    },
+    "INPUT-INVALID": {
+      "what": "Os dados informados para a rotina não estão completos ou corretos.",
+      "completed": "A verificação foi feita antes de qualquer ação.",
+      "pending": "Nada foi executado.",
+      "next": "Corrija o campo indicado e execute novamente.",
+      "details": "{reason}"
+    },
+    "INPUT-FILE-MISSING": {
+      "what": "O arquivo de entrada informado não foi encontrado.",
+      "completed": "A verificação foi feita antes de abrir qualquer aplicativo.",
+      "pending": "Nada foi executado.",
+      "next": "Confira o caminho do arquivo de entrada ({path}) e execute novamente.",
+      "details": "Arquivo ausente no momento da verificação."
+    },
+    "RECORDING-EMPTY": {
+      "what": "A gravação terminou sem nenhuma ação registrada no aplicativo escolhido.",
+      "completed": "A gravação foi encerrada; nada foi salvo como rotina.",
+      "pending": "Nenhuma rotina foi criada.",
+      "next": "Grave novamente usando o teclado e o mouse no aplicativo escolhido. Ações automáticas de outros programas não são gravadas.",
+      "details": "{reason}"
+    },
+    "RECORDING-INCOMPLETE": {
+      "what": "A gravação não terminou corretamente e não pode virar rotina.",
+      "completed": "A gravação foi encerrada; nada foi salvo como rotina.",
+      "pending": "Nenhuma rotina foi criada.",
+      "next": "Grave novamente. Se persistir, copie o diagnóstico e encaminhe ao suporte.",
+      "details": "Estado da gravação: {reason}"
+    },
+    "APP-NOT-INSTALLED": {
+      "what": "O aplicativo necessário para esta rotina não foi encontrado.",
+      "completed": "A verificação foi feita antes de qualquer ação.",
+      "pending": "Nada foi executado.",
+      "next": "Instale ou disponibilize o aplicativo para este usuário e execute novamente.",
+      "details": "Aplicativo ausente: {app}. Pré-condição não satisfeita; defeito no módulo não confirmado."
+    },
+    "APP-WINDOW-NOT-FOUND": {
+      "what": "O aplicativo foi iniciado, mas a janela dele não apareceu.",
+      "completed": "O aplicativo foi iniciado. Nada foi digitado nem salvo.",
+      "pending": "A rotina não foi executada.",
+      "next": "Confira se o aplicativo abriu uma janela ou está pedindo alguma coisa, feche-o e execute novamente.",
+      "details": "Janela não encontrada: {reason}."
+    },
+    "RESULT-NOT-VERIFIED": {
+      "what": "A automação terminou, mas o resultado esperado não foi confirmado.",
+      "completed": "Os passos foram enviados ao aplicativo.",
+      "pending": "A conferência independente não encontrou o resultado esperado ({reason}).",
+      "next": "Confira o arquivo ou a tela antes de executar novamente.",
+      "details": "Verificador: {verifier_code}."
+    },
+    "LOGIN-REQUIRED": {
+      "what": "O site abriu, mas pede que você entre na sua conta.",
+      "completed": "A página foi aberta no navegador do RedRise.",
+      "pending": "A caixa de entrada não foi aberta; o RedRise nunca digita senhas.",
+      "next": "Em Configuração, use Abrir navegador do RedRise, entre na conta manualmente e execute novamente.",
+      "details": "URL final classificada como login."
+    },
+    "TEMPLATE-UNAVAILABLE": {
+      "what": "Este modelo de rotina não está disponível nesta versão.",
+      "completed": "Nada foi executado.",
+      "pending": "O modelo não pode ser usado.",
+      "next": "Escolha outro modelo ou aguarde uma versão que o inclua.",
+      "details": "{reason}"
+    },
+    "CONTRACT-PAYLOAD": {
+      "what": "Uma resposta interna do RedRise veio em formato incompatível.",
+      "completed": "A resposta foi recebida e recusada na validação.",
+      "pending": "A etapa seguinte não foi executada.",
+      "next": "Copie o diagnóstico e encaminhe ao suporte. Repetir a mesma operação pode não resolver.",
+      "details": "Contrato {contract} recusado ({reason}). A origem pode estar no produtor, no consumidor ou na composição."
+    },
+    "AUTH-REQUIRED": {
+      "what": "É preciso entrar novamente.",
+      "completed": "O pedido foi recusado antes de qualquer alteração.",
+      "pending": "Nada foi feito.",
+      "next": "Entre com seu usuário e senha e repita a ação.",
+      "details": "Sessão ausente, expirada ou revogada."
+    },
+    "AUTH-INVALID": {
+      "what": "Usuário ou senha incorretos.",
+      "completed": "A tentativa de entrada foi recusada.",
+      "pending": "Você não entrou no RedRise.",
+      "next": "Confira usuário e senha. Se esqueceu a senha, peça a um administrador da equipe.",
+      "details": "Credenciais recusadas."
+    },
+    "AUTH-FORBIDDEN": {
+      "what": "Seu perfil não permite esta ação.",
+      "completed": "O pedido foi recusado antes de qualquer alteração.",
+      "pending": "Nada foi feito.",
+      "next": "Peça a um administrador da equipe para realizar a ação ou alterar seu perfil.",
+      "details": "Ação exige perfil {required_role}."
+    },
+    "SETUP-ALREADY-DONE": {
+      "what": "Esta equipe já tem um administrador.",
+      "completed": "Nada foi alterado.",
+      "pending": "A configuração inicial não é repetida.",
+      "next": "Entre com um usuário existente.",
+      "details": "Bootstrap do primeiro administrador já realizado."
+    },
+    "NOT-FOUND": {
+      "what": "O item solicitado não existe ou não está mais disponível.",
+      "completed": "Nada foi alterado.",
+      "pending": "A ação não foi realizada.",
+      "next": "Atualize a tela e escolha o item novamente.",
+      "details": "{what_missing} não encontrado."
+    },
+    "VALIDATION": {
+      "what": "Os dados enviados não são válidos.",
+      "completed": "O pedido foi recusado antes de qualquer alteração.",
+      "pending": "Nada foi salvo.",
+      "next": "Corrija o campo indicado e tente novamente.",
+      "details": "{reason}"
+    },
+    "CONFLICT": {
+      "what": "A ação conflita com o estado atual.",
+      "completed": "Nada foi alterado.",
+      "pending": "O estado atual foi preservado.",
+      "next": "Atualize a tela para ver o estado atual antes de agir.",
+      "details": "{reason}"
+    },
+    "STATION-INCOMPATIBLE": {
+      "what": "A estação escolhida não pode executar esta rotina.",
+      "completed": "A compatibilidade foi verificada antes de enfileirar.",
+      "pending": "A execução não foi criada.",
+      "next": "Escolha uma estação compatível com a categoria e o sistema da rotina.",
+      "details": "{reason}"
+    },
+    "CORE-STORAGE-UNAVAILABLE": {
+      "what": "O servidor da equipe não conseguiu acessar seus dados.",
+      "completed": "O pedido chegou ao servidor.",
+      "pending": "Não se sabe se a alteração foi gravada.",
+      "next": "Aguarde alguns instantes, atualize a tela e confira antes de repetir.",
+      "details": "Banco de dados indisponível ({reason})."
+    },
+    "CORE-INTERNAL": {
+      "what": "O servidor da equipe encontrou um erro interno.",
+      "completed": "O pedido chegou ao servidor.",
+      "pending": "Não se sabe se a alteração foi concluída.",
+      "next": "Atualize a tela e confira antes de repetir. Se persistir, copie o diagnóstico e encaminhe ao suporte.",
+      "details": "Exceção não tratada ({reason})."
+    },
+    "CORE-UNREACHABLE": {
+      "what": "Não foi possível falar com o servidor da equipe.",
+      "completed": "A conexão não foi concluída ou não houve resposta a tempo.",
+      "pending": "Se a ação já tinha sido enviada, o resultado é desconhecido.",
+      "next": "Confira se o computador servidor está ligado e na mesma rede; atualize a tela antes de repetir.",
+      "details": "{reason}. Ausência de resposta não comprova falha do servidor."
+    },
+    "CORE-CERT-MISMATCH": {
+      "what": "O servidor respondeu com uma identidade diferente da esperada.",
+      "completed": "A conexão foi interrompida antes de enviar dados.",
+      "pending": "Nada foi enviado ao servidor.",
+      "next": "Peça ao administrador um novo código de conexão da equipe.",
+      "details": "Impressão digital do certificado não confere."
+    },
+    "JOB-LEASE-LOST": {
+      "what": "A estação parou de responder durante a execução.",
+      "completed": "A execução tinha começado na estação.",
+      "pending": "Não se sabe até onde ela foi; a execução não é repetida automaticamente.",
+      "next": "Confira o resultado na estação (arquivo ou tela) antes de executar novamente.",
+      "details": "Lease expirou com a execução em andamento. Pode ser perda de rede, desligamento ou travamento; causa não confirmada."
+    },
+    "STATION-NOT-JOINED": {
+      "what": "Este computador ainda não está conectado a uma equipe.",
+      "completed": "Nada foi executado.",
+      "pending": "A estação não recebe execuções da equipe.",
+      "next": "Em Configuração, conecte a estação com o código da equipe e um administrador.",
+      "details": "Conexão da estação ausente."
+    },
+    "JOIN-CODE-INVALID": {
+      "what": "O código de conexão da equipe não é válido.",
+      "completed": "Nada foi enviado ao servidor.",
+      "pending": "A estação não foi conectada.",
+      "next": "Copie novamente o código exibido no computador servidor da equipe.",
+      "details": "Formato esperado rr1:<servidor>:<porta>:<impressão digital>."
+    },
+    "ENGINE-IR-COMPILE": {
+      "what": "A gravação não pôde ser transformada em rotina.",
+      "completed": "A gravação foi lida.",
+      "pending": "Nenhuma rotina foi salva.",
+      "next": "Confira os parâmetros informados (o texto precisa ter sido digitado na gravação) e tente novamente.",
+      "details": "{reason}"
+    },
+    "UPDATE-CHANNEL-UNREACHABLE": {
+      "what": "Não foi possível consultar atualizações.",
+      "completed": "A versão instalada continua em uso.",
+      "pending": "A verificação será feita novamente mais tarde.",
+      "next": "Nenhuma ação é necessária agora.",
+      "details": "{reason}"
+    },
+    "UPDATE-INVALID": {
+      "what": "A atualização oferecida não é confiável e foi ignorada.",
+      "completed": "Nada foi instalado; a versão atual e os dados continuam intactos.",
+      "pending": "A atualização não será aplicada.",
+      "next": "Avise o suporte; não instale arquivos recebidos por outros meios.",
+      "details": "{reason}"
+    },
+    "UPDATE-DOWNLOAD": {
+      "what": "Não foi possível baixar a atualização.",
+      "completed": "A versão instalada continua em uso.",
+      "pending": "A atualização não foi aplicada.",
+      "next": "Tente novamente mais tarde em Pode atualizar.",
+      "details": "{reason}"
+    },
+    "UPDATE-BUSY": {
+      "what": "A atualização aguarda: há uma execução ou gravação em andamento nesta estação.",
+      "completed": "Nada foi interrompido.",
+      "pending": "A atualização não começou.",
+      "next": "Aguarde o término e clique em Pode atualizar novamente.",
+      "details": "Ponto seguro não alcançado."
+    },
+    "UNMAPPED": {
+      "what": "Ocorreu um erro ainda sem descrição específica.",
+      "completed": "O estado da operação não foi determinado.",
+      "pending": "Confira o que foi feito antes de repetir.",
+      "next": "Copie o diagnóstico e encaminhe ao suporte.",
+      "details": "Código original sem mapeamento: {original_code}."
+    },
+    "ROUTINE-NOT-ISOLATED": {
+      "what": "Esta rotina não pode ser executada isoladamente.",
+      "completed": "O pedido foi recusado antes de iniciar qualquer ação.",
+      "pending": "Nada foi executado.",
+      "next": "Execute o processo que contém a rotina ({routine}) ou permita a execução isolada no cadastro dela.",
+      "details": "A execução isolada está desmarcada; a rotina precisa do contexto da rotina anterior no processo."
+    },
+    "BROWSER-NOT-FOUND": {
+      "what": "O navegador escolhido para esta rotina não foi encontrado na estação.",
+      "completed": "A conferência foi feita antes de abrir qualquer coisa.",
+      "pending": "Nenhuma página foi aberta; as próximas rotinas não foram executadas.",
+      "next": "Instale o navegador para este usuário na estação ou edite a rotina e escolha um navegador encontrado nela.",
+      "details": "Navegador escolhido: {browser}. Nenhum outro navegador é usado no lugar dele."
+    },
+    "BROWSER-OPEN-FAILED": {
+      "what": "A página não pôde ser aberta.",
+      "completed": "O pedido de abertura foi recusado pelo Windows.",
+      "pending": "Nenhuma página foi aberta; as próximas rotinas não foram executadas.",
+      "next": "Confira se o navegador ou o arquivo pode ser aberto por este usuário e execute novamente.",
+      "details": "Falha no pedido de abertura ({reason})."
+    },
+    "BROWSER-OPEN-UNCONFIRMED": {
+      "what": "A abertura da página não foi confirmada a tempo.",
+      "completed": "A abertura foi solicitada.",
+      "pending": "Nenhuma guia nova mostrando o destino foi identificada em 30 segundos; as próximas rotinas não foram executadas.",
+      "next": "Confira o navegador: uma guia pode ter sido aberta e foi mantida como está. Execute novamente só depois de conferir.",
+      "details": "Confirmação não observada ({reason}). Não repetida automaticamente."
+    },
+    "BROWSER-PAGE-NOT-READY": {
+      "what": "A guia abriu no endereço, mas a página não foi confirmada como carregada.",
+      "completed": "Uma guia nova mostrando o endereço de destino foi identificada.",
+      "pending": "A página não carregou a tempo ou o navegador mostrou uma página de erro; as próximas rotinas não foram executadas.",
+      "next": "Confira a guia aberta: ela foi mantida como está. Verifique o endereço e a conexão e execute novamente.",
+      "details": "Página não pronta ({reason}). Não repetida automaticamente."
+    },
+    "BROWSER-IDENTIFY-UNAVAILABLE": {
+      "what": "A estação não consegue identificar guias do navegador agora.",
+      "completed": "A conferência foi feita antes de abrir qualquer coisa.",
+      "pending": "Nenhuma página foi aberta; as próximas rotinas não foram executadas.",
+      "next": "Tente novamente. Se persistir, copie o diagnóstico e envie ao suporte.",
+      "details": "A Automação de Interface do Windows está indisponível ({reason}); a página não é aberta sem meio de confirmá-la."
+    },
+    "IDENTITY-NOT-CONFIGURED": {
+      "what": "A entrada por e-mail não está disponível nesta instalação.",
+      "completed": "A solicitação não foi enviada.",
+      "pending": "O serviço de contas não está configurado nesta versão.",
+      "next": "Entre com o usuário da equipe ou instale uma versão com o serviço de contas configurado.",
+      "details": "Configuração ausente: {reason}."
+    },
+    "IDENTITY-PROVIDER-UNAVAILABLE": {
+      "what": "Não foi possível falar com o serviço de contas.",
+      "completed": "Nenhuma sessão foi alterada.",
+      "pending": "A operação não foi confirmada pelo serviço.",
+      "next": "Confira a conexão com a internet e tente novamente.",
+      "details": "O serviço de contas não respondeu: {reason}."
+    },
+    "IDENTITY-INVALID": {
+      "what": "E-mail ou senha incorretos.",
+      "completed": "A tentativa de entrada foi recusada.",
+      "pending": "Você não entrou no RedRise.",
+      "next": "Confira o e-mail e a senha ou use a recuperação de senha.",
+      "details": "O serviço de contas recusou as credenciais."
+    },
+    "IDENTITY-UNCONFIRMED": {
+      "what": "O e-mail desta conta não foi confirmado.",
+      "completed": "A tentativa de entrada foi recusada.",
+      "pending": "Você não entrou no RedRise.",
+      "next": "Abra a mensagem de confirmação ou peça o reenvio.",
+      "details": "Conta sem prova de posse do e-mail."
+    },
+    "IDENTITY-NO-MEMBERSHIP": {
+      "what": "Esta conta ainda não faz parte desta equipe.",
+      "completed": "A conta foi verificada.",
+      "pending": "Nenhum acesso à equipe foi concedido.",
+      "next": "Informe o usuário e a senha que recebeu da equipe para vincular esta conta uma única vez ou peça um usuário a um administrador da equipe.",
+      "details": "Sem vínculo entre a conta e um membro da equipe neste servidor."
+    },
+    "IDENTITY-ALREADY-LINKED": {
+      "what": "Esta conta ou este usuário da equipe já está vinculado.",
+      "completed": "O vínculo existente foi mantido.",
+      "pending": "Nenhum novo vínculo foi criado.",
+      "next": "Entre com a conta já vinculada ou peça a revisão a um administrador da equipe.",
+      "details": "Uma conta se vincula a um único usuário da equipe."
+    },
+    "IDENTITY-PASSWORD-WEAK": {
+      "what": "O serviço de contas não aceitou esta senha.",
+      "completed": "A conta não foi criada.",
+      "pending": "O cadastro aguarda outra senha.",
+      "next": "Escolha outra senha e tente novamente.",
+      "details": "Senha recusada pelo serviço: {reason}."
+    },
+    "IDENTITY-SIGNUP-BLOCKED": {
+      "what": "O serviço de contas não concluiu o cadastro.",
+      "completed": "A solicitação foi enviada.",
+      "pending": "Não é possível presumir o envio da mensagem de confirmação.",
+      "next": "Tente entrar ou peça o reenvio da confirmação antes de repetir. Se persistir, copie o diagnóstico e envie ao suporte.",
+      "details": "O serviço recusou ou alterou o cadastro: {reason}."
+    },
+    "IDENTITY-RATE-LIMITED": {
+      "what": "Muitas tentativas em pouco tempo.",
+      "completed": "A solicitação foi recusada pelo serviço de contas.",
+      "pending": "Nada foi enviado.",
+      "next": "Aguarde alguns minutos e tente novamente.",
+      "details": "Limite de frequência do serviço de contas."
+    },
+    "IDENTITY-SESSION-EXPIRED": {
+      "what": "A sessão lembrada não é mais válida.",
+      "completed": "A sessão lembrada foi removida deste computador.",
+      "pending": "Você não entrou no RedRise.",
+      "next": "Entre novamente.",
+      "details": "Sessão expirada ou revogada: {reason}."
+    },
+    "IDENTITY-VAULT-FAILED": {
+      "what": "O cofre do Windows não pôde ser usado.",
+      "completed": "Você pode continuar nesta sessão.",
+      "pending": "Este computador não foi lembrado.",
+      "next": "Confira o serviço de credenciais do Windows. Até lá, entre a cada início.",
+      "details": "Erro no cofre do Windows: {reason}."
+    },
+    "ACCOUNT-EXISTS": {
+      "what": "Este e-mail já tem uma conta.",
+      "completed": "A conta existente foi mantida.",
+      "pending": "Nenhuma conta nova foi criada.",
+      "next": "Entre com este e-mail ou peça a um administrador da equipe para ativar a conta.",
+      "details": "Uma conta por e-mail nesta equipe."
+    }
+  },
+  "values": {
+    "session unavailable": "sessão indisponível",
+    "step not reported": "passo não informado",
+    "invalid connection code": "código de conexão inválido",
+    "request body too large or invalid": "corpo grande demais ou inválido",
+    "invalid JSON": "JSON inválido",
+    "invalid identifier": "identificador inválido",
+    "invalid lease": "lease inválido",
+    "invalid team name": "nome da equipe inválido",
+    "user name: 3-40 characters a-z 0-9 . _ -": "usuário: 3-40 caracteres a-z 0-9 . _ -",
+    "user already exists": "usuário já existe",
+    "user": "usuário",
+    "invalid station name": "nome da estação inválido",
+    "a station with this name already exists": "já existe uma estação com este nome",
+    "station": "estação",
+    "station revoked": "estação revogada",
+    "invalid routine name": "nome da rotina inválido",
+    "template not available in this version": "modelo não disponível nesta versão",
+    "invalid procedure (IR v1/v2 expected)": "procedimento inválido (IR v1/v2 esperada)",
+    "version kind must be template or procedure": "tipo de versão deve ser template ou procedure",
+    "request_id already used": "request_id já usado",
+    "routine version": "versão da rotina",
+    "run": "execução",
+    "lease does not match": "lease não corresponde",
+    "administrator or run author": "administrador ou autor da execução",
+    "lease expired or replaced": "lease expirado ou substituído",
+    "station system not reported yet": "sistema da estação ainda não informado",
+    "response is not JSON": "resposta não é JSON",
+    "station not connected": "estação não conectada",
+    "server not prepared": "servidor não preparado",
+    "error response without a diagnostic": "resposta de erro sem diagnóstico",
+    "route not allowed for the interface": "rota não permitida para a interface",
+    "one recording at a time": "uma gravação por vez",
+    "recording missing": "gravação ausente",
+    "run or recording on this station": "execução ou gravação nesta estação",
+    "check for updates again": "verifique atualizações novamente",
+    "local response is not JSON": "resposta local não é JSON",
+    "enter an http(s) address": "informe um endereço http(s)",
+    "enter the executable, e.g. excel.exe": "informe o executável, ex.: excel.exe",
+    "Engine did not answer the stop": "Engine sem resposta ao parar",
+    "outside the recordings folder": "fora da pasta de gravações",
+    "invalid public key": "chave pública inválida",
+    "signature has an invalid size": "assinatura com tamanho inválido",
+    "invalid signature": "assinatura inválida",
+    "incompatible release manifest": "manifesto de versão incompatível",
+    "locked": "sessão bloqueada",
+    "no channel": "sem canal",
+    "invalid file name": "nome de arquivo inválido",
+    "administrator": "administrador",
+    "role must be admin or operator": "perfil deve ser administrador ou operador",
+    "the team needs at least one active administrator": "a equipe precisa de ao menos um administrador ativo",
+    "category must be browser, windows, mac or linux": "categoria deve ser Browser, Windows, Mac ou Linux",
+    "routine": "Rotina",
+    "template category differs from the routine": "categoria do modelo difere da rotina",
+    "procedure category differs from the routine": "categoria do procedimento difere da rotina",
+    "request_id missing": "identificador do pedido ausente",
+    "inputs must be text": "entradas devem ser texto",
+    "config must be an object": "configuração inválida",
+    "isolated must be true or false": "execução isolada deve ser sim ou não",
+    "choose one of the detected browsers": "escolha um dos navegadores encontrados",
+    "address must start with http:// or https://": "o endereço deve começar com http:// ou https://",
+    "full path of an .html or .htm file expected": "informe o caminho completo de um arquivo .html ou .htm",
+    "origin must be site or html": "a origem deve ser site ou HTML local",
+    "browser routines use the browser category": "rotinas de navegador usam a categoria Browser",
+    "browser routines run through executions": "rotinas de navegador são executadas pelo fluxo de execução",
+    "each link needs routine_id and continue_next": "cada vínculo precisa da rotina e da continuação",
+    "only browser routines can be linked to a process in this version": "nesta versão, só rotinas de navegador podem ser vinculadas a um processo",
+    "invalid process name": "nome do processo inválido",
+    "process": "Processo",
+    "execution": "Execução",
+    "give either process_id or routine_id": "informe um processo ou uma rotina",
+    "only browser routines run as executions in this version": "nesta versão, só rotinas de navegador são executadas por este fluxo",
+    "the process has no linked routine": "o processo não tem rotina vinculada",
+    "the process links a routine that cannot run": "o processo vincula uma rotina que não pode ser executada",
+    "version kind must be template, procedure or browser_open": "tipo de versão deve ser modelo, gravação ou abertura de navegador"
+  },
+  "patterns": [
+    {
+      "en": "step {n}",
+      "pt": "passo {n}"
+    },
+    {
+      "en": "run already finished as {state}",
+      "pt": "execução já finalizada como {state}"
+    },
+    {
+      "en": "category {c} not supported by the station (supports: {list})",
+      "pt": "categoria {c} não suportada pela estação (suporta: {list})"
+    },
+    {
+      "en": "routine for {p}; station is {s}",
+      "pt": "rotina para {p}; estação é {s}"
+    },
+    {
+      "en": "{n} run(s) in progress in the team",
+      "pt": "{n} execução(ões) em andamento na equipe"
+    },
+    {
+      "en": "HTTP {status} without a valid diagnostic",
+      "pt": "HTTP {status} sem diagnóstico válido"
+    },
+    {
+      "en": "unreadable response: {e}",
+      "pt": "resposta ilegível: {e}"
+    },
+    {
+      "en": "subcommand {s}",
+      "pt": "subcomando {s}"
+    },
+    {
+      "en": "no readiness signal ({s}); see host\\logs\\core.log",
+      "pt": "sem sinal de prontidão ({s}); veja host\\logs\\core.log"
+    },
+    {
+      "en": "size {a} of {b}; sha256 {h}",
+      "pt": "tamanho {a} de {b}; sha256 {h}"
+    },
+    {
+      "en": "password must have at least {n} characters",
+      "pt": "senha deve ter ao menos {n} caracteres"
+    },
+    {
+      "en": "unknown inputs: {list}",
+      "pt": "entradas desconhecidas: {list}"
+    },
+    {
+      "en": "state {state}",
+      "pt": "estado {state}"
+    },
+    {
+      "en": "a process links 1 to {n} routines",
+      "pt": "um processo vincula de 1 a {n} rotinas"
+    },
+    {
+      "en": "no new tab showing the target within {n} s",
+      "pt": "nenhuma guia nova mostrando o destino em {n} s"
+    }
+  ]
+}

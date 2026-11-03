@@ -1,0 +1,133 @@
+{
+  "step": "P02",
+  "status": "in_progress",
+  "scope_of_this_record": "dev-machine development checks only; NOT the P02 acceptance (clean Windows 11 machine pending)",
+  "run_id": "RUN-P02-20261027-01",
+  "work_order": "delivery/work-orders/P02-private-runtime.md",
+  "decision": "docs/decisions/P02-private-runtime.md",
+  "runbook": "packaging/runtime/CLEAN-MACHINE-P02.md",
+  "source_revision": "unborn",
+  "candidate": {
+    "engine_sha256": "2a8b830f9642007423aca9cb4bda774e70b572acc5d417734516460132489305",
+    "layout_manifest_sha256": "300a9b126c091d42b6be6ae671dd4add62c01b03c2551108596b48414987441f",
+    "layout_files": 651,
+    "vm_bundle_manifest_sha256": "082a638ca4ef01c785b901f54f9800987567c2f93cb39644a684fc4ab5c931f0",
+    "lab_stage": "%USERPROFILE%/RedRise-v2-dev/stage/p02-20261027-091450/@redrise",
+    "lab_vm_bundle": "%USERPROFILE%/RedRise-v2-dev/stage/p02-vm-bundle-20261027-091450",
+    "python": {
+      "version": "3.12.10 x64",
+      "source": "nuget.org package python 3.12.10 (PSF)",
+      "nupkg_sha512": "u9pNz2iKlCEbYtUJaKkbOPMF0LjR7NkCafdKhvigpPzrt8oWKgdTpHaR6z3wyWQAm9PYGUxv0Zr66NX9AeHMDw==",
+      "matches_nuget_catalog": true
+    }
+  },
+  "environment": {
+    "machine": "development machine (NOT clean): Windows 11 Pro 10.0.26200 x64, Excel 365 16.0.20527.20088, Rust/Node present"
+  },
+  "checks": [
+    {
+      "name": "runner contract tests",
+      "command": "python -m unittest test_runner (tests/runtime)",
+      "expected": "all pass",
+      "actual": "12 passed (compatibility refusals before Engine, session busy/locked, job never re-run, uncertain preserved, cooperative cancel, bindings, BOM, unknown fields/path traversal, integrity, missing engine)",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "python package provenance",
+      "command": "SHA512 of fresh download vs NuGet catalog packageHash",
+      "expected": "equal",
+      "actual": "equal; byte-identical to earlier lab copy",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "health under hostile Python env",
+      "command": "redrise-runner.cmd health with bogus PYTHONHOME/PYTHONPATH/PYTHONSTARTUP, PATH=System32 only",
+      "expected": "healthy, sys.path confined",
+      "actual": "healthy; sys.path = runtime Lib, DLLs, runner only",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "P01 scenario through package + Runner job (hostile env)",
+      "command": "proofs/excel-engine/p01-excel.ps1 -Runner <stage>/redrise-runner.cmd -HostilePythonEnv",
+      "expected": "verified",
+      "actual": "verified: T07-T09 pass; job accepted>running>completed_unverified; run-20261027-012101",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "install tree not mutated",
+      "command": "count *.pyc in stage; health integrity after run",
+      "expected": "0 / ok",
+      "actual": "0 / ok",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "tamper detection",
+      "command": "modify runner/redrise_runner/jobs.py in a copy; health",
+      "expected": "unhealthy",
+      "actual": "unhealthy, modified=[runner/redrise_runner/jobs.py]",
+      "exit_code": 0,
+      "result": "passed"
+    }
+  ],
+  "defects_found_and_fixed": [
+    "Runner rejected job files written with UTF-8 BOM -> utf-8-sig",
+    "cancel via stdin impossible after communicate() -> --stop-file"
+  ],
+  "not_executed": [
+    "clean Windows 11 x64 machine without Python/Node/Rust (P02.5, B01)",
+    "offline run (B01)",
+    "incompatible global Python actually installed (dev machine has only the Store alias)",
+    "real per-user install into %LOCALAPPDATA%\\Programs\\@redrise (done only inside the VM run by design)"
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/P02/artifacts/bundle-manifest.json",
+      "sha256": "17f2936495530905fa16a3965956a71d4c8ec3511211c5e6ed55bf7364500c21"
+    },
+    {
+      "path": "delivery/evidence/P02/artifacts/engine-crates.json",
+      "sha256": "4084f13be77e974388eb1dbe6ab4f2d438266199703b48e9b1197227df3235e9"
+    },
+    {
+      "path": "delivery/evidence/P02/artifacts/health.json",
+      "sha256": "2fd4039bf941c7c5c32b879fef793e3f0a269c1c660e8715826109c81ebd9cf5"
+    },
+    {
+      "path": "delivery/evidence/P02/artifacts/layout-manifest.json",
+      "sha256": "3d8f1620f5b4f2027112cf0eee409cb76b550ffc2e8d5281ffeb95cc7b5970b0"
+    },
+    {
+      "path": "delivery/evidence/P02/artifacts/p01-via-runner.job.json",
+      "sha256": "415555dfc652543c143947476bdff871690aeaef68adb412fc2d1cd3a99fb304"
+    },
+    {
+      "path": "delivery/evidence/P02/artifacts/p01-via-runner.summary.json",
+      "sha256": "7583a0c9a4449c2794ba42bdeed873d9981d3b41824a36024978692a6a833027"
+    },
+    {
+      "path": "delivery/evidence/P02/artifacts/p01-via-runner.verify.json",
+      "sha256": "394a5884114b7028c319f336ee8116708d9f3fbd40afb28b62e4fc26f35028d0"
+    }
+  ],
+  "evidence_note": "Artifacts have the Windows profile path redacted to %USERPROFILE%.",
+  "review": null,
+  "next_action": "Run packaging/runtime/vm/run-p02-on-clean-vm.ps1 on the user's clean VM per CLEAN-MACHINE-P02.md; verify results on host; independent review; then P02 verified.",
+  "candidate_superseded": [
+    {
+      "engine_sha256": "3a436103f03fe8ba37dbef47c9653d8ff6fae7ae218eb0f7d2854a920e3e8491",
+      "layout_manifest_sha256": "3d8f1620f5b4f2027112cf0eee409cb76b550ffc2e8d5281ffeb95cc7b5970b0",
+      "vm_bundle_manifest_sha256": "17f2936495530905fa16a3965956a71d4c8ec3511211c5e6ed55bf7364500c21",
+      "reason": "Engine rebuilt for P03 (2026-10-27); bundle rebuilt"
+    },
+    {
+      "engine_sha256": "d14f9e9bebae9684aad13c802d918f6716d278720d3796258c002a2c59bfa570",
+      "vm_bundle_manifest_sha256": "138c9dc2b776f1d32f90fe76ca3690513b2c609b4ee022f3f15ba5f4c35b56cf",
+      "reason": "Engine rebuilt in P04"
+    }
+  ]
+}

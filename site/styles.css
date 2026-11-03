@@ -1,0 +1,26 @@
+/* Site palette from 03-SITE §5 (vermelho #A51D32, grafite #25262B, branco quente #F6F2EB).
+   Typography falls back to system fonts: Playfair/Raleway/Geist binaries are not bundled. */
+:root { --red: #A51D32; --ink: #25262B; --bg: #F6F2EB; --muted: #5d5f66; --line: #e2dccf; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 "Segoe UI", system-ui, sans-serif; }
+.top { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); }
+.top nav { display: flex; gap: 16px; align-items: center; }
+.top a { color: var(--ink); text-decoration: none; font-weight: 600; }
+.logo { height: 38px; }
+main { max-width: 980px; margin: 0 auto; padding: 24px; }
+main.narrow { max-width: 560px; }
+h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(28px, 5vw, 46px); line-height: 1.15; }
+h2 { font-family: "Segoe UI Semibold", system-ui, sans-serif; margin-top: 36px; }
+.hero { padding: 48px 0 24px; }
+.cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.btn, button.btn { display: inline-block; background: var(--red); color: #fff !important; border: 0; border-radius: 8px; padding: 11px 18px; font-weight: 600; text-decoration: none; cursor: pointer; font-size: 15px; }
+.btn.ghost, a.ghost { background: transparent; color: var(--ink) !important; border: 1px solid var(--ink); border-radius: 8px; padding: 8px 14px; }
+.steps { padding-left: 20px; }
+.steps li { margin: 14px 0; }
+.steps span { display: block; color: var(--muted); }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+.card input { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; margin: 8px 0 12px; font: inherit; }
+.mono { font-family: Consolas, monospace; font-size: 13px; word-break: break-all; }
+.muted { color: var(--muted); }
+footer { background: var(--ink); color: #eee; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; padding: 28px 24px; margin-top: 48px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

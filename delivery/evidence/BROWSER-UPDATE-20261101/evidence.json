@@ -1,0 +1,457 @@
+{
+  "step": "BROWSER-UPDATE-20261101",
+  "work_order": "delivery/work-orders/BROWSER-UPDATE-20261101.md",
+  "status": "campaign_done_pending_review",
+  "source_revision": "unborn",
+  "source_tree_sha256_before": "5273770adc4bb0c05875dbe7b477e790db9c8709826f8a97ba97db4edfc89a99",
+  "source_tree_sha256_after": "feee41b049b95dcff39745ad651020fe3d598b583b922de9aaea0be1238b705a",
+  "environment": {
+    "os": "Windows 11 Pro 10.0.26200",
+    "lab": "C:/Users/raulv/RedRise-v2-dev",
+    "python": "3.12.10 (lab runtime)",
+    "node": "24.18.0",
+    "cargo": "1.98.1"
+  },
+  "increments": {
+    "I0": {
+      "status": "done",
+      "artifact": "delivery/work-orders/BROWSER-UPDATE-20261101.md"
+    },
+    "I1": {
+      "status": "done",
+      "note": "React 19.3.1 + Vite 8.3.4 (build only) + Tailwind 4.3.3 + shadcn new-york-v4 primitives copied from the official registry (MIT); light/dark tokens, moon/sun, undecorated window with round minimize/maximize-restore/close; sidebar-03; legacy login/bootstrap/update preserved. Previous Vanilla UI backed up at C:/Users/raulv/RedRise-v2-dev/research/vanilla-ui-backup-beta10."
+    },
+    "I2": {
+      "status": "done",
+      "note": "stats-02, table-04+table-02 with filters, grid-list-02, read-only Kanban by process, stats-13 (measured bytes, no quota), onboarding-05/06/07, all derived from the same execution store; fixtures only in vite --mode demo (not bundled in the production build: 0 demo chunks in dist)."
+    },
+    "I3": {
+      "status": "done",
+      "note": "Routine page with steps, HTML without browser, dialog-11 process composer, side sheets, one shared run dialog for Processos and Fluxos with idempotent request_id."
+    },
+    "I4": {
+      "status": "done",
+      "environment": "station: Windows 11 26200, Edge 156.0.4314.58 (only detected browser; Brave is running but is not a candidate), personal Edge profile, synthetic page served on 127.0.0.1:47891, candidate 0.1.0-beta.11 stage layout; reruns on stage 0.1.0-beta.12 and 0.1.0-beta.13 (Edge 156, Brave as the .html association)",
+      "runs": [
+        {
+          "case": "html via Windows association, Edge closed",
+          "result": "failed browser_open_unconfirmed after 30.7 s; Windows showed the OpenWith dialog instead of a browser (UserChoice .html=MSEdgeHTM), no browser process started; fail-closed, no retry; dialog left for the user",
+          "file": "run1-html-edge-closed.json",
+          "sha256": "3bdb26eed5b477ceca470a1cd97c44d9a432856faff843b03a3319de592f52cc"
+        },
+        {
+          "case": "site in Edge, Edge closed",
+          "result": "verified in 4.2 s, new window, synthetic tab title, address matched",
+          "file": "run2-site-edge-closed.json",
+          "sha256": "9241ccbbe946ab550d743108f5bfbb1098ab3f37d7e18b0a0e42df2e980e79f4"
+        },
+        {
+          "case": "site in Edge, Edge open",
+          "result": "verified in 0.4 s, new tab in the existing window (2 tabs, both kept open)",
+          "file": "run3-site-edge-open.json",
+          "sha256": "878b2bdcba1507f4e5f574095a1f983dd9ea013c476d7b7529e6c3afa38afbf4"
+        },
+        {
+          "case": "same address already open in a tab",
+          "result": "verified 0.4 s through a new tab (existing tab not reused)",
+          "file": "run4-site-same-target.json",
+          "sha256": "80bfb262bda8badd44e0f1f5828824e99b66fa4db194d163f47f1658b6335ce7"
+        },
+        {
+          "case": "address with nothing listening (127.0.0.1:47899)",
+          "result": "verified 0.7 s: FINDING - confirmation proves a new tab at the target address, not that the page loaded; the browser error page counts as confirmed",
+          "file": "run5-site-unreachable.json",
+          "sha256": "ad9e5bc14a8f7111e85eb5c5b1ce73ba0d91a4299291bcbc94ccc1cc06cc76cd"
+        },
+        {
+          "case": "chosen browser absent (chrome)",
+          "result": "refused browser_not_found before opening, no substitution",
+          "file": "run6-chrome-absent.json",
+          "sha256": "a3f3bca0ea6553952b15ea4b8583553a96bc42314e07afeb45db6073ba184bb9"
+        },
+        {
+          "case": "probe: UIA document of a loaded page vs an error page (Edge 156)",
+          "result": "loaded: Document Value = target URL; error: Document Value = chrome-error://chromewebdata/ while the address field shows the target; right after a new tab the Document can still be the previous page",
+          "file": "probe-loaded.json, probe-error.json",
+          "sha256": "674d73f854faabc5dc6a8b8bc28ba3c21b630edc3122983dc1b7bb32b8259c47, 5475e860e3b2a691690ad51bc98ea6b310ce3ad2f25e6c8e0d1ff22a42342b24"
+        },
+        {
+          "case": "beta.12 site in Edge, page loads",
+          "result": "verified page_ready in 0.6 s",
+          "file": "beta12/a-site-loaded.json",
+          "sha256": "580e1fa2787635148dd95ed90767b06efd5de121bcfd5e88b62cfd78fab5e013"
+        },
+        {
+          "case": "beta.12 address with nothing listening",
+          "result": "failed browser_page_not_ready after 30 s (browser error page), confirmation tab_open, tab kept",
+          "file": "beta12/b-site-error.json",
+          "sha256": "2e1e416108984d9d7caf74495e7976ce95be12fc6927227692b7e1e48bf48c37"
+        },
+        {
+          "case": "beta.12 html via association (x2)",
+          "result": "failed browser_open_unconfirmed: the association now resolved to Brave (no Open with dialog), which beta.12 did not watch; tabs kept",
+          "file": "beta12/c-html-association.json, beta12/d-html-again.json",
+          "sha256": "139afa2d6ed310f9454bf5a1426d8b744fc775cea1300e23aae2d4f3ca43ac13, 7f6eda06fa730a4b9ad449b520457021c5dd5b65080c65ff674598faa6918bcd"
+        },
+        {
+          "case": "beta.13 html via association",
+          "result": "verified page_ready in 1.0 s in Brave (opened_by association, file:// URL and title matched)",
+          "file": "beta13/e-html-association.json",
+          "sha256": "a93689c1bc3f6327e75ec1078ddb74cfbc1039148b0a04e5cb71fee123fd75c8"
+        },
+        {
+          "case": "beta.13 site in Edge, page loads",
+          "result": "verified page_ready in 0.35 s",
+          "file": "beta13/f-site-loaded.json",
+          "sha256": "dd3d510a8a3348063e50cbb9a8ff130387cf805cf17dfdcab5fc8f0b0d6b9269"
+        }
+      ],
+      "evidence_dir": "C:/Users/raulv/RedRise-v2-dev/proofs/browser-update",
+      "homologated_browsers": [],
+      "open_findings": [],
+      "resolved_findings": [
+        "Error page counted as confirmed (run5): resolved by the user's decision of 01/11/2026 - two levels, tab_open vs page_ready; only page_ready is verified; tab only fails BROWSER-PAGE-NOT-READY (proven in beta12/b).",
+        "HTML identification in a real browser: proven in beta13/e (Brave via association). Brave is identified for HTML only (user decision 01/11/2026), never offered for a site."
+      ],
+      "decisions": [
+        "2026-11-01 user: verified = page loaded and ready, distinct from tab open at the address.",
+        "2026-11-01 user: when the .html association raises Open with, use Edge (implemented as cancel the dialog + open the file in Edge; association never changed).",
+        "2026-11-01 user: identify Brave when a local HTML opens in it."
+      ]
+    },
+    "I5": {
+      "status": "done",
+      "note": "migration 002 (additive), browser_config validation, processes, executions with snapshot/context, advance only on verified + continuation, idempotent chaining (unique execution/position), isolated refused in API (ROUTINE-NOT-ISOLATED), storage endpoint; Portuguese Core reasons converted to English ASCII with pt-BR in the mask."
+    },
+    "I6": {
+      "status": "partial",
+      "note": "Runner browser_open (site/HTML, two-level confirmation <= 30 s, no retry/kill/substitution, tab kept, Open with -> Edge, Brave identified for HTML), heartbeat reports browsers, UI uses real sources; installed campaign passed on 0.1.0-beta.14."
+    },
+    "I7": {
+      "status": "partial",
+      "note": "register/login TO-BE only in the demo build with fixture states; contract proposal docs/identity/IDENTITY-CONTRACT-PROPOSAL.md; no backend, no external services; not homologated."
+    },
+    "I8": {
+      "status": "partial",
+      "note": "beta.13 gate passed and signed, installed through the app (beta.10 -> beta.13); campaign found error texts in English (CSP connect-src blocked fetching the pt-BR mask) -> fixed in beta.14 (mask bundled). beta.14 gate passed 2026-11-01 17:57, signed into the lab channel and installed through the app (beta.13 -> beta.14). Not published."
+    }
+  },
+  "checks": [
+    {
+      "kind": "contract_check",
+      "command": "cd tests/contracts && python -B -m unittest test_diagnostics",
+      "result": "17 passed",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "cd tests/core && python -B -m unittest test_browser_processes",
+      "scope": "real Core + isolated PostgreSQL 17.6 on C: (also runs the 14 existing test_core tests)",
+      "result": "24 passed",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "cd tests/core && python -B -m unittest test_agent",
+      "result": "6 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "cd tests/runtime && python -B -m unittest test_runner test_templates test_excel",
+      "result": "53 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "cd tests/runtime && python -B -m unittest test_browser_open",
+      "scope": "simulated: fake UIA probe and launchers",
+      "result": "22 passed (beta.13 code: two-level confirmation, Open with fallback, Brave identification)",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "npm run build:ui (tsc --noEmit + vite build) on C:",
+      "result": "passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "vite --mode demo, built-in browser: Processos/Fluxos/Kanban/routine wizard, dark and light, no console errors",
+      "result": "passed after 2 layout fixes (grid card truncation, Kanban column overlap)",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "node scripts/validate-base.mjs",
+      "result": "341 checks passed (foundation only)",
+      "exit": 0
+    },
+    {
+      "kind": "build",
+      "command": "cargo build --release --locked (engine, CARGO_TARGET_DIR on C:)",
+      "result": "engine_sha256 057ed44544548b5c5f2a4bf838e36635b46f9d331fa93c61937aaf6ffbd81c0d, identical to beta.10",
+      "exit": 0
+    },
+    {
+      "kind": "build",
+      "command": "packaging/desktop/build-desktop.ps1",
+      "result": "redrise-desktop.exe sha256 1cc9e912ed04aac7a98e9b145a8f465fa39e5d31f67bc9e5a37c3c5b4d64ffad (7838720 bytes)",
+      "exit": 0
+    },
+    {
+      "kind": "build",
+      "command": "packaging/release/build-release.ps1 -Version 0.1.0-beta.11",
+      "result": "installer built",
+      "exit": 0
+    },
+    {
+      "kind": "practical_check",
+      "command": "redrise_runner browser-open (stage beta.11) x6, see increments.I4.runs",
+      "scope": "native, real Edge, synthetic page",
+      "result": "4 verified, 1 refused as designed, 1 unconfirmed (OpenWith); 1 finding",
+      "exit": "mixed"
+    },
+    {
+      "kind": "release_gate",
+      "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.11",
+      "result": "passed=true on rerun 2026-11-01 09:41 (first run 04:03 passed=false: user's Notepad open)",
+      "exit": 0,
+      "record": "C:/Users/raulv/RedRise-v2-dev/release/0.1.0-beta.11/verification.json",
+      "record_sha256": "f223a21c88e75ebab5a19fabbdfc9e7107c2fbf1cfb8a9bc2ed5271d92ab9188",
+      "superseded_by": "0.1.0-beta.13"
+    },
+    {
+      "kind": "component_check",
+      "command": "cd tests/contracts && python -B -m unittest test_diagnostics",
+      "scope": "beta.13 code (BROWSER-PAGE-NOT-READY)",
+      "result": "17 passed",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "cd tests/core && python -B -m unittest test_agent test_browser_processes",
+      "scope": "beta.13 code, isolated PostgreSQL",
+      "result": "30 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "cd tests/runtime && python -B -m unittest test_runner test_templates test_excel",
+      "scope": "beta.13 code",
+      "result": "53 passed",
+      "exit": 0
+    },
+    {
+      "kind": "build",
+      "command": "build-desktop.ps1 + build-release.ps1 -Version 0.1.0-beta.13",
+      "result": "redrise-desktop.exe sha256 1c3ae350d4bf04f22fec11d49d49ecc3ba676ad57daa9499880db51c34073d18; engine 057ed445... unchanged",
+      "exit": 0
+    },
+    {
+      "kind": "practical_check",
+      "command": "redrise_runner browser-open on stages beta.12/beta.13, see increments.I4.runs",
+      "scope": "native, real Edge 156 and Brave, synthetic page/file",
+      "result": "page_ready verified (Edge site x2, Brave HTML), error page -> BROWSER-PAGE-NOT-READY, Brave HTML unwatched in beta.12 -> fixed in beta.13",
+      "exit": "mixed"
+    },
+    {
+      "kind": "release_gate",
+      "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.13",
+      "result": "passed=true 2026-11-01 16:43",
+      "exit": 0,
+      "record": "C:/Users/raulv/RedRise-v2-dev/release/0.1.0-beta.13/verification.json",
+      "record_sha256": "b6d57c7fa0fd79985bf666d55e11218b1eca4fe81fe249ed143043267189f630",
+      "superseded_by": "0.1.0-beta.14"
+    },
+    {
+      "kind": "release_gate",
+      "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.14",
+      "result": "passed=true 2026-11-01 17:57",
+      "exit": 0,
+      "record": "C:/Users/raulv/RedRise-v2-dev/release/0.1.0-beta.14/verification.json",
+      "record_sha256": "8d9a5fd66dd9e81515aecf9dd96d764174eb4f1b91cefd2b4a5638c24f3a4a22"
+    },
+    {
+      "kind": "component_check",
+      "command": "npm run build:ui (beta.14, mask bundled)",
+      "result": "passed; 'Usuário ou senha incorretos' present in the bundle",
+      "exit": 0
+    },
+    {
+      "kind": "practical_check",
+      "command": "installed campaign through the app UI (see installed_campaign)",
+      "scope": "installed 0.1.0-beta.14, real Edge/Brave, synthetic data",
+      "result": "8 scenarios passed (C6 UI only); 1 defect fixed (F1); 7 open findings",
+      "exit": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "C:/Users/raulv/RedRise-v2-dev/release/0.1.0-beta.14/RedRise-Setup-0.1.0-beta.14.exe",
+      "sha256": "3a1218012adacfc0d7715fee1928437a0b38e85b477a90cb44543b0cf470cbb3",
+      "payload_sha256": "ce4b6019322f9b4d9ec534e3272202ae76d28bdb736104fe26e4919c6bd35587",
+      "files": 3738,
+      "bytes": 732271046,
+      "signed_lab_channel": true,
+      "installed": true,
+      "supersedes": [
+        "0.1.0-beta.11",
+        "0.1.0-beta.12",
+        "0.1.0-beta.13 (5c290b5a...dcfc, signed and installed, replaced)"
+      ]
+    },
+    {
+      "path": "core/redrise_core/migrations/002_browser_processes.sql",
+      "sha256": "3c2f6fe73e4e3711f083eb16f1b11b6097ddbe0d52f9369a4447695dd90ee5cd"
+    },
+    {
+      "path": "runner/redrise_runner/browser_open.py",
+      "sha256": "d431dab095c0770654ef45cf1915b5666ea90213e3649d0c780f6ffc78c0adcd"
+    },
+    {
+      "path": "contracts/errors.json",
+      "sha256": "60da41a02c804eb5aac561dc4872c64d17480270becab3caacd76f69341abda2"
+    }
+  ],
+  "skills": {
+    "react-frontend-setup": "1f8efa29e70a40036d66f4c07fbbd345f74ee9b194dadf1a5d171d475072b9d2",
+    "frontend-localization-contract": "cf62e05ecbe3285eb4f67e67746fadf0606e719b4061fbc75626d9f065ba16a2",
+    "browser-automation-integration": "087fbab3f27ed1d5c5b6d5e9d6291ed9adce0184f5b8ac659f23312cc0646fd3",
+    "task-context-checkpoint": "88c25b1e0dd233056be4b9f6dfa7ff8c1543d3844f6827f90efc97ec315a3437"
+  },
+  "memory": "ai-memory CLI not on PATH; canonical sources used",
+  "review": null,
+  "limitations": [
+    "Real identification proven on Edge 156 (site, error page) and Brave (HTML via association) on this station, directly and in the installed campaign; Chrome, Firefox and Chromium are absent here. No browser formally homologated.",
+    "The Open with -> Edge fallback is proven only with fakes: on the reruns the association resolved to Brave and no dialog appeared.",
+    "page_ready means the selected tab's document is committed at the target and is not a browser error page; it does not prove every resource finished loading. Firefox error schemes (about:neterror/certerror) are unproven.",
+    "Site confirmation matches host (ignoring www.); redirects to another host fail.",
+    "Discovery refresh is cached 5 minutes in the Runner; the UI 'Atualizar lista' only re-reads what stations reported.",
+    "Routines consuming the context (login etc.) do not exist in this update; the context is recorded and handed to the next routine only.",
+    "Identity e-mail/Google/GitHub not implemented beyond demo fixtures."
+  ],
+  "next_action": "User review: decide formal homologation (Edge site, Brave HTML) and which campaign findings F2-F8 to fix next; identity follows IDENTITY-CONTRACT-PROPOSAL decisions. No commit/push/publication without order.",
+  "installed_campaign": {
+    "build": "0.1.0-beta.14",
+    "installer_sha256": "3a1218012adacfc0d7715fee1928437a0b38e85b477a90cb44543b0cf470cbb3",
+    "when": "2026-11-01 17:59-18:12 -03:00",
+    "station": "servidor-lab (host + station, single machine)",
+    "operator": "agent through Windows UI Automation by element name (invoke/select, SendKeys typing, one mouse click on a table row) on the RedRise window only; user signed in; computer free",
+    "data": "synthetic: page http://127.0.0.1:47891 served from the lab proofs folder, local HTML file, unreachable 127.0.0.1:47899",
+    "update_path": "beta.10 -> beta.13 -> beta.14 through the in-app offer (signed lab channel 127.0.0.1:47880); @redrise.previous kept",
+    "scenarios": [
+      {
+        "id": "C1",
+        "case": "error texts in pt-BR (made-up user, dummy value)",
+        "result": "beta.13: English (defect); beta.14: four-part pt-BR AUTH-INVALID",
+        "status": "passed_after_fix"
+      },
+      {
+        "id": "C2",
+        "case": "routine wizard: site (Edge) / HTML (no browser asked) / isolated flag",
+        "result": "3 routines saved; browser list shows only Edge 'detectado, não homologado'; Brave not offered for site; B isolated 'Não'",
+        "status": "passed"
+      },
+      {
+        "id": "C3",
+        "case": "process composer with continuation per link",
+        "result": "P1 (A->B) and P2 (C->A) saved; saving executed nothing",
+        "status": "passed"
+      },
+      {
+        "id": "C4",
+        "case": "run P1 from Processos, confirm pressed twice",
+        "result": "one POST /executions; A verified page_ready (Edge, existing window, new tab); B verified page_ready (Brave via association); end 'Fim da sequência'; context has steps 1, 2 and last",
+        "status": "passed"
+      },
+      {
+        "id": "C5",
+        "case": "run P2 from Fluxos (Nova execução)",
+        "result": "C failed BROWSER-PAGE-NOT-READY after 30 s (tab kept); A not run; execution 'Falhou · Interrompida: resultado não verificado'; pt-BR four-part diagnostic in the technical record",
+        "status": "passed"
+      },
+      {
+        "id": "C6",
+        "case": "isolated refusal in the UI",
+        "result": "B absent from isolated targets in the run dialog; its isolated button disabled; API refusal (ROUTINE-NOT-ISOLATED) covered by Core tests, not called from the installed app",
+        "status": "passed_ui_only"
+      },
+      {
+        "id": "C7",
+        "case": "isolated run allowed (A)",
+        "result": "verified page_ready, 'encerra aqui'",
+        "status": "passed"
+      },
+      {
+        "id": "C8",
+        "case": "status coherence",
+        "result": "Histórico, technical records and Kanban show the same states",
+        "status": "passed"
+      }
+    ],
+    "not_covered": [
+      "browser closed before a process run (proven only in direct runs)",
+      "Open with -> Edge on a real dialog",
+      "server-side request_id replay from the installed app",
+      "Chrome/Firefox/Chromium (absent)",
+      "second station / LAN",
+      "identity e-mail/Google/GitHub"
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "fixed",
+        "text": "Installed UI showed backend English: CSP connect-src without 'self' blocked fetch of locale/pt-BR.json. Fixed in beta.14 by bundling the mask."
+      },
+      {
+        "id": "F2",
+        "severity": "medium",
+        "text": "Each app update ends the session and the new login no longer pre-fills the user name (beta.10 did)."
+      },
+      {
+        "id": "F3",
+        "severity": "medium",
+        "text": "Execution details sheet shows only the error code; the pt-BR four-part diagnostic is only in the technical record below."
+      },
+      {
+        "id": "F4",
+        "severity": "low",
+        "text": "UI polls processes/routines/stations/executions/jobs about every 2.7 s even with nothing running (55 GET per 30 s)."
+      },
+      {
+        "id": "F5",
+        "severity": "low",
+        "text": "Technical record rows open only with the mouse (no keyboard focus)."
+      },
+      {
+        "id": "F6",
+        "severity": "low",
+        "text": "Timeline says 'continua para a próxima' on the last routine of a process."
+      },
+      {
+        "id": "F7",
+        "severity": "low",
+        "text": "Routines table 'Destino' shows raw backend values 'windows'/'browser'; dialog close button announced as 'Close'; routine names truncated in the composer."
+      },
+      {
+        "id": "F8",
+        "severity": "low",
+        "text": "context.tab_title can be the pre-load tab name ('Sem nome'); page_title is correct."
+      }
+    ],
+    "artifacts_dir": "C:/Users/raulv/RedRise-v2-dev/proofs/browser-update/campaign",
+    "artifacts_sha256": {
+      "01-login-error-ptbr.png": "582cf8ebd40d167cdfca774f08b914545c5db06d8f2ef397f070b890eca1f065",
+      "02-routines.png": "60a46b965176fadbd11b569cc8a299047bbb9b81a0b65c580a94472efbced463",
+      "03-processes.png": "6852cb431476eefe66c22ee6f5f6e403b53d4afec01088f96fd0f16f14c75f19",
+      "04-p1-verified.png": "0cbd75712c0143d80ae5050e8a15ea20d9dd98acd8015d65cef41c2bd745204b",
+      "05-p1-context.png": "1c4d902face92f8f3abfb45ae355a2c7468ec7f7f97c2a2d7f18b115d8ab20b6",
+      "06-kanban.png": "357eb1e787e92a81d959656be9f14c17a9b0178163f862e9fcda2608f8e2c418",
+      "07-p2-interrupted.png": "f0f2948bcbfef00fd0321cea2597abf2a2355be98253a86df85104cf083baee7",
+      "08-technical-records.png": "4af386c1bffbe02d823a8e8b6557c23ee251cc4012f2e31bdb02cb2a92b5852b",
+      "09-isolated-a.png": "f769eabbdf3e02445b61f2a61fc5dcb6beeea85ddc7b5fd1e438799bb84631db"
+    },
+    "homologation": "not declared: campaign evidence supports Edge 156 for site and Brave identification for HTML on this station; formal homologation is the user's decision"
+  }
+}

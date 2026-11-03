@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "product_id": "product:redrise-v2",
+  "roadmap": "docs/ROADMAP.md",
+  "current_step": "P13",
+  "next_step": "P13",
+  "beta_ready": false,
+  "published": false,
+  "publication_evidence": null,
+  "authorization": "User 2026-10-26 submitted docs/AGENT-START-BETA.md: research, local development and local proofs with synthetic data through release-ready Beta; no commit/push/publication. 2026-10-27: user will provide a clean disposable Windows 11 VM; continue P02 development not needing it, P02 unverified. 2026-10-27: user asked to start P03 development while preparing the VM (P02 unverified). 2026-10-27: user asked to start P04 template development while the VM is pending; user directed Save As to use the navigation field for the folder and only the file name in 'Nome do arquivo', and to update the skill accordingly. 2026-10-27 U27: user supersedes clean-VM/clean-PC prerequisites; retain localized capability checks and small contract checks, perform full practical E2E after installed closed-beta build, add four-part errors ending in diagnostic module codes and update handoff prompt. This task updates planning only. 2026-10-27 (later): user submitted updated AGENT-START-BETA (U27): continue from real state; localized capabilities/contracts/diagnostics, then practical validation of installed closed beta; no publication. 2026-10-27: user authorized executing pinned PostgreSQL 17.6-1 (EDB zip sha256 D378882A...3B3E) and wheels psycopg 3.2.13/psycopg-binary, cryptography 46.0.7, cffi 2.1.1 in the C: lab for tests and closed-beta packaging. 2026-10-28: user asked the agent to sign beta.4 and run the update test ('do these things for me').",
+  "steps": [
+    {
+      "id": "P00",
+      "title": "Base independente",
+      "depends_on": [],
+      "status": "verified",
+      "evidence": "delivery/evidence/P00/bootstrap.json",
+      "verified_under_roadmap_revision": 3
+    },
+    {
+      "evidence": "delivery/evidence/I00/investigation.json",
+      "status": "verified",
+      "depends_on": [
+        "P00"
+      ],
+      "title": "Investigar OpenAdapt e planejar Engine usando o catálogo",
+      "id": "I00",
+      "verified_under_roadmap_revision": 3
+    },
+    {
+      "id": "E01",
+      "title": "Engine: contratos SOLID a partir da investigação",
+      "depends_on": [
+        "I00"
+      ],
+      "status": "verified",
+      "evidence": "delivery/evidence/E01/engine.json",
+      "verified_under_roadmap_revision": 3
+    },
+    {
+      "id": "E02",
+      "title": "Engine: captura e finalização Windows",
+      "depends_on": [
+        "E01"
+      ],
+      "status": "verified",
+      "evidence": "delivery/evidence/E02/engine.json",
+      "verified_under_roadmap_revision": 3
+    },
+    {
+      "id": "E03",
+      "title": "Engine: IR e compilação próprias",
+      "depends_on": [
+        "E02"
+      ],
+      "status": "verified",
+      "evidence": "delivery/evidence/E03/engine.json",
+      "verified_under_roadmap_revision": 3
+    },
+    {
+      "id": "E04",
+      "title": "Engine: executor e verificação independente",
+      "depends_on": [
+        "E03"
+      ],
+      "status": "verified",
+      "evidence": "delivery/evidence/E04/engine.json",
+      "verified_under_roadmap_revision": 3
+    },
+    {
+      "id": "P01",
+      "title": "Engine própria no Excel real",
+      "depends_on": [
+        "E04"
+      ],
+      "status": "verified",
+      "evidence": "delivery/evidence/P01-engine/proof.json",
+      "verified_under_roadmap_revision": 3,
+      "rev4_items": {
+        "status": "checks_passed_pending_review",
+        "evidence": "delivery/evidence/U27-P01/capabilities.json"
+      }
+    },
+    {
+      "id": "P02",
+      "title": "Engine/Runner/runtime privados Windows",
+      "depends_on": [
+        "P01"
+      ],
+      "status": "in_progress",
+      "evidence": null,
+      "pending_acceptance": "Review defect: evidence predates current build. Re-run health (hostile env), tamper and Runner-driven checks on the next full layout (with Core/desktop) and record effective paths."
+    },
+    {
+      "id": "P03",
+      "title": "Browser privado",
+      "depends_on": [
+        "P02"
+      ],
+      "status": "in_progress",
+      "evidence": null,
+      "pending_acceptance": "Reviewer APPROVE (2026-10-27) conditional on P02; review notes fixed (adapter read deadline, non-JSON line no longer dropped, action timeout -> partial). Re-run p03 check on the next layout."
+    },
+    {
+      "id": "P04",
+      "title": "Templates cotidianos",
+      "depends_on": [
+        "P03"
+      ],
+      "status": "in_progress",
+      "evidence": null,
+      "pending_acceptance": "Review defect fixed: session lock and compatibility before launching the target app (tests added); window_present reports pre-existing windows. Re-run template suite on next layout. Deferred to P13: real Desktop write, Outlook launch, Gmail authenticated, shipped Browser target (product decision), native locked-session run."
+    },
+    {
+      "id": "P05",
+      "title": "Contratos Core/Runner/Engine e decisões LAN",
+      "depends_on": [
+        "P04"
+      ],
+      "status": "in_progress",
+      "evidence": null,
+      "pending_acceptance": "Reviewer APPROVE; correlation fix applied.",
+      "decision": "docs/decisions/P05-contracts-lan.md"
+    },
+    {
+      "id": "P06",
+      "title": "Core e equipe PostgreSQL",
+      "depends_on": [
+        "P05"
+      ],
+      "status": "in_progress",
+      "evidence": null,
+      "pending_acceptance": "B1 fix re-reviewed: APPROVE (2026-10-28)."
+    },
+    {
+      "id": "P07",
+      "title": "Runner e jobs confiáveis",
+      "depends_on": [
+        "P06"
+      ],
+      "status": "in_progress",
+      "evidence": null,
+      "pending_acceptance": "Reviewer APPROVE; agent crash note fixed."
+    },
+    {
+      "id": "P08",
+      "title": "Desktop Tauri mínimo",
+      "depends_on": [
+        "P07"
+      ],
+      "status": "in_progress",
+      "evidence": null,
+      "pending_acceptance": "B2 fix re-reviewed: APPROVE (2026-10-28)."
+    },
+    {
+      "id": "P09",
+      "title": "Catálogo integrado",
+      "depends_on": [
+        "P08"
+      ],
+      "status": "not_started",
+      "evidence": null
+    },
+    {
+      "id": "P10",
+      "title": "Instalador host/estação",
+      "depends_on": [
+        "P09"
+      ],
+      "status": "in_progress",
+      "evidence": "delivery/evidence/P10/closed-beta.json",
+      "pending_acceptance": "closed beta available; review pending; LAN second station in P13."
+    },
+    {
+      "id": "P11",
+      "title": "Atualização assistida",
+      "depends_on": [
+        "P10"
+      ],
+      "status": "in_progress",
+      "evidence": "delivery/evidence/P11/update.json",
+      "pending_acceptance": "beta.4->beta.5->beta.6 app updates and documented rollback passed on the real install; re-review pending."
+    },
+    {
+      "id": "P12",
+      "title": "Site/onboarding/download isolado",
+      "depends_on": [
+        "P11"
+      ],
+      "status": "in_progress",
+      "evidence": null,
+      "pending_acceptance": "review: APPROVE as local slice only; canon gaps listed in delivery/evidence/P13/campaign.json coverage."
+    },
+    {
+      "id": "P13",
+      "title": "Homologação Beta",
+      "depends_on": [
+        "P12"
+      ],
+      "status": "in_progress",
+      "evidence": "delivery/evidence/P13/campaign.json",
+      "pending_acceptance": "beta.6: B09 passed (1 refuted run attributed to concurrent input), B03/B10/B04 to repeat; open defect: executor does not detect concurrent user input; missing coverage in campaign.json."
+    },
+    {
+      "id": "P14",
+      "title": "Candidato Beta pronto",
+      "depends_on": [
+        "P13"
+      ],
+      "status": "not_started",
+      "evidence": null
+    }
+  ],
+  "roadmap_revision": 4,
+  "next_action": "Browser update: 0.1.0-beta.14 passed verify-candidate, signed into the lab channel and installed through the app (2026-11-01); installed Browser campaign passed with open findings. Next: user review of homologation and findings. Evidence: delivery/evidence/BROWSER-UPDATE-20261101/evidence.json.",
+  "direction_revision_evidence": "delivery/evidence/PRACTICAL-20261027/revision.json",
+  "closed_beta_available": true,
+  "closed_beta_evidence": "delivery/evidence/P10/closed-beta.json",
+  "pending_direction_requirements": [
+    {
+      "status": "implemented_practically_checked_partially",
+      "note": "Catalog/registry/four-topic UI implemented; seen in the installed app (OUTPUT-EXISTS, LOGIN-REQUIRED, INPUT-FILE-MISSING, RECORDING-EMPTY, UPDATE-INVALID); not all codes exercised in practice.",
+      "steps": [
+        "P05",
+        "P07",
+        "P08",
+        "P13"
+      ],
+      "id": "U27-ERROR-DIAGNOSTICS"
+    },
+    {
+      "status": "planning_applied_execution_pending",
+      "steps": [
+        "P02",
+        "P03",
+        "P04",
+        "P10",
+        "P13"
+      ],
+      "id": "U27-PRACTICAL-TESTING"
+    }
+  ],
+  "current_candidate": {
+    "version": "0.1.0-beta.14",
+    "installer_sha256": "3a1218012adacfc0d7715fee1928437a0b38e85b477a90cb44543b0cf470cbb3",
+    "installed": true
+  },
+  "scope_decisions": {
+    "decided_at": "2026-10-29",
+    "by": "user (chat)",
+    "deferred_after_beta": [
+      "human Excel recording",
+      "LAN second station and firewall port 47800 decision"
+    ],
+    "not_doing": [
+      "Authenticode code signing (cost)"
+    ],
+    "after_roadmap": [
+      "full canon site and real Contact Sales"
+    ],
+    "template_end_state": "an app opened only for the run is closed after a verified result; an app already open stays open; non-verified results keep it open for checking; Outlook (opening is the result) stays open; Gmail browser is run-scoped and already closes"
+  },
+  "lab_builds_not_candidates": [
+    {
+      "version": "0.1.0-beta.7",
+      "installer_sha256": "cb543aec38498e02bc0622ac8634acdcdf9ac6936459634ed4c6042279805e6c",
+      "verdict": "rejected: runner exception before any template launch (tasklist decoding)"
+    },
+    {
+      "version": "0.1.0-beta.8",
+      "installer_sha256": "a5eb43e897b65a2ac4b186013144a534c137882c01349b59182d2e4d6fef0ba4",
+      "verdict": "rejected: severe typing regression in-app (Boas-vindas refuted, 19 Notepad windows)"
+    }
+  ]
+}

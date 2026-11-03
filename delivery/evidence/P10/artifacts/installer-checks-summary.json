@@ -1,0 +1,45 @@
+﻿{
+    "corrupted":  {
+                      "message":  "pacote corrompido: SHA-256 do conteÃºdo nÃ£o confere",
+                      "installed":  false,
+                      "exit":  3
+                  },
+    "install":  {
+                    "seconds":  34,
+                    "result":  {
+                                   "data_root_untouched":  "%USERPROFILE%\\AppData\\Local\\RedRise",
+                                   "files":  3734,
+                                   "install_root":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p10-installer\\run-20261027-221225\\Programs\\@redrise",
+                                   "installed":  "0.1.0-beta.1",
+                                   "previous_kept":  false,
+                                   "shortcut":  "%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\RedRise.lnk"
+                               },
+                    "exit":  0
+                },
+    "installed_health":  {
+                             "status":  "healthy",
+                             "uninstall_exe":  true,
+                             "files":  3734,
+                             "integrity":  true
+                         },
+    "reinstall":  {
+                      "exit":  0,
+                      "previous_kept":  true
+                  },
+    "rollback":  {
+                     "restored":  true,
+                     "exit":  0
+                 },
+    "uninstall":  {
+                      "out":  {
+                                  "at":  1793150047,
+                                  "ok":  true,
+                                  "result":  {
+                                                 "data_kept":  "%USERPROFILE%\\AppData\\Local\\RedRise",
+                                                 "uninstalled":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p10-installer\\run-20261027-221225\\Programs\\@redrise"
+                                             }
+                              },
+                      "root_removed":  true,
+                      "exit":  0
+                  }
+}

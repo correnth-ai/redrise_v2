@@ -1,0 +1,268 @@
+{
+  "step": "P13",
+  "status": "partial_campaign_pending_review",
+  "run_id": "RUN-U27-20261027-01",
+  "build_under_test": {
+    "version": "0.1.0-beta.2",
+    "installer_sha256": "d8383c1a439e67dd0a984889b6711cecc4889f1974488d633b726c75b358a4d3"
+  },
+  "environment": {
+    "nodes": [
+      {
+        "name": "servidor-lab",
+        "roles": [
+          "host (Core + private PostgreSQL)",
+          "station (Runner)"
+        ],
+        "os": "Windows 11 Pro 10.0.26200 x64"
+      }
+    ],
+    "topology_limit": "single machine; no second physical station; LAN not exercised",
+    "operator": "synthetic SendInput operator driven by the agent (manual-equivalent through the installed UI); user present for consents",
+    "data": "synthetic only (lab accounts, template workbook, local synthetic order site)"
+  },
+  "scenarios": [
+    {
+      "id": "B09",
+      "name": "Boas-vindas via UI",
+      "expected": "Boas_Vindas.txt on real (OneDrive) Desktop, exact literal, verified",
+      "observed": "file created with exact literal; job Verificada",
+      "result": "passed"
+    },
+    {
+      "id": "B09-collision",
+      "name": "Boas-vindas again",
+      "expected": "refused before launch, file unchanged, 4-topic message",
+      "observed": "Recusada; OUTPUT-EXISTS | RR-FLOW; no Notepad launched",
+      "result": "passed"
+    },
+    {
+      "id": "B03-template",
+      "name": "Excel template via UI",
+      "expected": "B2 'Cliente Teste 01', B3 numeric 1500, labels preserved, input unchanged",
+      "observed": "independent openpyxl: ok; template sha256 unchanged; job Verificada",
+      "result": "passed",
+      "independent_reader": "openpyxl (lab venv)"
+    },
+    {
+      "id": "B10-outlook",
+      "name": "Abrir Outlook via UI",
+      "expected": "Outlook main window confirmed; no mail read",
+      "observed": "Verificada; mailbox content not captured",
+      "result": "passed"
+    },
+    {
+      "id": "B10-gmail",
+      "name": "Acessar Gmail via UI (no login)",
+      "expected": "login required reported; no credentials typed",
+      "observed": "Concluída, não verificada + LOGIN-REQUIRED",
+      "result": "passed",
+      "defect": "no in-app way to open the RedRise browser for manual login (fixed in beta.3, re-check pending)"
+    },
+    {
+      "id": "B04",
+      "name": "Browser record -> compile (param cliente) -> replay via UI",
+      "expected": "replay effect visible in independent store",
+      "observed": "store.jsonl: 'Cliente Web 01' (recording) and 'Cliente Web 02' (replay); job Concluída, não verificada (no verifier for recorded routines)",
+      "result": "passed"
+    },
+    {
+      "id": "B03-record",
+      "name": "Excel recording via UI",
+      "expected": "record/compile/replay of UI actions",
+      "observed": "synthetic input refused (RECORDING empty): hardware-only capture works; human recording not performed",
+      "result": "not_executed_requires_human",
+      "defect": "message not in 4-topic format (fixed in beta.3)"
+    },
+    {
+      "id": "B06/B08",
+      "name": "operator role via UI",
+      "expected": "operator cannot create routines/manage team; can run",
+      "observed": "UI without Nova rotina/Versões; run allowed",
+      "result": "passed"
+    },
+    {
+      "id": "B32",
+      "name": "operator run with missing input file",
+      "expected": "refused before action with diagnostic",
+      "observed": "Recusada; INPUT-INVALID | RR-FLOW (generic; fixed to INPUT-FILE-MISSING in beta.3)",
+      "result": "passed_with_defect"
+    },
+    {
+      "id": "B17-restart",
+      "name": "close app and reopen from Start Menu",
+      "expected": "history/routines/users persist",
+      "observed": "9 jobs, 6 routines, 2 users intact via API",
+      "result": "passed"
+    },
+    {
+      "id": "B18/B19",
+      "name": "update notice and apply",
+      "expected": "toast, Ainda não, Pode atualizar",
+      "observed": "see delivery/evidence/P11/update.json: notice, Ainda não, corrupted refused, Pode atualizar -> beta.4",
+      "result": "passed_with_exclusions (UPDATE-BUSY on installed build, multi-station/host update, invalid signature end-to-end not exercised)"
+    },
+    {
+      "id": "B07/B20",
+      "name": "LAN second station / multi-station update",
+      "expected": "real arrangement",
+      "observed": "single machine",
+      "result": "coverage_missing"
+    },
+    {
+      "id": "B11",
+      "name": "locked session",
+      "expected": "wait with reason, no desktop action",
+      "observed": "covered by automated tests only",
+      "result": "coverage_missing_native"
+    }
+  ],
+  "activity_outside_campaign": "Two Boas-vindas routines and two verified runs (23:10-23:14) were created on the host before the campaign, not by the agent.",
+  "defects_fixed_in_beta3": [
+    "Gmail: open RedRise browser for manual login (Configuração)",
+    "RECORDING-EMPTY/INCOMPLETE four-topic messages",
+    "recorded routine parameters as form fields",
+    "INPUT-FILE-MISSING names the file",
+    "sticky sidebar (Sair visible)",
+    "friendly input labels"
+  ],
+  "beta3_recheck": "done on 0.1.0-beta.4 (same fixes): sticky sidebar, RedRise browser button (opened Gmail; nothing typed), recorded routine 'Cliente' field, friendly labels, INPUT-FILE-MISSING naming the file. RECORDING-EMPTY four-topic message confirmed (empty Excel recording).",
+  "lab_incidents": [
+    "synthetic operator Alt-tap put the window in menu mode (keystrokes lost); replaced by F24",
+    "one screen-region capture caught another app; deleted unused; captures now PrintWindow-only"
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/P13/artifacts/beta4-config-sticky-sidebar-browser-card.png",
+      "sha256": "421d6c7f6e5979c398004d46998bf2d92e7c86c7fbc427074f0ea357feeeb4b4"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/beta4-friendly-labels.png",
+      "sha256": "211473df2a4a068dff2adad42de2edd0496194775821b785b7bc91bfc9327127"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/beta4-input-file-missing.png",
+      "sha256": "394c7a8e6a0c97a75901ae5f0a4f76d709a14fe0611a5cdecc69644cc8999549"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/beta4-recorded-routine-param-field.png",
+      "sha256": "6e8d6f8fefa0f5998b258945b3bb1e618ece16ad0cd9ff6894f0191032b5029c"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/beta4-recording-empty-diagnostic.png",
+      "sha256": "a9d495505d77b982148960e54a6ab169394debc05a01ec729f0e3d1c94042ed9"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/beta6-boas-vindas-refuted-and-collision.png",
+      "sha256": "80a46ea21031096d6e14482086cbb587f20101830b78ada3c18e898a8c029127"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/beta6-notice-on-beta5.png",
+      "sha256": "0bbbb06c791fa27785a6d3b80b2bd3dabb432dcc2560cbc5abe710907da32152"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/boas-vindas-collision-diagnostic.png",
+      "sha256": "f089aeafdf6af200169aa134d4096a1b44895dc86ea0024362569ceef733d224"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/boas-vindas-verified.png",
+      "sha256": "c5618feb6f4cdfe3d03454dd220e97aee2691cc9027e08ef4abb0ca415d63043"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/browser-recording-complete.png",
+      "sha256": "b0de51af4ebbf8764a018168f73990fdc62d2644c76393245f0e72cf7f514c4a"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/browser-replay-history.png",
+      "sha256": "b4ee04faff029e8b3ea588da0603a4f83d298233c9dcac8b337976d89bae8375"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/excel-synthetic-recording-refused.png",
+      "sha256": "ab8033aeb9f1364a3fb3f1f0016f63c5aab7a848c21371ee2003c01644a9ca33"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/gmail-login-required.png",
+      "sha256": "cb337515cfc5fc8c51d0711979854b0df9dc8e572fd94e4df02cd575321bc35b"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/operator-missing-input-refused.png",
+      "sha256": "b4f14922ed001edbd7046416858c3fc94430a594a7089bee730bf3aba001bf80"
+    },
+    {
+      "path": "delivery/evidence/P13/artifacts/operator-view.png",
+      "sha256": "2afbb77d0e03bc30bf99ad9799931b187c8e4fe567fa1ed8507c039907424742"
+    }
+  ],
+  "review": {
+    "date": "2026-10-28",
+    "verdicts": {
+      "P06": "APPROVE (B1)",
+      "P08": "APPROVE (B2)",
+      "P11": "REJECT (code defects, fixed for beta.5)",
+      "P12": "APPROVE local slice",
+      "P13": "REJECT for completion (partial, as declared)"
+    }
+  },
+  "missing_coverage_before_beta_ready": [
+    "human Excel recording/compile/replay",
+    "LAN second station + firewall decision",
+    "multi-station/host update and UPDATE-BUSY on installed build",
+    "invalid signature end-to-end",
+    "documented uninstall.exe --rollback on installed build; rollback after DB schema change",
+    "native locked session",
+    "repeat B09/B03/B10/B04 on the candidate build",
+    "Contact Sales and privacy page",
+    "full canon site (Como funciona, top bar, cases/docs/change-log, fonts, footer)",
+    "Authenticode signing (absent)"
+  ],
+  "candidate_runs": {
+    "version": "0.1.0-beta.6",
+    "installer_sha256": "4f4de2140f6fc59ad84268f727fb19d8ce92d32c7aba6353a3c775aa42129d5e",
+    "runs": [
+      {
+        "id": "P11-b4-to-b5",
+        "result": "passed",
+        "note": "beta.4's own update path (cwd fix) installed beta.5 via the app"
+      },
+      {
+        "id": "P11-b5-to-b6",
+        "result": "passed",
+        "note": "beta.5 update path: verified release kept in Rust, host-wide safe point, installer started before stopping children"
+      },
+      {
+        "id": "rollback-documented",
+        "result": "passed after fix",
+        "note": "uninstall.exe --rollback from the install folder: first attempt (beta.5) refused, fixed in beta.6 by hand-over to a temp copy; on the real install beta.6 -> beta.5 restored, then beta.6 reinstalled by its installer"
+      },
+      {
+        "id": "isolated-installer-checks",
+        "result": "passed",
+        "note": "--install-root tests no longer touch the real Start Menu entry, uninstall key or install record (they had removed the real shortcut once; restored by reinstall)"
+      },
+      {
+        "id": "B09-beta6-run1",
+        "result": "refuted_correctly",
+        "observed": "text garbled ('as à RedRise!ssstamos lllizes ...'); Engine completed; independent verifier refuted -> 'Concluída, não verificada' (no false success)",
+        "probable_cause": "concurrent human input during the replay (GetLastInputInfo showed input during typing while the agent sent none); not confirmed",
+        "defect": "Engine executor does not detect concurrent hardware input during replay; should stop as uncertain (RR-ENGINE-EXEC)"
+      },
+      {
+        "id": "B09-beta6-collision",
+        "result": "passed",
+        "observed": "Recusada OUTPUT-EXISTS"
+      },
+      {
+        "id": "B09-beta6-run2",
+        "result": "passed",
+        "observed": "exact literal on real Desktop (verification state not captured in UI screenshot; file content checked)"
+      }
+    ],
+    "not_repeated_on_beta6": [
+      "B03 Excel template",
+      "B10 Outlook",
+      "B10 Gmail",
+      "B04 Browser replay"
+    ],
+    "stop_reason": "user activity detected on the computer; UI driving stopped"
+  }
+}

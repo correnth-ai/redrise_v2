@@ -1,0 +1,43 @@
+{
+  "ended_at_unix_ms": 1793076819220,
+  "report": {
+    "code": null,
+    "failed_step": null,
+    "message": null,
+    "observed_outputs": [],
+    "outcome": "completed_unverified",
+    "procedure_sha256": "3269c0a291cb3f2e97107fe103c8366e9e701c3459e852462c7cdc387d92df5e",
+    "steps": [
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 0,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 1,
+        "note": null,
+        "waited_ms": 11
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 2,
+        "note": null,
+        "waited_ms": 6
+      },
+      {
+        "delivery": "delivered",
+        "effectful": true,
+        "id": 3,
+        "note": null,
+        "waited_ms": 3
+      }
+    ],
+    "verified": false
+  },
+  "started_at_unix_ms": 1793076818037
+}

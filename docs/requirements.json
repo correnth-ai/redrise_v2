@@ -1,0 +1,1050 @@
+{
+  "schema_version": 1,
+  "product_id": "product:redrise-v2",
+  "source_lock": "sources.lock.json",
+  "supplements": [
+    "U24-NEW",
+    "U24-LOGO",
+    "U24-DEV-C",
+    "U25-INSTALL-DIR",
+    "U26-ENGINE",
+    "U26-INSTALL",
+    "U26-RECORDS",
+    "U26-VALIDATION-SCOPE",
+    "U26-INVESTIGATION",
+    "U27-PRACTICAL-TESTING",
+    "U27-ERROR-DIAGNOSTICS"
+  ],
+  "requirements": [
+    {
+      "id": "D01",
+      "summary": "RedRise é o app próprio focado em automações B2B, com prioridade para processos simples, repetíveis e verificáveis",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D01"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P05",
+        "P09"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D02",
+      "summary": "Engine própria do RedRise, escrita do zero e integrada ao app; investigar OpenAdapt com o catálogo indicado em I00, sem torná-lo executor obrigatório",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D02"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "I00",
+        "E01",
+        "E04",
+        "P01",
+        "P07"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "OpenAdapt é o executor inicial a integrar; RedRise organiza a experiência e os processos",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D03",
+      "summary": "Não reinventar o Paperclip como objetivo do produto",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D03"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P00",
+        "P05"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D04",
+      "summary": "App nasce em Equipe/LAN, com possibilidade de self-hosted remoto",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D04"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P06",
+        "P10"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D05",
+      "summary": "PostgreSQL compartilhado no host; instalador único permite criar servidor da equipe ou conectar estação a servidor existente; host também pode executar automações",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D05"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P10"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D06",
+      "summary": "Persistência desde o início",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D06"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P06",
+        "P07"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D07",
+      "summary": "SOLID e módulos desacoplados em Core/Runner/Engine: captura, finalização, compilação, execução, verificação e plataforma separados",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D07"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "I00",
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "P05",
+        "P06"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "SOLID e módulos desacoplados no backend; funcional, leve e escalável",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D08",
+      "summary": "Construir capacidades pequenas de Excel/Engine e checks localizados; campanha completa de gravação/compilação/replay pela UI após existir closed beta instalado, sem gate anterior à UI",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D08"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "U27 supersedes full Excel proof before broad UI; preserve prior Engine/Excel evidence with original scope; localized construction checks and practical installed-beta acceptance remain distinct.",
+      "steps": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "P01",
+        "P08",
+        "P13"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "Validar OpenAdapt no cenário real antes de investir na UI completa",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-27:practical-testing",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL",
+          "U27-PRACTICAL-TESTING"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_PRACTICAL_TESTING_2026-10-27.md"
+      },
+      "prior_effective_summaries": [
+        {
+          "roadmap_revision": 3,
+          "summary": "Provar a Engine própria no Excel real antes de ampliar a UI; E01-E04 precedem a nova P01"
+        }
+      ]
+    },
+    {
+      "id": "D09",
+      "summary": "Primeiro cenário: Windows 11 + Excel Microsoft 365 desktop; preencher células e salvar XLSX",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D09"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P01"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D10",
+      "summary": "Primeira prova pode ter entradas fixas; parametrização e inferência próprias não são proibidas, mas exigem incremento justificado e verificado",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D10"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "E03",
+        "P01"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "Parametrização nativa se funcionar; caso contrário, replay sem parametrização customizada nesta primeira prova",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D11",
+      "summary": "Gravação, compilação, replay e diagnóstico da Engine própria; Flow publicado/monorepo-fallback deixa de ser caminho obrigatório do produto",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D11"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "I00",
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "P01"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "OpenAdapt Flow Python/CLI, pacote publicado primeiro, repositório como fallback",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D12",
+      "summary": "Teste ponta a ponta com conferência do arquivo produzido",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D12"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P01",
+        "P07"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D13",
+      "summary": "Computador Windows para prova guiada; runtimes/dados/execução de provas em C: conforme U24-DEV-C; fontes/evidência sanitizada em D:",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D13"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "P01"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "Computador Windows existente e PowerShell guiado",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D14",
+      "summary": "Templates simples de Rotina como memória operacional reutilizável; sem menu Motores",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D14"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08",
+        "P09"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D15",
+      "summary": "Sidebar por domínio, expansível, com poucos menus inicialmente",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D15"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D16",
+      "summary": "Gestão completa de agentes, goals/objectives e instruções de heartbeat fica fora da primeira interface",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D16"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D17",
+      "summary": "Tauri, linha v2 como referência técnica consultada",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D17"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D18",
+      "summary": "TypeScript/JavaScript, flavor TypeScript",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D18"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D19",
+      "summary": "npm",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D19"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D20",
+      "summary": "Vanilla",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D20"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D21",
+      "summary": "Vanilla UI do endereço vanilla-ui.com",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D21"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D22",
+      "summary": "Rust responsável pela integração nativa; negócio no Core Python",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D22"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D23",
+      "summary": "Core e Runner Python separados por contratos da Engine própria; Rust nativo; linguagem/integração concreta da Engine decidida em E01, com SOLID",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D23"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "I00",
+        "E01",
+        "P05",
+        "P06",
+        "P07"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "Core Python modular, API tipada e Runner Python/OpenAdapt desacoplado; SOLID",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D24",
+      "summary": "Usar o build compatível com o template Vanilla, usualmente Vite; fixar após scaffold",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D24"
+      },
+      "source_status": "proposal",
+      "beta_required": false,
+      "interpretation": "Technical candidate to decide at scaffold checkpoint",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D25",
+      "summary": "Next.js 16 / React / shadcn React como stack do desktop: SUPERADO por D17-D21",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D25"
+      },
+      "source_status": "superseded",
+      "beta_required": true,
+      "interpretation": "Beta exclusion: do not implement Next.js/React/shadcn React in the desktop. This does not impose or change the separate website stack.",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented",
+      "requirement_kind": "exclusion"
+    },
+    {
+      "id": "D26",
+      "summary": "Primeira entrega por download: Windows x64",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D26"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P10",
+        "P14"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D27",
+      "summary": "Alvos futuros: Windows ARM64, macOS Apple Silicon/Intel, Linux x64/ARM64",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D27"
+      },
+      "source_status": "confirmed",
+      "beta_required": false,
+      "interpretation": "Future release intent; not a Beta support claim",
+      "steps": [
+        "P14"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D28",
+      "summary": "Instalador inclui app, Engine, runtime e componentes necessários; cliente não instala plugins/extensões nem configura agente/portas manualmente",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D28"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "P02",
+        "P10"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "Pacote de instalação deve trazer o necessário para os recursos distribuídos",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D29",
+      "summary": "Cliente não instala Python/libs/plugins manualmente; produto provisiona e gerencia recursos distribuídos",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D29"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "P02",
+        "P10"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "Usuário final não deve instalar Python/libs manualmente",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D30",
+      "summary": "Runtime Python privado incluído, sem reaproveitar Python externo; app/Engine/componentes no destino Windows padrão por usuário",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D30"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "P02",
+        "P10",
+        "P11"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "Sempre usar o runtime Python privado incluído, sem reaproveitar Python externo nesta primeira versão",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D31",
+      "summary": "Incluir Playwright e Chromium compatível no pacote de automação web",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D31"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P03"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D32",
+      "summary": "WebView2 do Tauri e Chromium do Playwright são dependências distintas",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D32"
+      },
+      "source_status": "technical_fact",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P03",
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D33",
+      "summary": "Compatibilidade do app e compatibilidade de cada automação têm matrizes independentes",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D33"
+      },
+      "source_status": "derived_requirement",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P05",
+        "P13"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D34",
+      "summary": "Menus literais: Rotina, Ação e Configuração; sidebar por domínio, expansível",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D34"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D35",
+      "summary": "Templates de Rotina simples, disponíveis e funcionais desde a instalação, com dependências incluídas",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D35"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P09"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D36",
+      "summary": "Automação de desktop na sessão conectada e desbloqueada; indisponibilidade faz a execução aguardar com motivo visível",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D36"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P07"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D37",
+      "summary": "Primeira versão inclui Excel desktop, navegador e templates cotidianos Windows; primeiro validar Excel",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D37"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P01",
+        "P03",
+        "P04",
+        "P09"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D38",
+      "summary": "Template Boas-vindas abre Bloco de Notas pela UI, digita a mensagem literal, amplia a visualização e salva Boas_Vindas.txt na Área de Trabalho",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D38"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P04",
+        "P09"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D39",
+      "summary": "Catálogo inicial também inclui abrir Outlook e acessar Gmail no navegador",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D39"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P04",
+        "P09"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D40",
+      "summary": "Uma equipe por servidor, com vários usuários e computadores; cada empresa mantém sua instalação",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D40"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P06",
+        "P10"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D41",
+      "summary": "Contas locais ao servidor, login/senha, perfis administrador e operador; primeiro administrador na configuração inicial",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D41"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P06"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D42",
+      "summary": "App avisa sobre updates; instalação pelo próprio app somente após confirmação; aviso persistente se adiada",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D42"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P11"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D43",
+      "summary": "Confirmação com Pode atualizar / Ainda não; interrupção segura, encerramento dos componentes, atualização e reabertura do app",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D43"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P11"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D44",
+      "summary": "Site oferece sempre o instalador completo mais recente, além da atualização pelo app",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D44"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P12",
+        "P14"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D45",
+      "summary": "Acrescentar Baixar RedRise e onboarding de instalação/equipe no site, preservando Agendar Demonstração e acesso existente até revisão",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D45"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P12"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D46",
+      "summary": "Categorias de superfície: Browser, Windows, Mac e Linux, dentro de Rotina/Ação",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D46"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P05",
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D47",
+      "summary": "Browser já instalado e funcional com Playwright e Chromium compatível; sem depender de cache/download inicial do usuário",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D47"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P03",
+        "P10"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D48",
+      "summary": "Windows usa adapter/componentes próprios da Engine com lifecycle automático e sessão correta; WAA/uiautomation/comtypes upstream não são dependências obrigatórias",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D48"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Current v2 meaning follows U26-ENGINE/U26-INSTALL; original_summary and source_status preserve 2026-10-23 provenance. Original text is not the active executor mandate.",
+      "steps": [
+        "E02",
+        "E04",
+        "P02",
+        "P07"
+      ],
+      "implementation_status": "not_implemented",
+      "original_summary": "Windows inclui uiautomation/comtypes e dependências; agente Windows/WAA iniciado e gerenciado automaticamente pelo app",
+      "effective": {
+        "status": "confirmed",
+        "change_status": "amended-in-v2",
+        "authority": "user-request:2026-10-26:owned-engine",
+        "supplements": [
+          "U26-ENGINE",
+          "U26-INSTALL"
+        ],
+        "decision_ref": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md"
+      }
+    },
+    {
+      "id": "D49",
+      "summary": "Detectar SO automaticamente e bloquear qualquer início de gravação/execução local de categoria nativa incompatível; validar na UI e no backend/Runner",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D49"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P05",
+        "P07",
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D50",
+      "summary": "AX de Mac e AT-SPI de Linux pertencem aos respectivos SOs; não tentar ativá-los no Windows nem adotar RDP como fallback implícito",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D50"
+      },
+      "source_status": "confirmed",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P05",
+        "P08"
+      ],
+      "implementation_status": "not_implemented"
+    },
+    {
+      "id": "D51",
+      "summary": "Compatibilidade de SO e prontidão são verificações distintas; só iniciar com adapter, dependências, permissões e sessão aptos",
+      "source": {
+        "file": "01-DECISOES-CANONICAS.md",
+        "anchor": "D51"
+      },
+      "source_status": "derived_requirement",
+      "beta_required": true,
+      "interpretation": "Apply within source scope and latest user supplements",
+      "steps": [
+        "P05",
+        "P07"
+      ],
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "roadmap_revision": 4,
+  "interpretation_policy": "summary/interpretation are effective current v2 requirements; original_summary/source/source_status retain the original package provenance when amended; U26 overrides executor-specific mandates only; U27 updates testing sequence/environment and error diagnostics; no change to original source hashes or truthful prior evidence scope",
+  "supplemental_requirements": [
+    {
+      "id": "U26-ENGINE",
+      "summary": "Owned from-scratch Engine integrated in app; explicit SOLID and own QA; no whole upstream cloud/MCP/qualification runtime",
+      "steps": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "P01",
+        "P13"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "U26-INSTALL",
+      "summary": "Per-user Windows default %LOCALAPPDATA%\\Programs\\@redrise; app-managed dependencies/lifecycle, data and vault separate",
+      "steps": [
+        "P02",
+        "P10",
+        "P11",
+        "P13"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "U26-VALIDATION-SCOPE",
+      "summary": "Only delivered/in-scope features receive functional verifiers/tests; no gates for excluded cloud/MCP/qualification functionality",
+      "steps": [
+        "E01",
+        "E04",
+        "P01",
+        "P13"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "status": "confirmed",
+      "steps": [
+        "I00",
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "P01"
+      ],
+      "summary": "Mandatory catalogue-driven reverse engineering of OpenAdapt in I00 produces source map, independent specification and Engine build plan before construction; bounded agents use local skills, explicitly scoped memory and registered graphs/fallback.",
+      "id": "U26-INVESTIGATION"
+    },
+    {
+      "status": "confirmed",
+      "summary": "Localized capability checks during construction; short contract checks at module boundaries; full manual E2E after installed internal closed-beta build in own available environment; no clean-PC or VM prerequisite; preserve prior evidence.",
+      "steps": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P07",
+        "P08",
+        "P09",
+        "P10",
+        "P13",
+        "P14"
+      ],
+      "id": "U27-PRACTICAL-TESTING"
+    },
+    {
+      "status": "confirmed",
+      "summary": "Errors explain what happened, completed/pending outcome, next action and separate technical details; final visible line has error code and one or more stable module investigation codes. Distinguish internal, contract, communication, environment/precondition and unknown without fabricated cause.",
+      "steps": [
+        "P05",
+        "P07",
+        "P08",
+        "P13"
+      ],
+      "id": "U27-ERROR-DIAGNOSTICS"
+    }
+  ]
+}

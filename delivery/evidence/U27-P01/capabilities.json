@@ -1,0 +1,148 @@
+{
+  "step": "P01",
+  "scope_of_this_record": "roadmap rev4 P01 items 1-4 (Excel capabilities) + U27 diagnostic foundation used by them",
+  "status": "checks_passed_pending_review",
+  "run_id": "RUN-U27-20261027-01",
+  "work_order": "delivery/work-orders/U27-P01-P08-integration.md",
+  "prior_p01_proof_preserved": "delivery/evidence/P01-engine/proof.json (unchanged scope)",
+  "environment": {
+    "os": "Windows 11 Pro 10.0.26200 x64",
+    "excel": "Microsoft 365 desktop 16.0.20527.20088 (app_paths)",
+    "runner_runtime": "private CPython 3.12.10 (layout u27-20261027-205218)",
+    "engine_sha256": "5f0c5b3b00fe94adf6c5946d82e6a19b7b11bae4e6c63f4ee20f3969ec99563c"
+  },
+  "checks": [
+    {
+      "kind": "component",
+      "native": false,
+      "name": "discover found/not_found/failed + descriptor contract",
+      "command": "python -B -m unittest test_excel (tests/runtime)",
+      "result": "passed",
+      "doubles": "registry, is_file, version reader"
+    },
+    {
+      "kind": "component",
+      "native": false,
+      "name": "start from supplied descriptor: ready, start screen via Engine once, timeout partial, contract refusal before launch, missing exe, launch failure",
+      "command": "unittest test_excel",
+      "result": "passed",
+      "doubles": "launcher, window probe, Engine dismisser"
+    },
+    {
+      "kind": "contract",
+      "native": false,
+      "name": "routing found->start, not_found/failed->diagnostic, malformed->CONTRACT-EXCEL-DESCRIPTOR, correlation preserved",
+      "command": "unittest test_excel.Flow",
+      "result": "passed"
+    },
+    {
+      "kind": "contract",
+      "native": false,
+      "name": "four topics, footer last, categories, wrap/cause, sanitize, registry symbols/paths exist",
+      "command": "python -B -m unittest test_diagnostics (tests/contracts)",
+      "result": "passed (15)"
+    },
+    {
+      "kind": "component",
+      "native": true,
+      "name": "excel-discover via packaged Runner",
+      "command": "u27-excel-capabilities.ps1",
+      "result": "passed",
+      "observed": "found, app_paths, 16.0.20527.20088"
+    },
+    {
+      "kind": "component",
+      "native": true,
+      "name": "excel-start with descriptor file (no discovery)",
+      "command": "u27-excel-capabilities.ps1",
+      "result": "passed",
+      "observed": "new /x process; start screen dismissed by Engine Esc; EXCEL7 workbook window ready; closed with WM_CLOSE (no save)"
+    },
+    {
+      "kind": "contract",
+      "native": true,
+      "name": "excel-start with invalid descriptor",
+      "command": "u27-excel-capabilities.ps1",
+      "result": "passed",
+      "observed": "CONTRACT-EXCEL-DESCRIPTOR; no Excel process launched; footer 'Código: CONTRACT-EXCEL-DESCRIPTOR | Módulos para investigação: RR-EXCEL-DISC, RR-EXCEL-START, RR-CONTRACT, RR-FLOW'"
+    },
+    {
+      "kind": "component",
+      "native": true,
+      "name": "excel-new composition",
+      "command": "u27-excel-capabilities.ps1",
+      "result": "passed after fix",
+      "observed": "first attempt EXCEL-START-SCREEN-UNRESOLVED (Engine refused to reuse an existing report dir); fixed with per-call work dir; rerun ready"
+    }
+  ],
+  "not_executed": [
+    "Excel absent on a real machine (covered by fixtures, per roadmap: never uninstall Excel)",
+    "presentation in the installed UI (P13)"
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/U27-P01/artifacts/descriptor-invalid.json",
+      "sha256": "ec14854ea2c9b0b17a83bce72ea56e00733711e598f551ffe2b72119b7338b58"
+    },
+    {
+      "path": "delivery/evidence/U27-P01/artifacts/descriptor.json",
+      "sha256": "30ba3a972c742e109831d0d8fa4e3a2a4c8b7a77c2a88ab9994b5d95dcd96787"
+    },
+    {
+      "path": "delivery/evidence/U27-P01/artifacts/discover.json",
+      "sha256": "51caa12eb054fcafe5537e3764a1adffefd5fc0958977b541f6780acb5498abe"
+    },
+    {
+      "path": "delivery/evidence/U27-P01/artifacts/new.json",
+      "sha256": "7452ab4be4f8d61c7066358f2d96588798e1b1be27d27c3f736544894800c7f1"
+    },
+    {
+      "path": "delivery/evidence/U27-P01/artifacts/start-invalid.json",
+      "sha256": "d25e3f9220d5684ba4ad66d030e8fe994d0473eeaa7430208dc903313c047835"
+    },
+    {
+      "path": "delivery/evidence/U27-P01/artifacts/start.json",
+      "sha256": "e343fc1ea64f52b79cbb74434d53f5760d96919bc27ea10524994e3cad7f7343"
+    },
+    {
+      "path": "delivery/evidence/U27-P01/artifacts/summary.json",
+      "sha256": "c13c9f73bbb1c146edede4cb5675befc9a9903048d527d5579057af5f8cf00a0"
+    }
+  ],
+  "sources": [
+    {
+      "path": "runner/redrise_runner/excel.py",
+      "sha256": "b0c919ab8a97b638b3e0bacb2850370a1d6029fd5a562289aa9b8a98520e557c"
+    },
+    {
+      "path": "runner/redrise_runner/diagnose.py",
+      "sha256": "4572cc10c7885706abeb5cd124d2ba1ad4f82f55d36ad947923e8b9667b864fe"
+    },
+    {
+      "path": "contracts/errors.json",
+      "sha256": "a4034912c07aa70222a868457cbacd2947891066e6fbb409faf6567ebc9a83d5"
+    },
+    {
+      "path": "contracts/modules.json",
+      "sha256": "8515eca8d94e5dd65f138d6f1b711a08cb73e62c8122b82f0aea9849967fadca"
+    },
+    {
+      "path": "contracts/python/redrise_contracts/diagnostics.py",
+      "sha256": "8cec6be14c031a96c59e335e6c7c89f00cf8ca8aebc923e59499bac7a623932f"
+    },
+    {
+      "path": "tests/runtime/test_excel.py",
+      "sha256": "632759bf46dd247355fe59a0132206e12c11a551a262cc7fe0a324b7d8caaf96"
+    },
+    {
+      "path": "tests/contracts/test_diagnostics.py",
+      "sha256": "273707e363326b4abeca932f49388d5a770def0aa31c47ca7e21205794a9b727"
+    },
+    {
+      "path": "proofs/excel-capabilities/u27-excel-capabilities.ps1",
+      "sha256": "c5382a33dcfd0f36c1ec8b249df3f6ba6fcb591b63f7ad66391b5100e74c1720"
+    }
+  ],
+  "evidence_note": "Artifacts have the Windows profile path redacted to %USERPROFILE%.",
+  "review": null
+}

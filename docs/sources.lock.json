@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "product_id": "product:redrise-v2",
+  "package_version": "1.1",
+  "package_date": "2026-10-23",
+  "authority": "user-directed-product-baseline",
+  "source_root": "C:\\Users\\raulv\\OneDrive\\Documentos\\Correnth\\redrise-canon-2026-10-23",
+  "files": [
+    {
+      "file": "00-LEIA-ME.md",
+      "sha256": "969fa8c11215d880de02d1bc28f22a4a193fcec3d505b2afd7a13e177cdab4f7",
+      "read_status": "consulted"
+    },
+    {
+      "file": "01-DECISOES-CANONICAS.md",
+      "sha256": "5d8fa4061da0ec49eedce3d3a591f095710e42646216c9d40b73556fb52d98c2",
+      "read_status": "consulted"
+    },
+    {
+      "file": "02-ARQUITETURA-E-INSTALACAO.md",
+      "sha256": "cfe4674b38100e51059f873951868444c7f87c380ace3fd45ec81c6c3e751fcc",
+      "read_status": "consulted"
+    },
+    {
+      "file": "03-SITE-COMERCIAL-E-CONTINUIDADE.md",
+      "sha256": "a91eda70fa3e281706b523aa7226e81df6beaa66c82c36af21cc9dd9a4865141",
+      "read_status": "consulted"
+    },
+    {
+      "file": "04-GRILL-ME.md",
+      "sha256": "c774df5bd78f6a55babc59426178f56f7d4e1f9215edf893f68c2614c10d1f3a",
+      "read_status": "consulted"
+    },
+    {
+      "file": "05-ROTINAS-E-ATUALIZACOES.md",
+      "sha256": "96a74cea71548bac6a7fa772f4aac96c6742b1aa75951f02afd13021ae19cb95",
+      "read_status": "consulted"
+    },
+    {
+      "file": "06-CATEGORIAS-E-COMPATIBILIDADE.md",
+      "sha256": "6f582c04647d7e608edc23e73f012e502cd071053befc35cf2b54f55c1408ff2",
+      "read_status": "consulted"
+    },
+    {
+      "file": "fontes/REDRISE-OPENADAPT-EXCEL-WINDOWS11-POC.md",
+      "sha256": "6cc2051f6fff82d8633904c58e548a53eb84d0589046d61ed4c4cdc27955b064",
+      "read_status": "consulted"
+    },
+    {
+      "file": "fontes/REDRISE-WEBSITE-BLUEPRINT.md",
+      "sha256": "66b516a98c4c25f4829a353ec746c8b578763606f6ed71c00aac6eba4d688eeb",
+      "read_status": "required-before-P12-not-consulted-in-bootstrap"
+    },
+    {
+      "file": "fontes/REDRISE-DESIGN-SYSTEM-EXTENSION.md",
+      "sha256": "40408f5320746238fe5dde6d85a7873882256f9faf2d525a06314b0235f57da0",
+      "read_status": "required-before-P12-not-consulted-in-bootstrap"
+    },
+    {
+      "file": "fontes/REDRISE-IMPLEMENTATION-PLAN.md",
+      "sha256": "3d428b6cc07e294e86fe1e7eebfec188ab949e26b209bef3057b8454a55884c7",
+      "read_status": "required-before-P12-not-consulted-in-bootstrap"
+    }
+  ],
+  "supplements": [
+    {
+      "id": "U24-NEW",
+      "date": "2026-10-24",
+      "decision": "New independent product/root/remote, no mandatory code reuse",
+      "source": "company/state/decisions/REDRISE_V2_PRODUCT_BASELINE_2026-10-24.md"
+    },
+    {
+      "id": "U24-LOGO",
+      "date": "2026-10-24",
+      "decision": "Existing RedRise logo files may be reused",
+      "source": "user follow-up in this task"
+    },
+    {
+      "id": "U24-DEV-C",
+      "date": "2026-10-24",
+      "decision": "D: holds only project source/docs/evidence; tests, proofs, runtimes, installs and app maintenance run on C: (dev proofs under C:\\Users\\{user}\\RedRise-v2-dev)",
+      "source": "user instruction during P01 (Work Order amendment P01-D5)"
+    },
+    {
+      "id": "U25-INSTALL-DIR",
+      "date": "2026-10-25",
+      "decision": "On Windows the RedRise installer installs the app and the extensions/dependencies it needs, by default and without asking for a directory, to %LOCALAPPDATA%\\Programs\\@redrise (e.g. C:\\Users\\{user}\\AppData\\Local\\Programs\\@redrise)",
+      "source": "user instruction during P01",
+      "applies_to": [
+        "P02",
+        "P10",
+        "P11",
+        "B28"
+      ]
+    },
+    {
+      "id": "U26-ENGINE",
+      "date": "2026-10-26",
+      "decision": "Owned from-scratch Engine/SOLID replaces OpenAdapt-first; reverse-engineering catalogue is a study reference, not shipped engine; preserve own verification/QA",
+      "source": "company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md",
+      "applies_to": [
+        "D02",
+        "D07",
+        "D08",
+        "D10",
+        "D11",
+        "D23",
+        "D48",
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "P01"
+      ]
+    },
+    {
+      "id": "U26-INSTALL",
+      "date": "2026-10-26",
+      "decision": "Reaffirms U25-INSTALL-DIR: per-user Windows installation defaults to %LOCALAPPDATA%\\Programs\\@redrise, with app/Engine/runtime/components managed automatically",
+      "source": "user request 2026-10-26 and current Engine decision",
+      "applies_to": [
+        "P02",
+        "P10",
+        "P11",
+        "B28"
+      ]
+    },
+    {
+      "id": "U26-RECORDS",
+      "date": "2026-10-26",
+      "decision": "User annotation 1 authorizes deletion of old local P01 attempt records; no requirement to preserve or resume them",
+      "source": "user response annotation 1 in this task"
+    },
+    {
+      "id": "U26-VALIDATION-SCOPE",
+      "date": "2026-10-26",
+      "decision": "User annotation 2: no functional verifiers for features that will not exist; checks belong only to delivered RedRise functionality",
+      "source": "user response annotation 2 in this task"
+    },
+    {
+      "decision": "User clarifies mandatory catalogue use to reverse engineer OpenAdapt and plan owned Engine before implementation; requests preparatory runbook and copyable prompt through Beta readiness.",
+      "source": "user clarifications 1-4 and Beta prompt follow-up",
+      "applies_to": [
+        "I00",
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "P01"
+      ],
+      "date": "2026-10-26",
+      "id": "U26-INVESTIGATION"
+    },
+    {
+      "decision": "User approves localized capability tests and contract checks during construction; full practical manual E2E after installed internal closed-beta build; own environment or optional other local user, no clean-PC/VM gate.",
+      "date": "2026-10-27",
+      "source": "company/state/decisions/REDRISE_V2_PRACTICAL_TESTING_2026-10-27.md",
+      "id": "U27-PRACTICAL-TESTING"
+    },
+    {
+      "decision": "User requires four error topics and final code(s) directing investigation of modules/boundaries; preserve uncertainty and distinguish communication/internal faults.",
+      "date": "2026-10-27",
+      "source": "company/state/decisions/REDRISE_V2_PRACTICAL_TESTING_2026-10-27.md",
+      "id": "U27-ERROR-DIAGNOSTICS"
+    }
+  ],
+  "external_references": [
+    {
+      "id": "REF-RE-CATALOGUE",
+      "url": "https://github.com/morluto/awesome-reverse-engineering",
+      "repository": "https://github.com/morluto/awesome-reverse-engineering.git",
+      "observed_head": "63d23e3197245a28028b21c8f342df18a9ac7859",
+      "consulted_at": "2026-10-26",
+      "kind": "curated-tools-and-learning-catalogue",
+      "consulted": "README via web; HEAD via git ls-remote",
+      "runtime_dependency": false,
+      "tools_installed_or_executed": false,
+      "authority": "supporting-reference-only",
+      "required_research_usage": true,
+      "investigation_plan": "docs/ENGINE-INVESTIGATION-PLAN.md",
+      "research_target": "Official OpenAdapt sources, resolved and pinned during I00"
+    }
+  ]
+}

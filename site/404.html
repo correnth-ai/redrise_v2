@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>404 — RedRise</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="top"><a href="/"><img src="/assets/redrise-lockup-light.svg" alt="RedRise" class="logo"></a></header>
+  <main class="narrow">
+    <h1>404 — Ainda não concluímos esta sessão.</h1>
+    <p>Cadastre-se abaixo para ser notificado quando lançarmos algo.</p>
+    <form id="notify" class="card">
+      <label for="email">Digite seu e-mail</label>
+      <input id="email" name="email" type="email" required maxlength="200" autocomplete="email">
+      <button type="submit" class="btn">Avisar-me</button>
+      <p id="msg" role="status"></p>
+    </form>
+  </main>
+  <script>
+    document.getElementById("notify").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const msg = document.getElementById("msg");
+      const email = document.getElementById("email").value.trim();
+      try {
+        const r = await fetch("/api/notify", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, page: location.pathname }) });
+        const j = await r.json();
+        msg.textContent = r.ok ? "Inscrição registrada." : (j.error || "Não foi possível registrar.");
+      } catch { msg.textContent = "Não foi possível registrar agora. Tente novamente mais tarde."; }
+    });
+  </script>
+</body>
+</html>

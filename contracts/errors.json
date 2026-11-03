@@ -1,0 +1,919 @@
+{
+  "schema": "redrise.error-catalog/1",
+  "note": "Stable error codes (docs/ERROR-DIAGNOSTICS.md). Backend texts are English ASCII; the desktop shows the user text from its locale mask (desktop/locale/pt-BR.json) by error_code and params. {name} placeholders come from the producer's params. Module hints are investigation pointers, not proof of a defect.",
+  "errors": {
+    "EXCEL-NOT-FOUND": {
+      "category": "precondition",
+      "modules": [
+        "RR-EXCEL-DISC"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Excel desktop was not found on this machine.",
+      "completed": "The check finished.",
+      "pending": "No workbook was opened; the start step did not begin.",
+      "next": "Check that Excel desktop is installed and available for this user, then run the check again.",
+      "details": "Discovery returned NotFound. Precondition not met; module defect not confirmed."
+    },
+    "EXCEL-DISCOVERY-FAILED": {
+      "category": "environment",
+      "modules": [
+        "RR-EXCEL-DISC"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Could not check whether Excel is installed.",
+      "completed": "The installation query failed before finishing.",
+      "pending": "Whether Excel is installed is unknown; no workbook was opened.",
+      "next": "Try again. If it persists, copy the diagnostic and send it to support.",
+      "details": "Discovery query failed ({reason}). The failure was not converted to NotFound."
+    },
+    "CONTRACT-EXCEL-DESCRIPTOR": {
+      "category": "contract",
+      "modules": [
+        "RR-EXCEL-DISC",
+        "RR-EXCEL-START",
+        "RR-CONTRACT",
+        "RR-FLOW"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "The Excel discovery answer could not be used to start the workbook.",
+      "completed": "The answer was received, but the contract was rejected.",
+      "pending": "The start step was not run.",
+      "next": "Copy the diagnostic and send it to support. Repeating the same operation may not help.",
+      "details": "Incompatible descriptor at the discover -> start boundary ({reason}). Investigate producer, consumer or composition."
+    },
+    "EXCEL-EXECUTABLE-MISSING": {
+      "category": "environment",
+      "modules": [
+        "RR-EXCEL-START",
+        "RR-EXCEL-DISC"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The Excel reported by discovery is no longer available.",
+      "completed": "The descriptor was accepted, but the executable is missing at the given path.",
+      "pending": "Excel was not started.",
+      "next": "Run the Excel check again; if Excel was removed or repaired, wait for it to finish and retry.",
+      "details": "Executable missing at start time. The environment may have changed after discovery."
+    },
+    "EXCEL-START-FAILED": {
+      "category": "environment",
+      "modules": [
+        "RR-EXCEL-START"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Excel could not be started.",
+      "completed": "Windows refused the start request.",
+      "pending": "No workbook was opened.",
+      "next": "Check that Excel opens manually for this user and try again.",
+      "details": "Process creation failed ({reason})."
+    },
+    "EXCEL-START-TIMEOUT": {
+      "category": "unknown",
+      "modules": [
+        "RR-EXCEL-START"
+      ],
+      "effect_state": "partial",
+      "retry": "check_first",
+      "what": "Excel started but did not become ready in time.",
+      "completed": "The Excel process was started (last observed state: {observed}).",
+      "pending": "The new workbook was not confirmed.",
+      "next": "Check the Excel window opened by this attempt and close it before trying again.",
+      "details": "Readiness not confirmed within {timeout_ms} ms. Slowness and an unexpected dialog cannot be told apart without investigation."
+    },
+    "EXCEL-START-SCREEN-UNRESOLVED": {
+      "category": "unknown",
+      "modules": [
+        "RR-EXCEL-START",
+        "RR-ENGINE-EXEC"
+      ],
+      "effect_state": "partial",
+      "retry": "check_first",
+      "what": "Excel opened on its start screen and the new workbook could not be created.",
+      "completed": "Excel was started; the command to leave the start screen ended as {engine_outcome}.",
+      "pending": "The new workbook was not confirmed.",
+      "next": "Check the Excel window opened by this attempt before repeating.",
+      "details": "Engine returned {engine_outcome} ({engine_code})."
+    },
+    "SESSION-UNAVAILABLE": {
+      "category": "precondition",
+      "modules": [
+        "RR-RUNNER"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The Windows session is not available for automation.",
+      "completed": "The session check finished before any action.",
+      "pending": "Nothing was done on screen.",
+      "next": "Unlock this user's session and keep it connected, then run again.",
+      "details": "Session not ready: {reason}."
+    },
+    "SESSION-BUSY": {
+      "category": "precondition",
+      "modules": [
+        "RR-RUNNER"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Another automation is already using this session.",
+      "completed": "The run was refused before any action.",
+      "pending": "This run did not start.",
+      "next": "Wait for the running automation to finish and run again.",
+      "details": "Exclusive session lock in use."
+    },
+    "RUNTIME-NOT-PRIVATE": {
+      "category": "environment",
+      "modules": [
+        "RR-RUNTIME"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "RedRise internal components are not intact.",
+      "completed": "The integrity check finished.",
+      "pending": "No automation was run.",
+      "next": "Use the installation repair option and try again.",
+      "details": "Private runtime failed checks: {failed_checks}."
+    },
+    "ENGINE-MISSING": {
+      "category": "environment",
+      "modules": [
+        "RR-RUNTIME"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The RedRise automation engine was not found.",
+      "completed": "The check finished.",
+      "pending": "No automation was run.",
+      "next": "Use the installation repair option and try again.",
+      "details": "Engine executable missing."
+    },
+    "ENGINE-NO-RESPONSE": {
+      "category": "communication",
+      "modules": [
+        "RR-RUNNER",
+        "RR-ENGINE-EXEC"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The automation engine did not answer as expected.",
+      "completed": "The request was sent to the engine; the answer was not usable.",
+      "pending": "The result of the operation is unknown.",
+      "next": "Check what is on screen before running again.",
+      "details": "Missing or invalid Engine answer ({reason}). This does not prove an engine defect."
+    },
+    "JOB-ALREADY-EXISTS": {
+      "category": "precondition",
+      "modules": [
+        "RR-RUNNER"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This run was already done and is not repeated automatically.",
+      "completed": "Nothing was run now.",
+      "pending": "The previous result is still recorded ({prior_state}).",
+      "next": "Check the previous result; to run again, create a new run.",
+      "details": "Job id already recorded."
+    },
+    "JOB-INVALID": {
+      "category": "contract",
+      "modules": [
+        "RR-RUNNER",
+        "RR-CONTRACT"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "The run request received is not valid.",
+      "completed": "The request was refused before any action.",
+      "pending": "Nothing was run.",
+      "next": "Copy the diagnostic and send it to support.",
+      "details": "Job request refused by validation ({reason})."
+    },
+    "PROCEDURE-INCOMPATIBLE": {
+      "category": "precondition",
+      "modules": [
+        "RR-RUNNER"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This routine is not compatible with this computer.",
+      "completed": "Compatibility was checked before any action.",
+      "pending": "Nothing was run.",
+      "next": "Run the routine on a station compatible with the stated category and system.",
+      "details": "{reason}"
+    },
+    "STEP-FAILED": {
+      "category": "unknown",
+      "modules": [
+        "RR-ENGINE-EXEC"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The automation stopped before finishing.",
+      "completed": "The failure happened before effectful actions ({failed_step}).",
+      "pending": "The remaining steps were not run.",
+      "next": "Check that the application was open and visible as expected and run again.",
+      "details": "Engine: {engine_code}."
+    },
+    "STEP-UNCERTAIN": {
+      "category": "unknown",
+      "modules": [
+        "RR-ENGINE-EXEC",
+        "RR-RUNNER"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The automation was interrupted after actions that may have changed something.",
+      "completed": "Part of the steps was sent to the application ({failed_step}).",
+      "pending": "Whether the last change was applied is unknown.",
+      "next": "Check the file or the screen before running again to avoid repeating changes.",
+      "details": "Engine: {engine_code}. Uncertain effect; no automatic retry."
+    },
+    "RUN-INTERRUPTED-BY-INPUT": {
+      "category": "environment",
+      "modules": [
+        "RR-ENGINE-EXEC"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The automation stopped because the keyboard or mouse was used during the run.",
+      "completed": "RedRise stopped typing and clicking as soon as it noticed the use ({failed_step}).",
+      "pending": "The following steps were not run; what was already typed may have mixed with the other input.",
+      "next": "Check the file or the screen and run again without using the keyboard and mouse until the run ends.",
+      "details": "Engine: {engine_code}. {reason}."
+    },
+    "RUN-CANCELLED": {
+      "category": "precondition",
+      "modules": [
+        "RR-RUNNER"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The run was cancelled.",
+      "completed": "The cancellation was applied between steps.",
+      "pending": "The following steps were not run; check what was already done.",
+      "next": "Check the application state before running again.",
+      "details": "Cancellation requested."
+    },
+    "OUTPUT-EXISTS": {
+      "category": "precondition",
+      "modules": [
+        "RR-FLOW"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The output file already exists and is never replaced.",
+      "completed": "The check was done before opening any application.",
+      "pending": "Nothing was written; the existing file was not changed.",
+      "next": "Choose another name or move the existing file and run again.",
+      "details": "Target in use: {path}."
+    },
+    "INPUT-INVALID": {
+      "category": "precondition",
+      "modules": [
+        "RR-FLOW"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The data given to the routine is incomplete or incorrect.",
+      "completed": "The check was done before any action.",
+      "pending": "Nothing was run.",
+      "next": "Fix the indicated field and run again.",
+      "details": "{reason}"
+    },
+    "INPUT-FILE-MISSING": {
+      "category": "precondition",
+      "modules": [
+        "RR-FLOW"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The given input file was not found.",
+      "completed": "The check was done before opening any application.",
+      "pending": "Nothing was run.",
+      "next": "Check the input file path ({path}) and run again.",
+      "details": "File missing at check time."
+    },
+    "RECORDING-EMPTY": {
+      "category": "precondition",
+      "modules": [
+        "RR-ENGINE-CAP"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The recording ended without any action recorded in the chosen application.",
+      "completed": "The recording was closed; nothing was saved as a routine.",
+      "pending": "No routine was created.",
+      "next": "Record again using the keyboard and mouse in the chosen application. Automatic actions from other programs are not recorded.",
+      "details": "{reason}"
+    },
+    "RECORDING-INCOMPLETE": {
+      "category": "unknown",
+      "modules": [
+        "RR-ENGINE-CAP"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The recording did not finish correctly and cannot become a routine.",
+      "completed": "The recording was closed; nothing was saved as a routine.",
+      "pending": "No routine was created.",
+      "next": "Record again. If it persists, copy the diagnostic and send it to support.",
+      "details": "Recording state: {reason}"
+    },
+    "APP-NOT-INSTALLED": {
+      "category": "precondition",
+      "modules": [
+        "RR-FLOW"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The application this routine needs was not found.",
+      "completed": "The check was done before any action.",
+      "pending": "Nothing was run.",
+      "next": "Install or make the application available for this user and run again.",
+      "details": "Missing application: {app}. Precondition not met; module defect not confirmed."
+    },
+    "APP-WINDOW-NOT-FOUND": {
+      "category": "environment",
+      "modules": [
+        "RR-FLOW"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The application was started, but its window did not appear.",
+      "completed": "The application was started. Nothing was typed or saved.",
+      "pending": "The routine did not run.",
+      "next": "Check whether the application opened a window or is asking for something, close it, and run again.",
+      "details": "Window not found: {reason}."
+    },
+    "RESULT-NOT-VERIFIED": {
+      "category": "unknown",
+      "modules": [
+        "RR-FLOW",
+        "RR-ENGINE-EXEC"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The automation finished, but the expected result was not confirmed.",
+      "completed": "The steps were sent to the application.",
+      "pending": "The independent check did not find the expected result ({reason}).",
+      "next": "Check the file or the screen before running again.",
+      "details": "Verifier: {verifier_code}."
+    },
+    "LOGIN-REQUIRED": {
+      "category": "precondition",
+      "modules": [
+        "RR-FLOW"
+      ],
+      "effect_state": "confirmed",
+      "retry": "after_fix",
+      "what": "The site opened but asks you to sign in to your account.",
+      "completed": "The page was opened in the RedRise browser.",
+      "pending": "The inbox was not opened; RedRise never types passwords.",
+      "next": "In Settings, use Open RedRise browser, sign in manually and run again.",
+      "details": "Final URL classified as login."
+    },
+    "TEMPLATE-UNAVAILABLE": {
+      "category": "precondition",
+      "modules": [
+        "RR-FLOW"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This routine template is not available in this version.",
+      "completed": "Nothing was run.",
+      "pending": "The template cannot be used.",
+      "next": "Choose another template or wait for a version that includes it.",
+      "details": "{reason}"
+    },
+    "CONTRACT-PAYLOAD": {
+      "category": "contract",
+      "modules": [
+        "RR-CONTRACT"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "An internal RedRise answer came in an incompatible format.",
+      "completed": "The answer was received and rejected by validation.",
+      "pending": "The next step was not run.",
+      "next": "Copy the diagnostic and send it to support. Repeating the same operation may not help.",
+      "details": "Contract {contract} rejected ({reason}). The origin may be the producer, the consumer or the composition."
+    },
+    "AUTH-REQUIRED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "You need to sign in again.",
+      "completed": "The request was refused before any change.",
+      "pending": "Nothing was done.",
+      "next": "Sign in with your user and password and repeat the action.",
+      "details": "Session missing, expired or revoked."
+    },
+    "AUTH-INVALID": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Wrong user or password.",
+      "completed": "The sign-in attempt was refused.",
+      "pending": "You are not signed in to RedRise.",
+      "next": "Check user and password. If you forgot the password, ask a team administrator.",
+      "details": "Credentials refused."
+    },
+    "AUTH-FORBIDDEN": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "Your role does not allow this action.",
+      "completed": "The request was refused before any change.",
+      "pending": "Nothing was done.",
+      "next": "Ask a team administrator to do the action or change your role.",
+      "details": "Action requires role {required_role}."
+    },
+    "SETUP-ALREADY-DONE": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This team already has an administrator.",
+      "completed": "Nothing was changed.",
+      "pending": "The initial setup is not repeated.",
+      "next": "Sign in with an existing user.",
+      "details": "First administrator bootstrap already done."
+    },
+    "NOT-FOUND": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "The requested item does not exist or is no longer available.",
+      "completed": "Nothing was changed.",
+      "pending": "The action was not done.",
+      "next": "Refresh the screen and choose the item again.",
+      "details": "{what_missing} not found."
+    },
+    "VALIDATION": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The data sent is not valid.",
+      "completed": "The request was refused before any change.",
+      "pending": "Nothing was saved.",
+      "next": "Fix the indicated field and try again.",
+      "details": "{reason}"
+    },
+    "CONFLICT": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "The action conflicts with the current state.",
+      "completed": "Nothing was changed.",
+      "pending": "The current state was kept.",
+      "next": "Refresh the screen to see the current state before acting.",
+      "details": "{reason}"
+    },
+    "STATION-INCOMPATIBLE": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE",
+        "RR-RUNNER"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "The chosen station cannot run this routine.",
+      "completed": "Compatibility was checked before queueing.",
+      "pending": "The run was not created.",
+      "next": "Choose a station compatible with the routine category and system.",
+      "details": "{reason}"
+    },
+    "CORE-STORAGE-UNAVAILABLE": {
+      "category": "environment",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The team server could not access its data.",
+      "completed": "The request reached the server.",
+      "pending": "Whether the change was saved is unknown.",
+      "next": "Wait a moment, refresh the screen and check before repeating.",
+      "details": "Database unavailable ({reason})."
+    },
+    "CORE-INTERNAL": {
+      "category": "module_internal",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The team server hit an internal error.",
+      "completed": "The request reached the server.",
+      "pending": "Whether the change was completed is unknown.",
+      "next": "Refresh the screen and check before repeating. If it persists, copy the diagnostic and send it to support.",
+      "details": "Unhandled exception ({reason})."
+    },
+    "CORE-UNREACHABLE": {
+      "category": "communication",
+      "modules": [
+        "RR-CORE",
+        "RR-UI"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "Could not talk to the team server.",
+      "completed": "The connection did not complete or there was no answer in time.",
+      "pending": "If the action had already been sent, its result is unknown.",
+      "next": "Check that the server computer is on and on the same network; refresh the screen before repeating.",
+      "details": "{reason}. No answer does not prove a server failure."
+    },
+    "CORE-CERT-MISMATCH": {
+      "category": "communication",
+      "modules": [
+        "RR-CORE",
+        "RR-UI"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "The server answered with an identity different from the expected one.",
+      "completed": "The connection was stopped before sending data.",
+      "pending": "Nothing was sent to the server.",
+      "next": "Ask the administrator for a new team connection code.",
+      "details": "Certificate fingerprint does not match."
+    },
+    "JOB-LEASE-LOST": {
+      "category": "communication",
+      "modules": [
+        "RR-CORE",
+        "RR-RUNNER"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The station stopped answering during the run.",
+      "completed": "The run had started on the station.",
+      "pending": "How far it went is unknown; the run is not repeated automatically.",
+      "next": "Check the result on the station (file or screen) before running again.",
+      "details": "Lease expired with the run in progress. May be network loss, shutdown or a hang; cause not confirmed."
+    },
+    "STATION-NOT-JOINED": {
+      "category": "precondition",
+      "modules": [
+        "RR-RUNNER"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "This computer is not connected to a team yet.",
+      "completed": "Nothing was run.",
+      "pending": "The station does not receive team runs.",
+      "next": "In Settings, connect the station with the team code and an administrator.",
+      "details": "Station connection missing."
+    },
+    "JOIN-CODE-INVALID": {
+      "category": "precondition",
+      "modules": [
+        "RR-RUNNER",
+        "RR-UI"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The team connection code is not valid.",
+      "completed": "Nothing was sent to the server.",
+      "pending": "The station was not connected.",
+      "next": "Copy the code shown on the team server computer again.",
+      "details": "Expected format rr1:<server>:<port>:<fingerprint>."
+    },
+    "ENGINE-IR-COMPILE": {
+      "category": "unknown",
+      "modules": [
+        "RR-ENGINE-IR"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The recording could not be turned into a routine.",
+      "completed": "The recording was read.",
+      "pending": "No routine was saved.",
+      "next": "Check the given parameters (the text must have been typed during the recording) and try again.",
+      "details": "{reason}"
+    },
+    "UPDATE-CHANNEL-UNREACHABLE": {
+      "category": "communication",
+      "modules": [
+        "RR-UI"
+      ],
+      "effect_state": "none",
+      "retry": "safe",
+      "what": "Could not check for updates.",
+      "completed": "The installed version stays in use.",
+      "pending": "The check will run again later.",
+      "next": "No action is needed now.",
+      "details": "{reason}"
+    },
+    "UPDATE-INVALID": {
+      "category": "contract",
+      "modules": [
+        "RR-UI",
+        "RR-RUNTIME"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "The offered update is not trusted and was ignored.",
+      "completed": "Nothing was installed; the current version and data are intact.",
+      "pending": "The update will not be applied.",
+      "next": "Tell support; do not install files received by other means.",
+      "details": "{reason}"
+    },
+    "UPDATE-DOWNLOAD": {
+      "category": "communication",
+      "modules": [
+        "RR-UI"
+      ],
+      "effect_state": "none",
+      "retry": "safe",
+      "what": "Could not download the update.",
+      "completed": "The installed version stays in use.",
+      "pending": "The update was not applied.",
+      "next": "Try again later with Update now.",
+      "details": "{reason}"
+    },
+    "UPDATE-BUSY": {
+      "category": "precondition",
+      "modules": [
+        "RR-UI",
+        "RR-RUNNER"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The update is waiting: a run or recording is in progress on this station.",
+      "completed": "Nothing was interrupted.",
+      "pending": "The update did not start.",
+      "next": "Wait for it to finish and click Update now again.",
+      "details": "Safe point not reached."
+    },
+    "UNMAPPED": {
+      "category": "unknown",
+      "modules": [
+        "RR-DIAG"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "An error without a specific description yet occurred.",
+      "completed": "The operation state was not determined.",
+      "pending": "Check what was done before repeating.",
+      "next": "Copy the diagnostic and send it to support.",
+      "details": "Original code without mapping: {original_code}."
+    },
+    "ROUTINE-NOT-ISOLATED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This routine cannot run on its own.",
+      "completed": "The request was refused before anything was started.",
+      "pending": "Nothing was run.",
+      "next": "Run the process that contains the routine ({routine}), or allow isolated execution in its registration.",
+      "details": "Isolated execution is off for this routine; it needs the context of the previous routine in a process."
+    },
+    "BROWSER-NOT-FOUND": {
+      "category": "precondition",
+      "modules": [
+        "RR-BROWSER-OPEN"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The browser chosen for this routine was not found on the station.",
+      "completed": "The check was done before opening anything.",
+      "pending": "No page was opened; the next routines did not run.",
+      "next": "Install the browser for this user on the station, or edit the routine and choose a browser found there.",
+      "details": "Chosen browser: {browser}. No other browser is used in its place."
+    },
+    "BROWSER-OPEN-FAILED": {
+      "category": "environment",
+      "modules": [
+        "RR-BROWSER-OPEN"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The page could not be opened.",
+      "completed": "The opening request was refused by Windows.",
+      "pending": "No page was opened; the next routines did not run.",
+      "next": "Check that the browser or the file can be opened by this user and run again.",
+      "details": "Opening request failed ({reason})."
+    },
+    "BROWSER-OPEN-UNCONFIRMED": {
+      "category": "unknown",
+      "modules": [
+        "RR-BROWSER-OPEN"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The opening of the page was not confirmed in time.",
+      "completed": "The opening was requested.",
+      "pending": "No new tab showing the target was identified within 30 seconds; the next routines did not run.",
+      "next": "Check the browser: a tab may have opened. It was left as it is. Run again only after checking.",
+      "details": "Confirmation not observed ({reason}). Not repeated automatically."
+    },
+    "BROWSER-PAGE-NOT-READY": {
+      "category": "unknown",
+      "modules": [
+        "RR-BROWSER-OPEN"
+      ],
+      "effect_state": "partial",
+      "retry": "check_first",
+      "what": "The tab opened at the address, but the page was not confirmed as loaded.",
+      "completed": "A new tab showing the target address was identified.",
+      "pending": "The page did not load in time or the browser showed an error page; the next routines did not run.",
+      "next": "Check the tab that was opened: it was left as it is. Check the address and the connection, then run again.",
+      "details": "Page not ready ({reason}). Not repeated automatically."
+    },
+    "BROWSER-IDENTIFY-UNAVAILABLE": {
+      "category": "environment",
+      "modules": [
+        "RR-BROWSER-OPEN"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The station cannot identify browser tabs right now.",
+      "completed": "The check was done before opening anything.",
+      "pending": "No page was opened; the next routines did not run.",
+      "next": "Try again. If it persists, copy the diagnostic and send it to support.",
+      "details": "UI Automation is unavailable ({reason}); a page is not opened without a way to confirm it."
+    },
+    "IDENTITY-NOT-CONFIGURED": {
+      "category": "environment",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "E-mail sign-in is not available in this installation.",
+      "completed": "The request was not sent.",
+      "pending": "The account service is not configured in this build.",
+      "next": "Use the team user sign-in, or install a build with the account service configured.",
+      "details": "Configuration missing: {reason}."
+    },
+    "IDENTITY-PROVIDER-UNAVAILABLE": {
+      "category": "communication",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "safe",
+      "what": "Could not reach the account service.",
+      "completed": "No session was changed.",
+      "pending": "The operation was not confirmed by the service.",
+      "next": "Check the internet connection and try again.",
+      "details": "Account service did not answer: {reason}."
+    },
+    "IDENTITY-INVALID": {
+      "category": "precondition",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Wrong e-mail or password.",
+      "completed": "The sign-in attempt was refused.",
+      "pending": "You are not signed in to RedRise.",
+      "next": "Check the e-mail and password, or use the password recovery.",
+      "details": "The account service refused the credentials."
+    },
+    "IDENTITY-UNCONFIRMED": {
+      "category": "precondition",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The e-mail of this account was not confirmed.",
+      "completed": "The sign-in attempt was refused.",
+      "pending": "You are not signed in to RedRise.",
+      "next": "Open the confirmation message or ask for it again.",
+      "details": "Account without proof of e-mail possession."
+    },
+    "IDENTITY-NO-MEMBERSHIP": {
+      "category": "precondition",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "This account is not part of this team yet.",
+      "completed": "The account was verified.",
+      "pending": "No access to the team was granted.",
+      "next": "Enter the user and password you received from the team to link this account once, or ask a team administrator for a user.",
+      "details": "No link between the account and a team member on this server."
+    },
+    "IDENTITY-ALREADY-LINKED": {
+      "category": "precondition",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "This account or team user is already linked.",
+      "completed": "The existing link was kept.",
+      "pending": "No new link was created.",
+      "next": "Sign in with the account already linked, or ask a team administrator to review it.",
+      "details": "One account links to one team user."
+    },
+    "IDENTITY-PASSWORD-WEAK": {
+      "category": "precondition",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The account service did not accept this password.",
+      "completed": "The account was not created.",
+      "pending": "Registration is pending a different password.",
+      "next": "Choose another password and try again.",
+      "details": "Password refused by the service: {reason}."
+    },
+    "IDENTITY-SIGNUP-BLOCKED": {
+      "category": "unknown",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The account service did not complete the registration.",
+      "completed": "The request was sent.",
+      "pending": "No confirmation message can be assumed.",
+      "next": "Try to sign in or ask for the confirmation again before repeating. If it persists, copy the diagnostic and send it to support.",
+      "details": "Service refused or changed the registration: {reason}."
+    },
+    "IDENTITY-RATE-LIMITED": {
+      "category": "precondition",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Too many attempts in a short time.",
+      "completed": "The request was refused by the account service.",
+      "pending": "Nothing was sent.",
+      "next": "Wait a few minutes and try again.",
+      "details": "Rate limit of the account service."
+    },
+    "IDENTITY-SESSION-EXPIRED": {
+      "category": "precondition",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The remembered session is no longer valid.",
+      "completed": "The remembered session was removed from this computer.",
+      "pending": "You are not signed in to RedRise.",
+      "next": "Sign in again.",
+      "details": "Session expired or revoked: {reason}."
+    },
+    "IDENTITY-VAULT-FAILED": {
+      "category": "environment",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The Windows vault could not be used.",
+      "completed": "You can keep working in this session.",
+      "pending": "This computer was not remembered.",
+      "next": "Check the Windows credentials service. Until then, sign in on every start.",
+      "details": "Windows vault error: {reason}."
+    },
+    "ACCOUNT-EXISTS": {
+      "category": "precondition",
+      "modules": [
+        "RR-IDENTITY"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "This e-mail already has an account.",
+      "completed": "The existing account was kept.",
+      "pending": "No new account was created.",
+      "next": "Sign in with this e-mail, or ask a team administrator to activate the account.",
+      "details": "One account per e-mail in this team."
+    }
+  }
+}

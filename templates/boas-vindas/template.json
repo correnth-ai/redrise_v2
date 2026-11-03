@@ -1,0 +1,42 @@
+{
+  "id": "boas-vindas",
+  "version": "1.2.0",
+  "title": "Boas-vindas",
+  "purpose": "Abrir o Bloco de Notas pela UI, digitar a mensagem de boas-vindas, ampliar a visualização e salvar Boas_Vindas.txt na Área de Trabalho do usuário.",
+  "category": "windows",
+  "inputs": {
+    "output_path": {
+      "role": "output_path",
+      "default": "{desktop}\\Boas_Vindas.txt"
+    }
+  },
+  "preconditions": [
+    {
+      "kind": "app_installed",
+      "app": "notepad"
+    },
+    {
+      "kind": "output_absent",
+      "input": "output_path",
+      "on_violation": "refuse"
+    }
+  ],
+  "launch": {
+    "app": "notepad",
+    "args": []
+  },
+  "procedure": "procedure.json",
+  "end_state": "An app opened only for this run is closed after a verified result; an app that was already open stays open; on any other result it stays open for checking.",
+  "step_timeout_ms": 20000,
+  "collision": "refuse: an existing Boas_Vindas.txt is never overwritten or renamed",
+  "verifier": {
+    "kind": "text_file_equals",
+    "input": "output_path",
+    "text": "Boas vindas à RedRise! Estamos felizes em tê-los conosco! Esperamos que as automações lhes seja útil!"
+  },
+  "notes": "Zoom is a view setting of the editor; TXT files do not store it, so it is not verifiable from the file.",
+  "settle_ms": 900,
+  "char_delay_ms": 80,
+  "stable_ms": 1500,
+  "save_as": "folder via the dialog's navigation field (Alt+D); only the file name in 'Nome do arquivo' (Alt+N). Derived inputs output_dir/output_name come from output_path."
+}

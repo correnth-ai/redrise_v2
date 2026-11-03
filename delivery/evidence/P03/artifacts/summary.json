@@ -1,0 +1,21 @@
+﻿{
+    "run_dir":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p03-browser\\run-20261027-015319",
+    "url":  "http://127.0.0.1:47321/",
+    "global_cache_mtime_before":  "2026-10-05T00:47:04.9411513Z",
+    "recorder_ready":  true,
+    "demo":  "completed",
+    "chrome_during_record":  "%USERPROFILE%\\RedRise-v2-dev\\stage\\p03-20261027-015212\\@redrise\\browsers\\chromium-1243\\chrome-win64\\chrome.exe",
+    "record_exit":  0,
+    "store_records_after_record":  1,
+    "compile_exit":  0,
+    "run_exit":  0,
+    "replay_browser":  "redrise-engine.exe : browser replay via  %USERPROFILE%\\RedRise-v2-dev\\stage\\p03-20261027-015212\\@redrise\\browsers\\chromium-1243\\chrome-win64\\chrome.exe No D:\\Correnth\\products\\redrise-v2\\repos\\app\\proofs\\browser\\p03-browser.ps1:76 caractere:1 + \u0026 $engine run --procedure $proc --report (Join-Path $run \u0027run.json\u0027)  ... + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     + CategoryInfo          : NotSpecified: (browser replay ...in64\\chrome.exe:String) [], RemoteException     + FullyQualifiedErrorId : NativeCommandError  ",
+    "verifier_exit":  0,
+    "fake_run_exit":  0,
+    "fake_verifier_exit":  1,
+    "global_cache_mtime_after":  "2026-10-05T00:47:04.9411513Z",
+    "chrome_from_package":  true,
+    "chrome_from_global_cache":  false,
+    "chrome_from_package_only":  true,
+    "verified":  true
+}

@@ -1,0 +1,36 @@
+﻿[
+    {
+        "launch":  "notepad.exe"
+    },
+    {
+        "wait_window":  15000
+    },
+    {
+        "keys":  "^n"
+    },
+    {
+        "sleep":  800
+    },
+    {
+        "text":  "Teste RedRise E04 ç 123"
+    },
+    {
+        "keys":  "^s"
+    },
+    {
+        "timeout_ms":  10000,
+        "wait_class":  "#32770"
+    },
+    {
+        "sleep":  600
+    },
+    {
+        "text":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\e04-notepad\\run-20261027-000344\\saida\\gravado.txt"
+    },
+    {
+        "keys":  "{ENTER}"
+    },
+    {
+        "sleep":  1500
+    }
+]

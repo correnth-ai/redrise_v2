@@ -1,0 +1,25 @@
+﻿{
+    "run_dir":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\e04-notepad\\run-20261027-000344",
+    "text":  "Teste RedRise E04 ç 123",
+    "operator_record":  "completed",
+    "record_exit":  0,
+    "record_stop_to_exit_ms":  57,
+    "recorded_sha256_before_replay":  "fbf26ba2ae51ca9aa489719294d20df25ab854277f8be807fdb7873c7811451e",
+    "compile_exit":  0,
+    "run_exit":  0,
+    "recorded":  {
+                     "path":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\e04-notepad\\run-20261027-000344\\saida\\gravado.txt",
+                     "exists":  true,
+                     "content":  "Teste RedRise E04 ç 123",
+                     "matches":  true,
+                     "sha256":  "fbf26ba2ae51ca9aa489719294d20df25ab854277f8be807fdb7873c7811451e"
+                 },
+    "replayed":  {
+                     "path":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\e04-notepad\\run-20261027-000344\\saida\\replay.txt",
+                     "exists":  true,
+                     "content":  "Teste RedRise E04 ç 123",
+                     "matches":  true,
+                     "sha256":  "fbf26ba2ae51ca9aa489719294d20df25ab854277f8be807fdb7873c7811451e"
+                 },
+    "verified":  true
+}

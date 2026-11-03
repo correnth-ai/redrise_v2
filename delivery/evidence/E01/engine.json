@@ -1,0 +1,102 @@
+{
+  "step": "E01",
+  "status": "verified",
+  "run_id": "RUN-E01-20261026-01",
+  "source_revision": "unborn",
+  "source_tree_sha256": "3528deffe4b8dfc5b639d096e77d40a1dc3619340b0ef14c128c0d0896b10b95",
+  "engine": {
+    "version": "0.1.0",
+    "binary": "redrise-engine.exe (release, --locked)",
+    "sha256": "3a436103f03fe8ba37dbef47c9653d8ff6fae7ae218eb0f7d2854a920e3e8491",
+    "toolchain": "rustc stable x86_64-pc-windows-msvc (cargo 1.98.1)"
+  },
+  "environment": {
+    "os": "Windows 11 Pro 10.0.26200 x64",
+    "locale": "pt-BR",
+    "session": "interactive, unlocked, medium integrity",
+    "lab": "%USERPROFILE%/RedRise-v2-dev (C:)"
+  },
+  "skills": [
+    {
+      "name": "scope-planning",
+      "sha256": "fd7b13af53a7853d7cbd43ac9f72e801d602c7fb4e592981ac4842e4ded58bfa"
+    },
+    {
+      "name": "upstream-license-governance",
+      "sha256": "74699dbd93027deebbb30d04af0be7cea5a90ccefdcc9bcb4f0a81268c0f3ec1"
+    }
+  ],
+  "memory": {
+    "workspace": "correnth",
+    "project": "redrise-v2",
+    "status": "degraded",
+    "reason": "ai-memory CLI absent"
+  },
+  "graph": {
+    "status": "not_used",
+    "reason": "no registered graphify root for repo:redrise-v2"
+  },
+  "work_order": "delivery/work-orders/E01-E04-P01-engine.md",
+  "decision": "docs/decisions/E01-engine-contracts.md",
+  "checks": [
+    {
+      "name": "engine unit/contract suite",
+      "command": "cargo test --release (CARGO_TARGET_DIR on C:)",
+      "expected": "all pass",
+      "actual": "37 passed: capture 11, compile_ir 10, execute 16",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "dependency inversion",
+      "command": "cargo tree -p engine-core -e normal --depth 1",
+      "expected": "no OS crates",
+      "actual": "serde, serde_json, sha2 only",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "IR contract rejects scripts/unknown",
+      "command": "cargo test --test compile_ir ir_rejects_unknown_version_fields_and_scripts",
+      "expected": "rejected",
+      "actual": "version 2, field 'script', action 'shell', undeclared param rejected",
+      "exit_code": 0,
+      "result": "passed"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/decisions/E01-engine-contracts.md",
+      "sha256": "bb98a009923239f0336ac2f9273cf55bf19d5a774cbf862ca2e9b3f139e3892b"
+    },
+    {
+      "path": "engine/contracts/ir-v1/valid/p01-excel.procedure.json",
+      "sha256": "64711e7ea9c440ba648bc362529941a2a23b899248fd26f92699b16835fee6f7"
+    }
+  ],
+  "review": {
+    "reviewer": "independent read-only review subagent (not the author), Claude session",
+    "date": "2026-10-27",
+    "verdict": "approve (after fixes)",
+    "defects_fixed": [
+      "max-duration recording sealed complete -> truncated",
+      "lone modifier taps dropped -> key step",
+      "no in-capture hook liveness -> check_liveness at stop (keyboard only)",
+      "VK_PACKET surrogate/control -> reassembled or refused",
+      "effectful heuristic broadened to #32770 keys/clicks",
+      "UIPI before input -> refused; zero accepted -> not_attempted; cancel between chars",
+      "pid cache TTL",
+      "as-built spec reconciliation + hardware-only disclosure",
+      "P01 gate enforces template/recorded hashes unchanged"
+    ]
+  },
+  "evidence_note": "Artifacts under delivery/evidence/*/artifacts are copies of the lab files with the Windows profile path redacted to %USERPROFILE%; they are not byte-identical to the lab originals, which remain on C:.",
+  "limitations": [
+    "The product default (hardware-only input) has only been proven negatively; no successful hardware-only demonstration has been recorded yet.",
+    "The demonstration was performed by a synthetic operator (proofs/operator/operator.ps1, SendKeys/user32) injecting OS input, recorded with --accept-injected and labelled input_origin=injected-accepted. A human-operated recording has not been performed.",
+    "Template created through the Excel UI by the same operator (setup, not recorded).",
+    "Development machine, not a clean Windows install (that is P02/P10/P13).",
+    "Geometry click requires the same window rect; UIA targeting not implemented."
+  ],
+  "next_action": "next engine increment"
+}

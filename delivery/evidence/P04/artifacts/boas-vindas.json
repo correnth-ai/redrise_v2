@@ -1,0 +1,29 @@
+﻿{
+  "template": "boas-vindas",
+  "version": "1.1.0",
+  "verified": true,
+  "inputs": {
+    "output_path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\Desktop\\Boas_Vindas.txt"
+  },
+  "launched": {
+    "app": "notepad",
+    "pid": 13208
+  },
+  "job": {
+    "job_id": "tpl-boas-vindas-20261027-091132",
+    "state": "completed_unverified",
+    "code": null,
+    "failed_step": null
+  },
+  "verification": {
+    "verified": true,
+    "code": null,
+    "path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\Desktop\\Boas_Vindas.txt",
+    "name": "Boas_Vindas.txt",
+    "encoding": "utf-8",
+    "content": "Boas vindas à RedRise! Estamos felizes em tê-los conosco! Esperamos que as automações lhes seja útil!",
+    "bytes": 106
+  },
+  "state": "verified",
+  "result_file": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\data\\template-runs\\boas-vindas-20261027-091157.json"
+}

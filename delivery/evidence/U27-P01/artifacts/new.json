@@ -1,0 +1,8 @@
+{
+  "status": "ready",
+  "pid": 19356,
+  "observed": "workbook_ready",
+  "correlation_id": "fe0956a08a3343c7",
+  "start_screen_dismissed": true,
+  "stage": "start"
+}

@@ -1,0 +1,7 @@
+﻿{
+  "events_sha256": "858cb1659ca801cbf5c7abfcfdfbe01b19a43df5ed144be47c65fd4e71b544bc",
+  "procedure": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p01-engine\\run-20261027-000410\\procedure.json",
+  "procedure_sha256": "64711e7ea9c440ba648bc362529941a2a23b899248fd26f92699b16835fee6f7",
+  "status": "compiled",
+  "steps": 11
+}

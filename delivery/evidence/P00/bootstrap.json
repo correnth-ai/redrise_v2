@@ -1,0 +1,136 @@
+{
+  "step": "P00",
+  "status": "verified",
+  "verified_at": "2026-10-24T12:53:03.8745732-03:00",
+  "scope": "foundation-only",
+  "source_revision": "unborn main; repository was cloned empty; no commit or push",
+  "product_id": "product:redrise-v2",
+  "repository_id": "repo:redrise-v2",
+  "remote": "https://github.com/correnth-ai/redrise_v2.git",
+  "checks": [
+    {
+      "command": "node --check scripts/validate-base.mjs",
+      "result": "passed",
+      "exit_code": 0
+    },
+    {
+      "command": "node scripts/validate-base.mjs --check-sources",
+      "result": "passed",
+      "exit_code": 0,
+      "observed_checks_before_status_promotion": 248,
+      "scope": "foundation only"
+    },
+    {
+      "command": "Test-Json product.yaml -SchemaFile product.schema.json",
+      "result": "passed",
+      "observed": true
+    },
+    {
+      "command": "Test-Json scoped new repository entry -SchemaFile repository.schema.json",
+      "result": "passed",
+      "observed": true,
+      "scope": "new entry only; not full pre-existing registry qualification"
+    },
+    {
+      "command": "Read-only manifest/registry/reference hash and canonical ownership resolution checks",
+      "result": "passed"
+    },
+    {
+      "command": "git origin/main/ignore checks",
+      "result": "passed",
+      "note": "main unborn, origin exact, nested root excluded from control-plane Git"
+    },
+    {
+      "command": "git diff --check on changed existing control-plane files",
+      "result": "passed",
+      "exit_code": 0,
+      "note": "LF/CRLF notices only"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "f96b421907685e6180686d002a61798956a0b3f39e88f602d5ce02f0a1d4ec2b"
+    },
+    {
+      "path": "README.md",
+      "sha256": "591eda748013f991f4f0299e25d401b79f9e62d5ec586b2c57d6d57956f427a1"
+    },
+    {
+      "path": ".ai-memory.toml",
+      "sha256": "20eea9117b2fd351b09887025d248f60859729a459d01ed83743153a689d54db"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "5c8ce4ce47b8079a56d20e78b49555f122543a1df3eeaaa811fbc50046aee6f2"
+    },
+    {
+      "path": "project.json",
+      "sha256": "0557bd2d4a2da4a4a0283a3a92fbc71dc279fdebf7d2349aa2bdd0bbfde7e69f"
+    },
+    {
+      "path": "docs/BASELINE.md",
+      "sha256": "8d80d8642ea4b7b647a9e7403b76d6c2e4751666602ae56700ab69798bedf936"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "ad6654ffb0dd78ebda6206553ecae5c1d22336310d4ff5ec0f0e4847780e624d"
+    },
+    {
+      "path": "docs/requirements.json",
+      "sha256": "7fc97d5d6a3d82fa5108c67f39796c443982b38a0133a78dfa094909166e9590"
+    },
+    {
+      "path": "docs/sources.lock.json",
+      "sha256": "ffd2a6e0181d132a488143347e9e3335a3ac66c0f5b3a054cea308cc2640e37d"
+    },
+    {
+      "path": "docs/BETA-ACCEPTANCE.md",
+      "sha256": "c5f47597109e6e9c7fd66195a047ec2e1f6fe5fb59c25dd2803aef2f753a3163"
+    },
+    {
+      "path": "docs/WORK-ORDER.md",
+      "sha256": "f6fb4671c957c439b1e324a9feb3e8199dfec1658a1487c09a32774cf0cb4bfa"
+    },
+    {
+      "path": "docs/EVIDENCE.md",
+      "sha256": "6ac0ac6c054799ca402aae5ae899fb0ff36ab852d4c25d12b0236500b81ba2b7"
+    },
+    {
+      "path": "scripts/validate-base.mjs",
+      "sha256": "ab83029846783b9e04c36016ff27fcb56c2f9cc0bb0a67e2144328b0a60ad440"
+    },
+    {
+      "path": "assets/brand/redrise/provenance.json",
+      "sha256": "d5d0c337e1a3a1cf8367782dfd177143ad2d3c824f39cc4889e34ae33bf714fb"
+    },
+    {
+      "path": "assets/brand/redrise/README.md",
+      "sha256": "4b8183513f0a692065bef29a19377579758804d740f5bb555cfc633b53006eed"
+    }
+  ],
+  "review": {
+    "reviewer": "/root/v2_requirements_review",
+    "scope": "independent documentation and foundation review; no runtime or Beta QA",
+    "initial_findings": [
+      "D25 summary ambiguous; fixed explicit desktop exclusion",
+      "Ownership schema alias versus canonical path; explicit mapping and validation added without schema change"
+    ],
+    "initial_verdict": "No material roadmap/acceptance omission",
+    "resolution_recheck": "passed; independent reviewer confirmed both findings resolved and no remaining documentary blockers; 15/15 artifact hashes matched"
+  },
+  "limitations": [
+    "No runtime/UI/Core/Runner/installer implemented or exercised",
+    "No proof Excel or clean-machine/LAN/update test executed",
+    "Source details S2/S3/S4 are hash-locked but must be read before P12",
+    "Product owner remains undesignated; not a blocker to authorized local establishment",
+    "Graph not consulted or registered for new code root; no build or rebuild"
+  ],
+  "next_action": "P01 real Excel proof, under a corresponding authorized task and Work Order",
+  "memory_delivery": {
+    "initial_state": "project not found",
+    "final_state": "delivered to existing service and queryable",
+    "scope": "correnth/redrise-v2",
+    "new_database_or_service": false
+  }
+}

@@ -1,0 +1,8 @@
+﻿{
+  "template": "outlook-abrir",
+  "version": "1.0.0",
+  "verified": false,
+  "inputs": {},
+  "state": "ready",
+  "app": "C:\\Program Files\\Microsoft Office\\Root\\Office16\\OUTLOOK.EXE"
+}

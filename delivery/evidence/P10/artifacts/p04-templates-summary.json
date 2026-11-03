@@ -1,0 +1,79 @@
+﻿{
+    "run_dir":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-215745",
+    "real_desktop_check":  {
+                               "exit":  0,
+                               "state":  "ready",
+                               "code":  null,
+                               "verified":  false,
+                               "file":  "boas-vindas-check-real-desktop.json"
+                           },
+    "boas_vindas":  {
+                        "exit":  0,
+                        "state":  "verified",
+                        "code":  null,
+                        "verified":  true,
+                        "file":  "boas-vindas.json"
+                    },
+    "boas_vindas_collision":  {
+                                  "exit":  2,
+                                  "state":  "refused",
+                                  "code":  "output_exists",
+                                  "verified":  false,
+                                  "file":  "boas-vindas-collision.json"
+                              },
+    "boas_vindas_file_sha256":  "90C85C9CC26B3EBD83018EF506BDD40D5D52306B83FA11CA76E3065C5DE8089D",
+    "excel_defaults":  {
+                           "exit":  0,
+                           "state":  "verified",
+                           "code":  null,
+                           "verified":  true,
+                           "file":  "excel-defaults.json"
+                       },
+    "excel_inputs":  {
+                         "exit":  0,
+                         "state":  "verified",
+                         "code":  null,
+                         "verified":  true,
+                         "file":  "excel-inputs.json"
+                     },
+    "excel_missing_input":  {
+                                "exit":  2,
+                                "state":  "precondition_missing",
+                                "code":  "input_missing",
+                                "verified":  false,
+                                "file":  "excel-missing-input.json"
+                            },
+    "outlook_check":  {
+                          "exit":  0,
+                          "state":  "ready",
+                          "code":  null,
+                          "verified":  false,
+                          "file":  "outlook-check.json"
+                      },
+    "gmail":  {
+                  "exit":  1,
+                  "state":  "login_required",
+                  "code":  "login_required",
+                  "verified":  false,
+                  "file":  "gmail.json"
+              },
+    "candidate_browser":  {
+                              "exit":  2,
+                              "state":  "refused",
+                              "code":  "template_candidate_not_shipped",
+                              "verified":  false,
+                              "file":  "browser-candidate.json"
+                          },
+    "expected":  {
+                     "real_desktop_check":  "ready",
+                     "boas_vindas":  "verified",
+                     "boas_vindas_collision":  "refused/output_exists",
+                     "excel_defaults":  "verified",
+                     "excel_inputs":  "verified",
+                     "excel_missing_input":  "precondition_missing/input_missing",
+                     "outlook_check":  "ready",
+                     "gmail":  "login_required",
+                     "candidate_browser":  "refused/template_candidate_not_shipped"
+                 },
+    "all_as_expected":  true
+}

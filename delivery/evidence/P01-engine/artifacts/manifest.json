@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "recording_id": "recording",
+  "status": "complete",
+  "reason": null,
+  "platform": "windows-x86_64",
+  "target_process": "excel.exe",
+  "input_origin": "injected-accepted",
+  "event_count": 266,
+  "events_sha256": "858cb1659ca801cbf5c7abfcfdfbe01b19a43df5ed144be47c65fd4e71b544bc",
+  "dropped": 0,
+  "source": {
+    "filtered_out": 0,
+    "injected_ignored": 0,
+    "injected_accepted": 266
+  },
+  "started_at_unix_ms": 1793070282716,
+  "duration_ms": 17244,
+  "engine_version": "0.1.0"
+}

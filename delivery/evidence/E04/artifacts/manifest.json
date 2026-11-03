@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "recording_id": "recording",
+  "status": "complete",
+  "reason": null,
+  "platform": "windows-x86_64",
+  "target_process": "notepad.exe",
+  "input_origin": "injected-accepted",
+  "event_count": 246,
+  "events_sha256": "0dde1aa7aeb17664aa895d23c278f5ab20af3e79ce6860070753a1d582b9904f",
+  "dropped": 0,
+  "source": {
+    "filtered_out": 0,
+    "injected_ignored": 0,
+    "injected_accepted": 246
+  },
+  "started_at_unix_ms": 1793070224479,
+  "duration_ms": 15239,
+  "engine_version": "0.1.0"
+}

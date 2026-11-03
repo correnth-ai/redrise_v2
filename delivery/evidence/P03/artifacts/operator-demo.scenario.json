@@ -1,0 +1,39 @@
+﻿[
+    {
+        "timeout_ms":  60000,
+        "wait_class":  "Chrome_WidgetWin_1"
+    },
+    {
+        "sleep":  800
+    },
+    {
+        "click_rel":  [
+                          700,
+                          500
+                      ]
+    },
+    {
+        "sleep":  500
+    },
+    {
+        "keys":  "{TAB}"
+    },
+    {
+        "text":  "Cliente Teste 01"
+    },
+    {
+        "keys":  "{TAB}"
+    },
+    {
+        "text":  "1500"
+    },
+    {
+        "keys":  "{TAB}"
+    },
+    {
+        "keys":  " "
+    },
+    {
+        "sleep":  2500
+    }
+]

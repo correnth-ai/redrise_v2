@@ -1,0 +1,34 @@
+﻿{
+  "job_id": "p01-run-20261027-012101",
+  "procedure": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101\\procedure.json",
+  "bindings": {
+    "output_path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101\\saida\\resultado_replay.xlsx"
+  },
+  "runner_platform": "windows-x86_64",
+  "history": [
+    {
+      "state": "accepted",
+      "at_unix_ms": 1793074919922
+    },
+    {
+      "state": "running",
+      "at_unix_ms": 1793074919990
+    },
+    {
+      "state": "completed_unverified",
+      "at_unix_ms": 1793074927046
+    }
+  ],
+  "state": "completed_unverified",
+  "engine_exit": 0,
+  "code": null,
+  "failed_step": null,
+  "observed_outputs": [
+    {
+      "exists_after_run": true,
+      "param": "output_path",
+      "path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101\\saida\\resultado_replay.xlsx"
+    }
+  ],
+  "verified": false
+}

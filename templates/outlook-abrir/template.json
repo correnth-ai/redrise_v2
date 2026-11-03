@@ -1,0 +1,22 @@
+{
+  "id": "outlook-abrir",
+  "version": "1.0.1",
+  "title": "Abrir Outlook",
+  "purpose": "Abrir o Outlook instalado e confirmar a janela principal do processo correto. Não lê, lista nem envia mensagens.",
+  "category": "windows",
+  "inputs": {},
+  "preconditions": [ { "kind": "app_installed", "app": "outlook" } ],
+  "launch": { "app": "outlook", "args": [] },
+  "procedure": null,
+  "close_opened_app": false,
+  "end_state": "Outlook stays open: opening it is the result of this template.",
+  "collision": "not applicable (no file effect); an already-open Outlook is reported, not restarted",
+  "verifier": {
+    "kind": "window_present",
+    "candidates": [
+      { "process_image": "outlook.exe", "class": "rctrl_renwnd32" },
+      { "process_image": "olk.exe", "class": null }
+    ],
+    "timeout_ms": 90000
+  }
+}

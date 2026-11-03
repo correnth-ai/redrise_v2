@@ -1,0 +1,98 @@
+{
+  "ended_at_unix_ms": 1793070314598,
+  "report": {
+    "code": null,
+    "failed_step": null,
+    "message": null,
+    "observed_outputs": [
+      {
+        "exists_after_run": true,
+        "param": "output_path",
+        "path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p01-engine\\run-20261027-000410\\saida\\resultado_replay.xlsx"
+      }
+    ],
+    "outcome": "completed_unverified",
+    "procedure_sha256": "64711e7ea9c440ba648bc362529941a2a23b899248fd26f92699b16835fee6f7",
+    "steps": [
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 0,
+        "note": null,
+        "waited_ms": 406
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 1,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 2,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 3,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 4,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 5,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 6,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 7,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 8,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 9,
+        "note": null,
+        "waited_ms": 1218
+      },
+      {
+        "delivery": "delivered",
+        "effectful": true,
+        "id": 10,
+        "note": null,
+        "waited_ms": 0
+      }
+    ],
+    "verified": false
+  },
+  "started_at_unix_ms": 1793070307741
+}

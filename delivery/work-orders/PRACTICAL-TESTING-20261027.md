@@ -1,0 +1,12 @@
+# Work Order — practical testing and diagnostic direction
+
+- Request: user 2026-10-27 authorizes localized capability tests during development, short communication/contract checks, full manual E2E campaigns after the installed internal closed-beta build, no clean-PC/VM prerequisite, four-part errors plus diagnostic module codes, and a revised execution prompt.
+- Identity: product:redrise-v2; repo:redrise-v2; root D:/Correnth/products/redrise-v2/repos/app; origin https://github.com/correnth-ai/redrise_v2.git; main with unborn HEAD. Existing untracked source is meaningful work; preserve it.
+- Starting state: I00/E01-E04/P01 verified in another session; P02/P03/P04 in_progress; actual status and evidence hashes captured in the corresponding organizational run before-state.json.
+- Write scope: docs, root AGENTS/README/project metadata, delivery status and this task evidence; scripts/validate-base.mjs only for structural roadmap metadata; v2 parent AGENTS, direction decision, manifest and its targeted registry hash.
+- Exclusions: no Engine/runtime/template code changes, tests removed, historical evidence rewritten, tools installed, sessions/users created or native automation executed. This task defines the new contracts/diagnostics for later implementation; no claim they already exist in code.
+- Skills: scope-planning and runtime-skill-routing, pins in operations/runs/TASK-REDRISE-V2-PRACTICAL-20261027/harness-context.json. Normative query; scoped memory correnth/redrise-v2 unavailable, canonical fallback; no graph rebuild/query needed.
+- Acceptance: roadmap revision4 consistently distinguishes local capability completion, closed-beta availability, full practical validation and release readiness. Errors include outcome, next action, separate technical details and stable module investigation hints; module/internal/communication/environment/unknown are distinguishable without fabricated diagnosis.
+- Validation: Node syntax and foundation/source checks from C:, schema and normative/registry hashes, historical evidence hash comparison, independent read-only documentation review.
+- Stop: actual authority conflict, changed evidence from concurrent work, structural validation failure or need to mutate executable contracts outside this task. Preserve concurrent changes and report instead of overwriting them.
+- Next: executor reconciles current P02-P04 component work, implements error/contract conventions, completes integrated installed closed beta, then runs manual practical acceptance and corrections through release readiness.

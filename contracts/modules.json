@@ -1,0 +1,335 @@
+{
+  "schema": "redrise.module-registry/1",
+  "note": "Module investigation codes (docs/ERROR-DIAGNOSTICS.md) -> responsibility -> implemented symbols/contracts -> current paths. A code points where to investigate; it does not assert a defect. tests/contracts/test_registry.py checks that every path and symbol exists.",
+  "modules": {
+    "RR-EXCEL-DISC": {
+      "responsibility": "Descobrir e validar instalação/ativação do Excel",
+      "symbols": [
+        "redrise_runner.excel.discover",
+        "redrise_runner.excel.ExcelDescriptor.parse",
+        "redrise_runner.excel.present_discovery"
+      ],
+      "contracts": [
+        "redrise.excel-descriptor/1"
+      ],
+      "paths": [
+        "runner/redrise_runner/excel.py"
+      ],
+      "conditions": [
+        "EXCEL-NOT-FOUND",
+        "EXCEL-DISCOVERY-FAILED"
+      ]
+    },
+    "RR-EXCEL-START": {
+      "responsibility": "Iniciar Excel/nova planilha e confirmar prontidão",
+      "symbols": [
+        "redrise_runner.excel.start",
+        "redrise_runner.excel.Win32ExcelWindows",
+        "redrise_runner.excel.engine_dismisser"
+      ],
+      "contracts": [
+        "redrise.excel-descriptor/1"
+      ],
+      "paths": [
+        "runner/redrise_runner/excel.py"
+      ],
+      "conditions": [
+        "EXCEL-EXECUTABLE-MISSING",
+        "EXCEL-START-FAILED",
+        "EXCEL-START-TIMEOUT",
+        "EXCEL-START-SCREEN-UNRESOLVED"
+      ]
+    },
+    "RR-FLOW": {
+      "responsibility": "Compor e rotear capacidades/resultados da rotina",
+      "symbols": [
+        "redrise_runner.excel.new_workbook",
+        "redrise_runner.templates.run_template"
+      ],
+      "contracts": [
+        "template.json (templates/*)"
+      ],
+      "paths": [
+        "runner/redrise_runner/templates.py",
+        "runner/redrise_runner/excel.py",
+        "templates"
+      ],
+      "conditions": [
+        "OUTPUT-EXISTS",
+        "INPUT-INVALID",
+        "INPUT-FILE-MISSING",
+        "APP-NOT-INSTALLED",
+        "APP-WINDOW-NOT-FOUND",
+        "TEMPLATE-UNAVAILABLE",
+        "RESULT-NOT-VERIFIED",
+        "LOGIN-REQUIRED"
+      ]
+    },
+    "RR-CONTRACT": {
+      "responsibility": "Validar contratos, versões e fronteiras entre componentes",
+      "symbols": [
+        "redrise_contracts.diagnostics.validate",
+        "redrise_contracts.diagnostics.contract_violation"
+      ],
+      "contracts": [
+        "redrise.diagnostic/1",
+        "contracts/schemas/*"
+      ],
+      "paths": [
+        "contracts/python/redrise_contracts/diagnostics.py",
+        "contracts/schemas"
+      ],
+      "conditions": [
+        "CONTRACT-PAYLOAD",
+        "CONTRACT-EXCEL-DESCRIPTOR",
+        "JOB-INVALID"
+      ]
+    },
+    "RR-ENGINE-CAP": {
+      "responsibility": "Captura/finalização da Engine",
+      "symbols": [
+        "engine_core::capture",
+        "engine_win::hooks"
+      ],
+      "contracts": [
+        "Recording (engine-core::recording)"
+      ],
+      "paths": [
+        "engine/crates/engine-core/src/capture.rs",
+        "engine/crates/engine-win/src/hooks.rs"
+      ],
+      "conditions": [
+        "RECORDING-EMPTY",
+        "RECORDING-INCOMPLETE"
+      ]
+    },
+    "RR-ENGINE-IR": {
+      "responsibility": "Compilação/representação intermediária",
+      "symbols": [
+        "engine_core::compile",
+        "engine_core::ir"
+      ],
+      "contracts": [
+        "IR v1/v2 (docs/decisions/E01-engine-contracts.md)"
+      ],
+      "paths": [
+        "engine/crates/engine-core/src/compile.rs",
+        "engine/crates/engine-core/src/ir.rs"
+      ],
+      "conditions": []
+    },
+    "RR-ENGINE-EXEC": {
+      "responsibility": "Execução de ações da Engine",
+      "symbols": [
+        "engine_core::execute",
+        "engine_win::inject",
+        "engine_browser::lib"
+      ],
+      "contracts": [
+        "Engine CLI run report (E01)"
+      ],
+      "paths": [
+        "engine/crates/engine-core/src/execute.rs",
+        "engine/crates/engine-win/src/inject.rs",
+        "engine/crates/engine-browser/src/lib.rs"
+      ],
+      "conditions": [
+        "STEP-FAILED",
+        "STEP-UNCERTAIN",
+        "RUN-INTERRUPTED-BY-INPUT",
+        "EXCEL-START-SCREEN-UNRESOLVED",
+        "ENGINE-NO-RESPONSE"
+      ]
+    },
+    "RR-RUNNER": {
+      "responsibility": "Sessão, jobs e coordenação local",
+      "symbols": [
+        "redrise_runner.jobs.run_job",
+        "redrise_runner.jobs.session_lock",
+        "redrise_runner.engine.EngineClient",
+        "redrise_runner.diagnose.for_result"
+      ],
+      "contracts": [
+        "job file (redrise_runner.jobs.JobSpec)"
+      ],
+      "paths": [
+        "runner/redrise_runner/jobs.py",
+        "runner/redrise_runner/engine.py",
+        "runner/redrise_runner/diagnose.py"
+      ],
+      "conditions": [
+        "SESSION-UNAVAILABLE",
+        "SESSION-BUSY",
+        "JOB-ALREADY-EXISTS",
+        "JOB-INVALID",
+        "PROCEDURE-INCOMPATIBLE",
+        "RUN-CANCELLED",
+        "ENGINE-NO-RESPONSE"
+      ]
+    },
+    "RR-CORE": {
+      "responsibility": "Equipe, autorização, persistência e coordenação do servidor",
+      "symbols": [
+        "redrise_core.service.Core",
+        "redrise_core.api.make_handler",
+        "redrise_core.host.prepare",
+        "redrise_core.pg.Cluster",
+        "redrise_core.db.provision"
+      ],
+      "contracts": [
+        "api/v1 (docs/decisions/P05-contracts-lan.md)",
+        "redrise.job/1",
+        "redrise.job-result/1"
+      ],
+      "paths": [
+        "core/redrise_core/service.py",
+        "core/redrise_core/api.py",
+        "core/redrise_core/host.py",
+        "core/redrise_core/pg.py",
+        "core/redrise_core/db.py",
+        "core/redrise_core/migrations"
+      ],
+      "conditions": [
+        "AUTH-REQUIRED",
+        "AUTH-INVALID",
+        "AUTH-FORBIDDEN",
+        "SETUP-ALREADY-DONE",
+        "NOT-FOUND",
+        "VALIDATION",
+        "CONFLICT",
+        "STATION-INCOMPATIBLE",
+        "CORE-STORAGE-UNAVAILABLE",
+        "CORE-INTERNAL",
+        "JOB-LEASE-LOST",
+        "ROUTINE-NOT-ISOLATED"
+      ]
+    },
+    "RR-RUNTIME": {
+      "responsibility": "Resolução/lifecycle dos componentes privados",
+      "symbols": [
+        "redrise_runner.runtime.report",
+        "redrise_runner.paths.resolve",
+        "redrise_runner.integrity.verify"
+      ],
+      "contracts": [
+        "install-manifest.json"
+      ],
+      "paths": [
+        "runner/redrise_runner/runtime.py",
+        "runner/redrise_runner/paths.py",
+        "runner/redrise_runner/integrity.py",
+        "packaging/runtime/build-layout.ps1"
+      ],
+      "conditions": [
+        "RUNTIME-NOT-PRIVATE",
+        "ENGINE-MISSING"
+      ]
+    },
+    "RR-UI": {
+      "responsibility": "Apresentação e interação do desktop",
+      "symbols": [
+        "desktop::core_api::Client::call",
+        "desktop::update::check",
+        "desktop::local::runner",
+        "desktop::procs::Supervisor"
+      ],
+      "contracts": [
+        "Tauri commands (desktop/src-tauri/src/lib.rs)",
+        "redrise.release/1"
+      ],
+      "paths": [
+        "desktop/src/App.tsx",
+        "desktop/src/lib/api.ts",
+        "desktop/src/components/diagnostic.tsx",
+        "desktop/src-tauri/src/lib.rs",
+        "desktop/src-tauri/src/core_api.rs",
+        "desktop/src-tauri/src/update.rs",
+        "desktop/src-tauri/src/local.rs",
+        "desktop/src-tauri/src/procs.rs"
+      ],
+      "conditions": [
+        "CORE-UNREACHABLE",
+        "CORE-CERT-MISMATCH",
+        "UPDATE-CHANNEL-UNREACHABLE",
+        "UPDATE-INVALID",
+        "UPDATE-DOWNLOAD",
+        "UPDATE-BUSY"
+      ]
+    },
+    "RR-DIAG": {
+      "responsibility": "Diagnóstico ainda sem responsabilidade mapeada",
+      "symbols": [
+        "redrise_contracts.diagnostics.make"
+      ],
+      "contracts": [
+        "redrise.diagnostic/1"
+      ],
+      "paths": [
+        "contracts/python/redrise_contracts/diagnostics.py"
+      ],
+      "conditions": [
+        "UNMAPPED"
+      ]
+    },
+    "RR-BROWSER-OPEN": {
+      "responsibility": "Descobrir navegadores da estação, abrir site/HTML em nova guia e confirmar a guia por UI Automation (leitura)",
+      "symbols": [
+        "redrise_runner.browser_open.run",
+        "redrise_runner.browser_open.confirm",
+        "redrise_runner.browsers.discover",
+        "redrise_runner.uia.Uia"
+      ],
+      "contracts": [
+        "browser_open config (core/redrise_core/service.py browser_config)"
+      ],
+      "paths": [
+        "runner/redrise_runner/browser_open.py",
+        "runner/redrise_runner/browsers.py",
+        "runner/redrise_runner/uia.py"
+      ],
+      "conditions": [
+        "BROWSER-NOT-FOUND",
+        "BROWSER-OPEN-FAILED",
+        "BROWSER-OPEN-UNCONFIRMED",
+        "BROWSER-IDENTIFY-UNAVAILABLE"
+      ]
+    },
+    "RR-IDENTITY": {
+      "responsibility": "Cadastro de conta no Core e verificacao de identidade (provedor externo fora de uso por enquanto)",
+      "symbols": [
+        "redrise_core.identity.SupabaseVerifier.verify",
+        "redrise_core.service.Core.identity_session",
+        "redrise_core.service.Core.identity_link",
+        "redrise_core.service.Core.forget_device",
+        "redrise_core.service.Core.register"
+      ],
+      "contracts": [
+        "identity.json",
+        "POST /api/v1/identity/session",
+        "POST /api/v1/identity/link",
+        "GET /api/v1/identity/devices",
+        "POST /api/v1/register"
+      ],
+      "paths": [
+        "core/redrise_core/identity.py",
+        "core/redrise_core/migrations/003_identity.sql",
+        "core/redrise_core/migrations/004_account_email.sql",
+        "desktop/src/features/auth.tsx"
+      ],
+      "conditions": [
+        "IDENTITY-NOT-CONFIGURED",
+        "IDENTITY-PROVIDER-UNAVAILABLE",
+        "IDENTITY-INVALID",
+        "IDENTITY-UNCONFIRMED",
+        "IDENTITY-NO-MEMBERSHIP",
+        "IDENTITY-ALREADY-LINKED",
+        "IDENTITY-PASSWORD-WEAK",
+        "IDENTITY-SIGNUP-BLOCKED",
+        "IDENTITY-RATE-LIMITED",
+        "IDENTITY-SESSION-EXPIRED",
+        "IDENTITY-VAULT-FAILED",
+        "ACCOUNT-EXISTS"
+      ]
+    }
+  }
+}

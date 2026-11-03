@@ -1,0 +1,167 @@
+{
+  "step": "P04",
+  "status": "in_progress",
+  "scope_of_this_record": "dev-machine development checks; not verifiable before P02/P03",
+  "run_id": "RUN-P04-20261027-01",
+  "decision": "docs/decisions/P04-templates.md",
+  "work_order": "delivery/work-orders/P04-templates.md",
+  "candidate": {
+    "engine_sha256": "2a8b830f9642007423aca9cb4bda774e70b572acc5d417734516460132489305",
+    "layout_manifest_sha256": "73b1d37b34aa773a3987c6a1da2e9f49572e51395085bf2aa46fd6cafe753342",
+    "layout_files": 1294,
+    "templates": {
+      "boas-vindas": "1.1.0",
+      "excel-pedido": "1.1.0",
+      "outlook-abrir": "1.0.0",
+      "gmail-acessar": "1.0.0",
+      "browser-formulario": "0.1.0-candidate (not shipped)"
+    }
+  },
+  "checks": [
+    {
+      "name": "runner + template tests",
+      "command": "python -m unittest test_runner test_templates",
+      "expected": "pass",
+      "actual": "23 passed (verifiers: UTF-8 text, XLSX number vs text incl. real Excel file, final-URL rules; refusals: collision, unknown/missing input, candidate, browser not packaged; dry run launches nothing)",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "Boas-vindas through packaged Runner",
+      "command": "run-template boas-vindas --desktop-dir <lab>",
+      "expected": "verified",
+      "actual": "verified; 5/5 runs after the Save As correction (suite + 4 repeats)",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "Boas-vindas collision",
+      "command": "run-template boas-vindas (file exists)",
+      "expected": "refused output_exists, file unchanged, nothing launched",
+      "actual": "as expected",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "real Desktop resolution (read-only)",
+      "command": "check-template boas-vindas",
+      "expected": "ready; resolves redirected Desktop",
+      "actual": "ready (OneDrive-redirected Desktop resolved; nothing written)",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "Excel defaults",
+      "command": "run-template excel-pedido",
+      "expected": "verified",
+      "actual": "B2 'Cliente Teste 01', B3 1500 numeric; input workbook unchanged",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "Excel other inputs (T10/T11 candidate)",
+      "command": "run-template excel-pedido --input cliente='Cliente Teste 02' --input valor=2750",
+      "expected": "verified",
+      "actual": "verified",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "Excel missing workbook",
+      "command": "run-template excel-pedido input_path=<absent>",
+      "expected": "precondition_missing",
+      "actual": "input_missing",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "Outlook detection",
+      "command": "check-template outlook-abrir",
+      "expected": "ready without launch",
+      "actual": "ready (classic Outlook resolved); not launched",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "Gmail without login",
+      "command": "run-template gmail-acessar (fresh RedRise profile)",
+      "expected": "login_required",
+      "actual": "login_required; no credentials typed",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "Browser candidate",
+      "command": "run-template browser-formulario",
+      "expected": "refused not shipped",
+      "actual": "template_candidate_not_shipped",
+      "exit_code": 0,
+      "result": "passed"
+    }
+  ],
+  "defects_found_and_fixed": [
+    "Boas-vindas text garbled on a cold-started Notepad (fast Unicode typing right after Ctrl+N) -> per-template settle/char-delay",
+    "Save As: the full path was typed into 'Nome do arquivo' and one save never happened (user observed). Now the folder goes through the dialog's navigation field (Alt+D) and only the file name into 'Nome do arquivo' (Alt+N, Ctrl+A); per-template stable-ms 1500 on new surfaces. Corporate skill windows-file-dialog-navigation created",
+    "Runner: verified flag not set on verified template runs",
+    "Browser recording could exceed the 5 s finalize deadline while Chromium closed -> adapter ends the stream before closing; browser deadline 20 s"
+  ],
+  "not_executed": [
+    "writing Boas_Vindas.txt to the real (OneDrive-synced) Desktop of this user (VM or explicit consent)",
+    "launching Outlook (real mailbox on this machine; VM or synthetic account)",
+    "Gmail with a signed-in synthetic account (inbox_authenticated path)",
+    "shipped Browser template (target pending product decision)",
+    "locked-session native run (covered by tests only)"
+  ],
+  "skill_created": {
+    "name": "windows-file-dialog-navigation",
+    "catalog": "D:/Correnth/catalogs/skills",
+    "sha256": "01e6db23e9acbe0293d53d1a5700bf18803a77bdb5de2f86ddb96d40f560d492",
+    "catalog_tests": "npm test: 0 failures; lock rebuilt (only this entry added)",
+    "committed": false
+  },
+  "artifacts": [
+    {
+      "path": "delivery/evidence/P04/artifacts/boas-vindas-check-real-desktop.json",
+      "sha256": "aa14ad3d5af19a2946c81ae12084a1d0d10ec82d461b814bb1ffda81d80c2826"
+    },
+    {
+      "path": "delivery/evidence/P04/artifacts/boas-vindas-collision.json",
+      "sha256": "94a3547adc043f86ae24f7b79394938e33ec7bc869054bf05b30207f335d754d"
+    },
+    {
+      "path": "delivery/evidence/P04/artifacts/boas-vindas.json",
+      "sha256": "402f6b084f8ed7c2b5d688c077ec8f44525fb70009231efdb09ece1edbf4f529"
+    },
+    {
+      "path": "delivery/evidence/P04/artifacts/browser-candidate.json",
+      "sha256": "214c17ad34f51ee65abbe3ecdfeead3ce7b4927aef8a494297310d87c15f5606"
+    },
+    {
+      "path": "delivery/evidence/P04/artifacts/excel-defaults.json",
+      "sha256": "c7259a4d899d7871257203fc97b7e6adcd3ed51cef2e6469335965541e2c66e1"
+    },
+    {
+      "path": "delivery/evidence/P04/artifacts/excel-inputs.json",
+      "sha256": "a8d46d87dce373e735f762e6ed8008dc5c41e34582edf36233e18d412a7f0f42"
+    },
+    {
+      "path": "delivery/evidence/P04/artifacts/excel-missing-input.json",
+      "sha256": "95f546dd9ca4029088c1f19186ae1f94aa733225dae0d6c1c01dced92ff39576"
+    },
+    {
+      "path": "delivery/evidence/P04/artifacts/gmail.json",
+      "sha256": "270aa3c52491952db4054c91842659af98ed6cc87ad16df7ea9e052c775e5d85"
+    },
+    {
+      "path": "delivery/evidence/P04/artifacts/outlook-check.json",
+      "sha256": "aa25a60141716d68a59aef71af728a84a79c3ad977793eedec567111936cd086"
+    },
+    {
+      "path": "delivery/evidence/P04/artifacts/summary.json",
+      "sha256": "eca51a5c1ae04245be6dfa17dd854438991f6523a2b663ab85db33926023896e"
+    }
+  ],
+  "evidence_note": "Artifacts have the Windows profile path redacted to %USERPROFILE%.",
+  "review": null,
+  "next_action": "After P02/P03 acceptance: run templates on the clean VM (real Desktop write, Outlook launch with a synthetic account), decide the shipped Browser target, independent review; then P05."
+}

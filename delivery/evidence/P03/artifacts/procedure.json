@@ -1,0 +1,84 @@
+{
+  "ir_version": 2,
+  "category": "browser",
+  "platform": "windows-x86_64",
+  "source": {
+    "recording_id": "recording",
+    "events_sha256": "69fd35d113720229b334bc80fc45c4c38310c6e8f208f20b4d57981b7bfa9667",
+    "input_origin": "dom-trusted-events"
+  },
+  "target_process": "redrise-browser",
+  "params": [],
+  "steps": [
+    {
+      "id": 0,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "redrise-browser",
+        "class": "http://127.0.0.1:47321"
+      },
+      "action": {
+        "type": "browser_goto",
+        "url": "http://127.0.0.1:47321/"
+      },
+      "effectful": false
+    },
+    {
+      "id": 1,
+      "from_seq": [
+        1,
+        1
+      ],
+      "expect": {
+        "process_image": "redrise-browser",
+        "class": "http://127.0.0.1:47321"
+      },
+      "action": {
+        "type": "browser_fill",
+        "selector": "#cliente",
+        "text": {
+          "literal": "Cliente Teste 01"
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 2,
+      "from_seq": [
+        2,
+        2
+      ],
+      "expect": {
+        "process_image": "redrise-browser",
+        "class": "http://127.0.0.1:47321"
+      },
+      "action": {
+        "type": "browser_fill",
+        "selector": "#valor",
+        "text": {
+          "literal": "1500"
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 3,
+      "from_seq": [
+        3,
+        3
+      ],
+      "expect": {
+        "process_image": "redrise-browser",
+        "class": "http://127.0.0.1:47321"
+      },
+      "action": {
+        "type": "browser_click",
+        "selector": "[data-testid=\"salvar\"]"
+      },
+      "effectful": true
+    }
+  ]
+}

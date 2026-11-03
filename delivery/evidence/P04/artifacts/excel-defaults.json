@@ -1,0 +1,57 @@
+﻿{
+  "template": "excel-pedido",
+  "version": "1.1.0",
+  "verified": true,
+  "inputs": {
+    "input_path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\excel\\template_redrise.xlsx",
+    "output_path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\excel\\pedido-01.xlsx",
+    "cliente": "Cliente Teste 01",
+    "valor": "1500"
+  },
+  "launched": {
+    "app": "excel",
+    "pid": 14456
+  },
+  "job": {
+    "job_id": "tpl-excel-pedido-20261027-091201",
+    "state": "completed_unverified",
+    "code": null,
+    "failed_step": null
+  },
+  "verification": {
+    "verified": true,
+    "checks": [
+      {
+        "verified": true,
+        "code": null,
+        "path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\excel\\pedido-01.xlsx",
+        "cells": {
+          "A1": "Campo",
+          "B1": "Valor",
+          "A2": "Cliente",
+          "A3": "Valor do pedido",
+          "B2": "Cliente Teste 01",
+          "B3": 1500
+        },
+        "mismatches": {}
+      },
+      {
+        "verified": true,
+        "code": null,
+        "path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\excel\\template_redrise.xlsx",
+        "cells": {
+          "A1": "Campo",
+          "B1": "Valor",
+          "A2": "Cliente",
+          "A3": "Valor do pedido",
+          "B2": null,
+          "B3": null
+        },
+        "mismatches": {}
+      }
+    ],
+    "code": null
+  },
+  "state": "verified",
+  "result_file": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\data\\template-runs\\excel-pedido-20261027-091212.json"
+}

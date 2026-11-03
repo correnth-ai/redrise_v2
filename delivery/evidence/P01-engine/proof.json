@@ -1,0 +1,220 @@
+{
+  "step": "P01",
+  "status": "verified",
+  "run_id": "RUN-P01-20261026-01",
+  "source_revision": "unborn",
+  "source_tree_sha256": "3528deffe4b8dfc5b639d096e77d40a1dc3619340b0ef14c128c0d0896b10b95",
+  "engine": {
+    "version": "0.1.0",
+    "binary": "redrise-engine.exe (release, --locked)",
+    "sha256": "3a436103f03fe8ba37dbef47c9653d8ff6fae7ae218eb0f7d2854a920e3e8491",
+    "toolchain": "rustc stable x86_64-pc-windows-msvc (cargo 1.98.1)"
+  },
+  "environment": {
+    "os": "Windows 11 Pro 10.0.26200 x64",
+    "locale": "pt-BR",
+    "session": "interactive, unlocked, medium integrity",
+    "lab": "%USERPROFILE%/RedRise-v2-dev (C:)"
+  },
+  "skills": [
+    {
+      "name": "scope-planning",
+      "sha256": "fd7b13af53a7853d7cbd43ac9f72e801d602c7fb4e592981ac4842e4ded58bfa"
+    },
+    {
+      "name": "upstream-license-governance",
+      "sha256": "74699dbd93027deebbb30d04af0be7cea5a90ccefdcc9bcb4f0a81268c0f3ec1"
+    }
+  ],
+  "memory": {
+    "workspace": "correnth",
+    "project": "redrise-v2",
+    "status": "degraded",
+    "reason": "ai-memory CLI absent"
+  },
+  "graph": {
+    "status": "not_used",
+    "reason": "no registered graphify root for repo:redrise-v2"
+  },
+  "checks": [
+    {
+      "name": "T01 preconditions",
+      "command": "readiness + Excel 365 16.0.20527.20088 x64 + interactive session",
+      "expected": "ready",
+      "actual": "ready",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "T02/T05 Engine readiness (own, no Flow/WAA)",
+      "command": "redrise-engine readiness --probe-hooks",
+      "expected": "ready",
+      "actual": "ready, hooks ok",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "T03 recording finalized",
+      "command": "record --target excel.exe --accept-injected",
+      "expected": "complete",
+      "actual": "complete 266 events, 0 dropped",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "T04 procedure compiled",
+      "command": "compile --param output_path=...",
+      "expected": "11 steps",
+      "actual": "11 steps, output path slot",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "T06 replay through UI from reopened template to distinct output",
+      "command": "run --bind output_path=saida/resultado_replay.xlsx",
+      "expected": "completed_unverified, output observed",
+      "actual": "completed_unverified, exists_after_run true",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "T07 template intact (labels + B2/B3 empty)",
+      "command": "verify_engine_result.py --run <run>",
+      "expected": "pass",
+      "actual": "A1..A3/B1 labels exact; B2/B3 None; template sha256 unchanged (gate-enforced)",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "T08 recorded output",
+      "command": "verify_engine_result.py",
+      "expected": "B2 text, B3 numeric 1500",
+      "actual": "B2='Cliente Teste 01', B3=1500 (int)",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "T09 replayed output",
+      "command": "verify_engine_result.py",
+      "expected": "B2 text, B3 numeric 1500",
+      "actual": "B2='Cliente Teste 01', B3=1500 (int); distinct file",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "recorded evidence unchanged by replay",
+      "command": "Get-FileHash before/after (gate-enforced)",
+      "expected": "equal",
+      "actual": "equal",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "verifier refutes false success",
+      "command": "python -m unittest test_verify_engine_result",
+      "expected": "6 pass",
+      "actual": "number-as-text, wrong text, missing, dirty template, empty refuted",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "repeatability",
+      "command": "p01-excel.ps1 on two consecutive builds",
+      "expected": "pass both",
+      "actual": "run-20261026-234427, run-20261026-235102 (earlier builds) and run-20261027-000410 (final build) verified",
+      "exit_code": 0,
+      "result": "passed"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/P01-engine/artifacts/compile.json",
+      "sha256": "a46156f3ea42a864fd2114ea101131abaaadca2490894e979e153e15df4786e4"
+    },
+    {
+      "path": "delivery/evidence/P01-engine/artifacts/manifest.json",
+      "sha256": "59f3dac79acde1f1d99b3e81742eb1ff0d0e53ecd1bd1be953207cf9c019e7bf"
+    },
+    {
+      "path": "delivery/evidence/P01-engine/artifacts/operator-demo.scenario.json",
+      "sha256": "90a45ad816db680e5b3efe2c88f889a168339a41fa48b4bbb64d2ede1dab77b0"
+    },
+    {
+      "path": "delivery/evidence/P01-engine/artifacts/operator-template.scenario.json",
+      "sha256": "ab8833602c2c5aa152ea07cdc2b1e370a720d454872151c70639acb2951d1222"
+    },
+    {
+      "path": "delivery/evidence/P01-engine/artifacts/procedure.json",
+      "sha256": "64711e7ea9c440ba648bc362529941a2a23b899248fd26f92699b16835fee6f7"
+    },
+    {
+      "path": "delivery/evidence/P01-engine/artifacts/record.json",
+      "sha256": "7c232b55e2dae853e4d60064816ed136283541e3cff8f177c5d297c127a481cb"
+    },
+    {
+      "path": "delivery/evidence/P01-engine/artifacts/run.json",
+      "sha256": "f10004bcc882dfc6c91448706bdc90b995d0ccc5c24aac5728347b271134fe6c"
+    },
+    {
+      "path": "delivery/evidence/P01-engine/artifacts/summary.json",
+      "sha256": "6dc979ea845b7660d25b4f47f163a23437ed8cdd0cf3b9ff84cbed8ed4b561c6"
+    },
+    {
+      "path": "delivery/evidence/P01-engine/artifacts/verify.json",
+      "sha256": "3057b57120dfd44e2e53354e6b1f50f8dbaebb612276ca09c88eaad3de9fa24e"
+    }
+  ],
+  "lab_run": "%USERPROFILE%/RedRise-v2-dev/proofs/p01-engine/run-20261027-000410",
+  "verifier": {
+    "python": "3.12.10 (private, C:)",
+    "openpyxl": "3.1.5",
+    "mode": "read-only"
+  },
+  "t10_t11": "not executed (optional parametrization beyond output path)",
+  "review": {
+    "reviewer": "independent read-only review subagent (not the author), Claude session",
+    "date": "2026-10-27",
+    "verdict": "approve",
+    "defects_fixed": [
+      "max-duration recording sealed complete -> truncated",
+      "lone modifier taps dropped -> key step",
+      "no in-capture hook liveness -> check_liveness at stop (keyboard only)",
+      "VK_PACKET surrogate/control -> reassembled or refused",
+      "effectful heuristic broadened to #32770 keys/clicks",
+      "UIPI before input -> refused; zero accepted -> not_attempted; cancel between chars",
+      "pid cache TTL",
+      "as-built spec reconciliation + hardware-only disclosure",
+      "P01 gate enforces template/recorded hashes unchanged"
+    ]
+  },
+  "evidence_note": "Artifacts under delivery/evidence/*/artifacts are copies of the lab files with the Windows profile path redacted to %USERPROFILE%; they are not byte-identical to the lab originals, which remain on C:.",
+  "limitations": [
+    "The product default (hardware-only input) has only been proven negatively; no successful hardware-only demonstration has been recorded yet.",
+    "The demonstration was performed by a synthetic operator (proofs/operator/operator.ps1, SendKeys/user32) injecting OS input, recorded with --accept-injected and labelled input_origin=injected-accepted. A human-operated recording has not been performed.",
+    "Template created through the Excel UI by the same operator (setup, not recorded).",
+    "Development machine, not a clean Windows install (that is P02/P10/P13).",
+    "Geometry click requires the same window rect; UIA targeting not implemented."
+  ],
+  "next_action": "P02: private runtime/Runner — requires a clean Windows 11 x64 machine for acceptance",
+  "revalidations": [
+    {
+      "date": "2026-10-27",
+      "engine_sha256": "d14f9e9bebae9684aad13c802d918f6716d278720d3796258c002a2c59bfa570",
+      "reason": "Engine changed for P03 (browser IR v2/executor branch); native acceptances re-run",
+      "e04_run": "%USERPROFILE%/RedRise-v2-dev/proofs/e04-notepad/run-20261027-015404",
+      "e04_verified": true,
+      "p01_run": "%USERPROFILE%/RedRise-v2-dev/proofs/p01-engine/run-20261027-015429",
+      "p01_verified": true,
+      "p01_procedure": "ir_version 1, category windows, 11 steps",
+      "unit_tests": "46 passed (capture 11, compile_ir 10, execute 16, browser 9); clippy -D warnings clean"
+    },
+    {
+      "date": "2026-10-27",
+      "engine_sha256": "2a8b830f9642007423aca9cb4bda774e70b572acc5d417734516460132489305",
+      "reason": "Engine changed in P04 (pacing/stable-ms/--declare flags; browser finalize deadline); Save As now folder via navigation field, bare name in 'Nome do arquivo' (user correction)",
+      "p01_run": "%USERPROFILE%/RedRise-v2-dev/proofs/p01-engine/run-20261027-091323",
+      "verified": true,
+      "procedure": "16 steps; params output_dir/output_name (text) + declared output_path guard"
+    }
+  ]
+}

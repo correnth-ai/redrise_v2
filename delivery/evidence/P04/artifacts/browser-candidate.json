@@ -1,0 +1,9 @@
+﻿{
+  "template": "browser-formulario",
+  "version": "0.1.0-candidate",
+  "verified": false,
+  "state": "refused",
+  "code": "template_candidate_not_shipped",
+  "detail": "Which real, stable web target and which independent system-of-record check (API/export) the Beta ships. Without it, no browser template is announced as functional.",
+  "result_file": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p04-templates\\run-20261027-091130\\data\\template-runs\\browser-formulario-20261027-091243.json"
+}

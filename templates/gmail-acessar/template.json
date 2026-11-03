@@ -1,0 +1,22 @@
+{
+  "id": "gmail-acessar",
+  "version": "1.0.0",
+  "title": "Acessar Gmail",
+  "purpose": "Abrir o Gmail no navegador do RedRise e informar se a caixa está autenticada ou se é preciso entrar na conta. O RedRise nunca digita credenciais.",
+  "category": "browser",
+  "inputs": {},
+  "preconditions": [ { "kind": "browser_packaged" } ],
+  "launch": null,
+  "procedure": "procedure.json",
+  "browser_profile": "persistent",
+  "step_timeout_ms": 30000,
+  "verifier": {
+    "kind": "browser_final_url",
+    "rules": [
+      { "prefix": "https://mail.google.com/mail/", "state": "inbox_authenticated", "verified": true },
+      { "prefix": "https://accounts.google.com/", "state": "login_required", "verified": false,
+        "reason": "Entre na sua conta Google na janela do navegador do RedRise e execute novamente." }
+    ],
+    "otherwise": { "state": "unexpected_page", "verified": false }
+  }
+}

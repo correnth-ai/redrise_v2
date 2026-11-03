@@ -1,0 +1,107 @@
+{
+  "run": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101",
+  "checks": [
+    {
+      "id": "template_exists",
+      "result": "passed",
+      "detail": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101\\entrada\\template_redrise.xlsx"
+    },
+    {
+      "id": "recorded_exists",
+      "result": "passed",
+      "detail": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101\\saida\\resultado_gravado.xlsx"
+    },
+    {
+      "id": "replayed_exists",
+      "result": "passed",
+      "detail": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101\\saida\\resultado_replay.xlsx"
+    },
+    {
+      "id": "T07_template_labels",
+      "result": "passed",
+      "detail": "{\"A1\": \"Campo\", \"B1\": \"Valor\", \"A2\": \"Cliente\", \"A3\": \"Valor do pedido\"}"
+    },
+    {
+      "id": "T07_template_B2_B3_empty",
+      "result": "passed",
+      "detail": "B2=None B3=None"
+    },
+    {
+      "id": "T08_recorded_labels",
+      "result": "passed",
+      "detail": "labels preserved"
+    },
+    {
+      "id": "T08_recorded_B2",
+      "result": "passed",
+      "detail": "B2='Cliente Teste 01'"
+    },
+    {
+      "id": "T08_recorded_B3",
+      "result": "passed",
+      "detail": "B3=1500 (int)"
+    },
+    {
+      "id": "T09_replayed_labels",
+      "result": "passed",
+      "detail": "labels preserved"
+    },
+    {
+      "id": "T09_replayed_B2",
+      "result": "passed",
+      "detail": "B2='Cliente Teste 01'"
+    },
+    {
+      "id": "T09_replayed_B3",
+      "result": "passed",
+      "detail": "B3=1500 (int)"
+    },
+    {
+      "id": "outputs_distinct_files",
+      "result": "passed",
+      "detail": "recording and replay outputs are separate files"
+    }
+  ],
+  "files": {
+    "template": {
+      "path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101\\entrada\\template_redrise.xlsx",
+      "exists": true,
+      "sha256": "2970ab5a0a44c5005abfd3cba075f4d48b9063f75eb2fc164c4ee64022501f0b",
+      "cells": {
+        "A1": "Campo",
+        "B1": "Valor",
+        "A2": "Cliente",
+        "A3": "Valor do pedido",
+        "B2": null,
+        "B3": null
+      }
+    },
+    "recorded": {
+      "path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101\\saida\\resultado_gravado.xlsx",
+      "exists": true,
+      "sha256": "bd03daba089a32709cd2f2e28b3f02c81a71020a11729147a8a5adce8b6c5eb2",
+      "cells": {
+        "A1": "Campo",
+        "B1": "Valor",
+        "A2": "Cliente",
+        "A3": "Valor do pedido",
+        "B2": "Cliente Teste 01",
+        "B3": 1500
+      }
+    },
+    "replayed": {
+      "path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101\\saida\\resultado_replay.xlsx",
+      "exists": true,
+      "sha256": "9d83a0a1dddb400a196225ebe6eee997c5dec1c4f27143a5f6bc19b0ffb464e6",
+      "cells": {
+        "A1": "Campo",
+        "B1": "Valor",
+        "A2": "Cliente",
+        "A3": "Valor do pedido",
+        "B2": "Cliente Teste 01",
+        "B3": 1500
+      }
+    }
+  },
+  "verified": true
+}

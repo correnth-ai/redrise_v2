@@ -1,0 +1,19 @@
+﻿{
+    "run_dir":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-p01-scenario\\run-20261027-012101",
+    "started":  "2026-10-27T01:21:01.9003095-03:00",
+    "template_sha256":  "2970ab5a0a44c5005abfd3cba075f4d48b9063f75eb2fc164c4ee64022501f0b",
+    "demo":  "completed",
+    "record_exit":  0,
+    "recorded_sha256_before_replay":  "bd03daba089a32709cd2f2e28b3f02c81a71020a11729147a8a5adce8b6c5eb2",
+    "compile_exit":  0,
+    "runner_env":  "hostile: bogus PYTHONHOME/PYTHONPATH, PATH without Python",
+    "run_exit":  0,
+    "replay_via":  "runner job p01-run-20261027-012101",
+    "template_sha256_after":  "2970ab5a0a44c5005abfd3cba075f4d48b9063f75eb2fc164c4ee64022501f0b",
+    "recorded_sha256_after":  "bd03daba089a32709cd2f2e28b3f02c81a71020a11729147a8a5adce8b6c5eb2",
+    "verifier_exit":  0,
+    "template_unchanged":  true,
+    "recorded_unchanged_by_replay":  true,
+    "verified":  true,
+    "ended":  "2026-10-27T01:22:11.3692311-03:00"
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "redrise.excel-descriptor/1",
+  "title": "Validated Excel installation descriptor (locate -> start boundary)",
+  "type": "object",
+  "required": ["schema", "executable", "version", "method"],
+  "properties": {
+    "schema": {"const": "redrise.excel-descriptor/1"},
+    "executable": {"type": "string", "description": "absolute path whose file name is EXCEL.EXE; data, never a command line"},
+    "version": {"type": "string", "pattern": "^\\d+(\\.\\d+){1,3}$"},
+    "method": {"enum": ["app_paths", "click_to_run"]}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,251 @@
+{
+  "ir_version": 1,
+  "category": "windows",
+  "platform": "windows-x86_64",
+  "source": {
+    "recording_id": "recording",
+    "events_sha256": "858cb1659ca801cbf5c7abfcfdfbe01b19a43df5ed144be47c65fd4e71b544bc",
+    "input_origin": "injected-accepted"
+  },
+  "target_process": "excel.exe",
+  "params": [
+    {
+      "name": "output_path",
+      "role": "output_path"
+    }
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "from_seq": [
+        0,
+        1
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "XLMAIN"
+      },
+      "action": {
+        "type": "click",
+        "button": "left",
+        "rel_x": 600,
+        "rel_y": 450,
+        "window_rect": {
+          "left": 52,
+          "top": 52,
+          "right": 1492,
+          "bottom": 805
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 1,
+      "from_seq": [
+        3,
+        3
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "XLMAIN"
+      },
+      "action": {
+        "type": "key",
+        "vk": 36,
+        "mods": {
+          "ctrl": true,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 2,
+      "from_seq": [
+        6,
+        6
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "XLMAIN"
+      },
+      "action": {
+        "type": "key",
+        "vk": 39,
+        "mods": {
+          "ctrl": false,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 3,
+      "from_seq": [
+        8,
+        8
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "XLMAIN"
+      },
+      "action": {
+        "type": "key",
+        "vk": 40,
+        "mods": {
+          "ctrl": false,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 4,
+      "from_seq": [
+        11,
+        44
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "XLMAIN"
+      },
+      "action": {
+        "type": "type_text",
+        "text": {
+          "literal": "Cliente Teste 01"
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 5,
+      "from_seq": [
+        46,
+        46
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "XLMAIN"
+      },
+      "action": {
+        "type": "key",
+        "vk": 13,
+        "mods": {
+          "ctrl": false,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 6,
+      "from_seq": [
+        48,
+        54
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "XLMAIN"
+      },
+      "action": {
+        "type": "type_text",
+        "text": {
+          "literal": "1500"
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 7,
+      "from_seq": [
+        56,
+        56
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "XLMAIN"
+      },
+      "action": {
+        "type": "key",
+        "vk": 13,
+        "mods": {
+          "ctrl": false,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 8,
+      "from_seq": [
+        58,
+        58
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "XLMAIN"
+      },
+      "action": {
+        "type": "key",
+        "vk": 123,
+        "mods": {
+          "ctrl": false,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 9,
+      "from_seq": [
+        61,
+        262
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "type_text",
+        "text": {
+          "param": "output_path"
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 10,
+      "from_seq": [
+        264,
+        264
+      ],
+      "expect": {
+        "process_image": "excel.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "key",
+        "vk": 13,
+        "mods": {
+          "ctrl": false,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": true
+    }
+  ]
+}

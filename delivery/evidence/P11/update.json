@@ -1,0 +1,86 @@
+{
+  "step": "P11",
+  "status": "practical_e2e_passed_pending_review",
+  "run_id": "RUN-U27-20261027-01",
+  "channel": {
+    "url": "http://127.0.0.1:47880/releases (local isolated site, P12)",
+    "signature": "Ed25519; private key in the user's Windows Credential Manager; public key compiled into the app",
+    "signed_by": "release_channel.py sign (key used in-process, never displayed)"
+  },
+  "from_version": "0.1.0-beta.3",
+  "to_version": "0.1.0-beta.4",
+  "to_installer_sha256": "f9a9dff0e41a4bf9eecf5852cebb344f8d3e2a9c737eb8256048e1f8cfc34c73",
+  "checks": [
+    {
+      "kind": "component",
+      "native": false,
+      "name": "signature/version unit tests (valid, tampered, wrong key, incompatible schema, order)",
+      "result": "4 passed"
+    },
+    {
+      "kind": "practical_e2e",
+      "native": true,
+      "name": "update detected after login: bottom-right notice + persistent sidebar indicator",
+      "result": "passed",
+      "artifact": "notice-and-indicator.png"
+    },
+    {
+      "kind": "practical_e2e",
+      "native": true,
+      "name": "Ainda não: notice closes, indicator stays, version unchanged",
+      "result": "passed",
+      "artifact": "ainda-nao-indicator-kept.png"
+    },
+    {
+      "kind": "practical_e2e",
+      "native": true,
+      "name": "first Pode atualizar attempt",
+      "result": "failed safely: swap refused (installer cwd inside install folder), beta.3 kept and reopened automatically",
+      "defect": "installer inherited the app's cwd (install folder) -> rename refused; fixed: installer sets cwd to its own folder; app starts it from the updates folder"
+    },
+    {
+      "kind": "practical_e2e",
+      "native": true,
+      "name": "corrupted package under a valid signed manifest",
+      "result": "refused: UPDATE-INVALID four-topic message, nothing installed, app kept running",
+      "artifact": "corrupted-package-refused.png",
+      "defect_minor": "next action shows the generic UI text instead of the catalog's 'avise o suporte'"
+    },
+    {
+      "kind": "practical_e2e",
+      "native": true,
+      "name": "Pode atualizar with the real package",
+      "result": "passed: downloaded+verified, children stopped, installer swapped (previous kept), app reopened on 0.1.0-beta.4; team/users/station intact via API",
+      "artifact": "install-result-beta4.json"
+    }
+  ],
+  "not_executed": [
+    "update with a job running (UPDATE-BUSY) on the installed build",
+    "host + separate stations update (single machine)",
+    "invalid signature end-to-end (covered by unit tests)"
+  ],
+  "operator": "agent synthetic operator at the user's request (2026-10-28 'do these things for me')",
+  "artifacts": [
+    {
+      "path": "delivery/evidence/P11/artifacts/ainda-nao-indicator-kept.png",
+      "sha256": "ec92ad2326a6a29d49367dbd80b2190426908eac03b7d48571a92e49abe6b6a2"
+    },
+    {
+      "path": "delivery/evidence/P11/artifacts/corrupted-package-refused.png",
+      "sha256": "29e88d4edbb3ce3692489ffc666d89857d8a4ae7a11aa9d55afdc4b3bf6c8ae8"
+    },
+    {
+      "path": "delivery/evidence/P11/artifacts/install-result-beta4.json",
+      "sha256": "1cd0b53bf990f22072189e889ce3d5106cb658dc6c447efd1f5fa3948dcfd6ce"
+    },
+    {
+      "path": "delivery/evidence/P11/artifacts/latest.json",
+      "sha256": "857b30ea8ad1b348a3cfd413fbee859ab36af2ef29bfb3154891e0beb657dad3"
+    },
+    {
+      "path": "delivery/evidence/P11/artifacts/notice-and-indicator.png",
+      "sha256": "cd2653362974718d9f1805d90fcc89a47f87a17b3b7eb52afdbce1fd999d53ac"
+    }
+  ],
+  "review": null
+}

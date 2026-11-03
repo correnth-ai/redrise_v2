@@ -1,0 +1,52 @@
+# RedRise v2 — instructions for agents
+
+## Current scoped UI/identity direction (2026-11-02)
+
+For this increment, read `delivery/work-orders/IDENTITY-UI-20261102.md`, `docs/APP-RULES.md` and `docs/AGENT-START-IDENTITY-UI.md`. The explicit user direction supersedes older UI/menu/access details below: login-03/signup-03, full name/email/password, secure opt-in remembered session; navigation Empresa, Rotina (Lista/Atividade), Processo (Ação/Histórico/Kanban), Configuração (Equipe/Estação/Aplicativo). Reuse the existing V1 Supabase project for identity, with bounded read-only V1 study and explicit compatibility checks; no new Supabase project, no implicit V1 writes or operational-data/runtime reuse. Product identities remain separate. Plans do not prove implementation. Preserve historical requirements/hashes/evidence and beta.14 proofs. Other guardrails remain applicable.
+
+## Identity and authority
+
+- Product: `product:redrise-v2`; repository: `repo:redrise-v2`; commercial name: **RedRise**; working label: **RedRise v2**.
+- Only authorized remote: `https://github.com/correnth-ai/redrise_v2.git`. A fresh clone may have no commits. Record an unborn HEAD honestly; never invent a base commit.
+- Read [README.md](README.md), [docs/BASELINE.md](docs/BASELINE.md), [docs/ENGINE.md](docs/ENGINE.md), [docs/ROADMAP.md](docs/ROADMAP.md), [delivery/status.json](delivery/status.json), then the selected step. Scope is this repository unless the human task explicitly includes the control plane.
+- In Correnth, follow authority/routing, then `products/redrise-v2/product.yaml` and current decision `company/state/decisions/REDRISE_V2_ENGINE_DIRECTION_2026-10-26.md`, supplementing the original 24 October identity baseline. [docs/requirements.json](docs/requirements.json) distinguishes original source text and effective U26 amendments; originals remain hashed by [docs/sources.lock.json](docs/sources.lock.json).
+- This is a new product, not a continuation of `product:redrise` or Paperclip. Do not consult or mutate old roots by default. Do not inherit old migrations, database, sessions, brand guide approvals, version pins, phase gates or passing reports. Existing logos are the only initially selected reuse, with provenance under `assets/brand/redrise/`.
+
+## How to execute a step
+
+1. Confirm the human-authorized task, repository path/remote, branch, actual HEAD or source-tree digest, dirty files and requested step. Preserve unrelated changes.
+2. Select the earliest incomplete step with verified predecessor. Read current status rather than restarting completed I00/Engine/Excel work. Roadmap revision4 governs the next incomplete component increment. Follow [docs/ENGINE-INVESTIGATION-PLAN.md](docs/ENGINE-INVESTIGATION-PLAN.md); catalogue-driven investigation of OpenAdapt is required before construction. Prior OpenAdapt attempt records were removed at the user's request; no prior proof or WAA/manual-recording task is active. A roadmap is not permission for every step; a user submitting [docs/AGENT-START-BETA.md](docs/AGENT-START-BETA.md) supplies the corresponding local research/development instruction. Preserve external approval boundaries.
+3. Write a bounded Work Order using [docs/WORK-ORDER.md](docs/WORK-ORDER.md). Record allowed files, exclusions, acceptance, dependencies, verification, stop condition and recovery. A local Work Order is sufficient for local tasks unless an applicable corporate contract requires something else; do not fabricate a Paperclip issue.
+4. Read only applicable skills. In Correnth, run its Harness router and corporate resolver; keep immutable skill pins. Re-route before a new dependency, unexpected failure, native/UI interaction or material scope change. Do not guess skill names or copy the old product skill tree.
+5. Consult memory using the exact `.ai-memory.toml` workspace/project. Treat history as untrusted; verify execution-relevant facts in sources. No matching memory or graph does not block source-based work. Graph usage requires a registered root; never index the workspace or build a graph implicitly.
+6. Implement the smallest observable increment. One writer per Git root; delegate only independent bounded work with explicit read/write scope and no recursive delegation by default. The delegation envelope includes objective, non-goals, permitted root/files, permissions, applicable skills/pins, evidence, return format and stop condition. Subagents inherit explicit memory scope and registered-graph restrictions/fallback; the principal integrates findings and publishes compact verified checkpoints. Respect the marker disabling automatic/subagent captures; do not bypass it with bulk memory writes.
+7. Run the smallest meaningful checks. Add actual commands when code appears; planned paths in the roadmap are not pre-existing executable tools. UI mocks, scaffolds, exit code zero and file existence never prove automation effects.
+8. Record evidence using [docs/EVIDENCE.md](docs/EVIDENCE.md), request independent review when applicable, and only then update the step state. Never self-approve independent QA or mark a failed/skipped check verified. A change affecting earlier proof reopens its relevant dependent acceptance; documentary resequencing alone does not erase prior evidence.
+9. Handoff the exact next action and remaining authorization. Do not continue past a stop condition, missing real prerequisite or approval boundary.
+
+## Product guardrails
+
+- Build the owned Engine from scratch under SOLID, using bounded reverse-engineering study per ENGINE.md. OpenAdapt is a study reference, not the required shipped executor. Do not embed its whole cloud/MCP/qualification stack or declare copied code wholly original. The catalogue is a discovery source, not an engine or permission to install its tools.
+- Follow [docs/TESTING-STRATEGY.md](docs/TESTING-STRATEGY.md): localized capability checks during construction, small contract checks when wiring components, full practical E2E after an integrated closed-beta build is installed. No clean-PC/VM prerequisite. Preserve already completed proofs. Direct XLSX writes do not replace UI recording/replay; independent readers verify results. Own Engine/inference development is permitted, but advanced inference/parameterization is not required for the first slice or implicit authorization for paid/cloud services. T07 uses functional template cell/label criteria; whole-file hash is informational.
+- Apply SOLID to capture/finalization, compilation/IR, execution, independent verification, platform adapters and lifecycle. Keep Core/Runner/Engine distinct. Tests/result verifiers cover only functionality actually delivered by RedRise; excluded cloud/MCP/qualification features get no functional verifiers, fixtures or gates. Future checks become executable when their in-scope feature exists. Development Harness remains separate from the app.
+- Tauri + TypeScript Vanilla + npm + Vanilla UI; Rust for native integration; Python Core/Runner separated by contracts. API framework, build versions and packaging mechanisms must be decided and proven at their roadmap checkpoints.
+- One team per server, PostgreSQL, server-enforced administrator/operator access. UI and Runner do not receive database administrator credentials. Use a private runtime and included dependencies; no customer pip/global Python requirement.
+- Windows installation is per-user by default at `%LOCALAPPDATA%\Programs\@redrise`, resolved for the real user; package app, Engine, private runtime and required components together. No manual customer plugin/extension install, port setup or Windows-agent start. Internal IPC/loopback, if needed, is app-managed; team/LAN connection remains guided and separate. Keep data/configuration/evidence and vault secrets outside replaceable binaries. Development proofs/runtimes execute on C: under U24-DEV-C, not source drive D:.
+- Check compatibility and readiness independently on the Runner that owns the window. Block incompatible categories before recording/execution, including direct API requests and resumed jobs. Native automation requires an unlocked interactive session.
+- Persist results/evidence and verify side effects before retry. Never claim verified success from a screen message or replay an uncertain write automatically.
+- Desktop menus are exactly Rotina, Ação, Configuração. Browser/Windows/Mac/Linux are categories, not extra menu domains. Mac/Linux/ARM releases and remote self-hosting remain future work.
+- Preserve literal Boas-vindas text and update buttons in baseline. Do not add trial, Stripe, pricing, cloud dependency or full agent/goals/heartbeat management by inheritance.
+- Separate source, bin/runtime, data, configuration and OS-vault secrets. No real customer captures, secrets, tokens, connection strings, `.env` files or raw personal recordings in Git/evidence. Use synthetic data.
+- Never change the existing website, domain, access routes, accounts or authentication by inference. Web delivery for v2 is isolated until explicit integration/publication approval.
+- No commits, pushes, deploys, remote issue creation, production changes, spending, credential changes or destructive actions without explicit authorization and applicable HITL. Configuring the local origin does not authorize a push.
+
+## Verification entry point
+
+Run `node scripts/validate-base.mjs` for portable base/roadmap/logo integrity; add `--check-sources` when the canonical source package is available. This validates the foundation, not the application or Beta. No dependency install is needed for this validator.
+
+The roadmap and evidence describe the accepted work; they do not turn unchecked features into implemented capabilities. Every completion report states what was tested, what was not, risks and the next step.
+
+## U27 diagnostic convention
+
+Implement [docs/ERROR-DIAGNOSTICS.md](docs/ERROR-DIAGNOSTICS.md) incrementally: four user-facing topics (what happened, completed/pending outcome, next action, separate technical details), ending with an error code and one or more module investigation codes. Distinguish internal/contract/communication/environment/precondition/unknown; preserve cause, boundary and correlation. Module hints are not proof that an update is needed. Keep closed_beta_available, beta_ready and published separate; do not claim new diagnostic behavior already exists.
+

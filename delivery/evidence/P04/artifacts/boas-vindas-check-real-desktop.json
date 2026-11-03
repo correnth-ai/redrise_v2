@@ -1,0 +1,10 @@
+﻿{
+  "template": "boas-vindas",
+  "version": "1.1.0",
+  "verified": false,
+  "inputs": {
+    "output_path": "%USERPROFILE%\\OneDrive\\Área de Trabalho\\Boas_Vindas.txt"
+  },
+  "state": "ready",
+  "app": "C:\\WINDOWS\\System32\\notepad.exe"
+}

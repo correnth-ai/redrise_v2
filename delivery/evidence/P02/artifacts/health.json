@@ -1,0 +1,58 @@
+{
+  "status": "healthy",
+  "runner": "0.1.0",
+  "platform": "windows-x86_64",
+  "categories": [
+    "windows"
+  ],
+  "install_root": "%USERPROFILE%\\RedRise-v2-dev\\stage\\p02-20261027-011940\\@redrise",
+  "data_root": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p02-data-evidence",
+  "engine": {
+    "path": "%USERPROFILE%\\RedRise-v2-dev\\stage\\p02-20261027-011940\\@redrise\\engine\\redrise-engine.exe",
+    "engine": "0.1.0",
+    "platform": "windows-x86_64"
+  },
+  "session": {
+    "hooks": {
+      "latency_ms": 1,
+      "status": "ok"
+    },
+    "readiness": {
+      "detail": [
+        "engine integrity rid=0x2000"
+      ],
+      "interactive_desktop": true,
+      "platform": "windows-x86_64"
+    },
+    "ready": true
+  },
+  "runtime": {
+    "python": "3.12.10",
+    "executable": "%USERPROFILE%\\RedRise-v2-dev\\stage\\p02-20261027-011940\\@redrise\\runtime\\python\\python.exe",
+    "prefix": "%USERPROFILE%\\RedRise-v2-dev\\stage\\p02-20261027-011940\\@redrise\\runtime\\python",
+    "sys_path": [
+      "%USERPROFILE%\\RedRise-v2-dev\\stage\\p02-20261027-011940\\@redrise\\runtime\\python\\Lib",
+      "%USERPROFILE%\\RedRise-v2-dev\\stage\\p02-20261027-011940\\@redrise\\runtime\\python\\DLLs",
+      "%USERPROFILE%\\RedRise-v2-dev\\stage\\p02-20261027-011940\\@redrise\\runner"
+    ],
+    "foreign_sys_path": [],
+    "env_python_vars_present": [
+      "PYTHONDONTWRITEBYTECODE"
+    ],
+    "checks": {
+      "interpreter_is_private": true,
+      "no_user_site": true,
+      "ignores_environment": true,
+      "sys_path_confined": true
+    },
+    "ok": true
+  },
+  "integrity": {
+    "ok": true,
+    "code": null,
+    "files": 640,
+    "missing": [],
+    "modified": [],
+    "unexpected": []
+  }
+}

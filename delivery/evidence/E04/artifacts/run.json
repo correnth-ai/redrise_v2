@@ -1,0 +1,56 @@
+{
+  "ended_at_unix_ms": 1793070246519,
+  "report": {
+    "code": null,
+    "failed_step": null,
+    "message": null,
+    "observed_outputs": [
+      {
+        "exists_after_run": true,
+        "param": "output_path",
+        "path": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\e04-notepad\\run-20261027-000344\\saida\\replay.txt"
+      }
+    ],
+    "outcome": "completed_unverified",
+    "procedure_sha256": "5e0d763ad64a6240ee5753fc8e629e5d38cea7cf34b1b2b672f1ff9dd39edc0a",
+    "steps": [
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 0,
+        "note": null,
+        "waited_ms": 405
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 1,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": true,
+        "id": 2,
+        "note": null,
+        "waited_ms": 0
+      },
+      {
+        "delivery": "delivered",
+        "effectful": false,
+        "id": 3,
+        "note": null,
+        "waited_ms": 716
+      },
+      {
+        "delivery": "delivered",
+        "effectful": true,
+        "id": 4,
+        "note": null,
+        "waited_ms": 0
+      }
+    ],
+    "verified": false
+  },
+  "started_at_unix_ms": 1793070241483
+}

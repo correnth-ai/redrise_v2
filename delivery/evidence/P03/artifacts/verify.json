@@ -1,0 +1,18 @@
+﻿{
+  "store": "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p03-browser\\run-20261027-015319\\store.jsonl",
+  "exists": true,
+  "records": 2,
+  "matching": 2,
+  "expected_records": 2,
+  "verified": true,
+  "values": [
+    {
+      "cliente": "Cliente Teste 01",
+      "valor": "1500"
+    },
+    {
+      "cliente": "Cliente Teste 01",
+      "valor": "1500"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "browser-formulario",
+  "version": "0.1.0-candidate",
+  "title": "Browser: preencher formulário (candidato)",
+  "status": "candidate — target site pending product decision (P04-D7)",
+  "purpose": "Preencher e enviar um formulário web com efeito verificável no sistema de registro.",
+  "category": "browser",
+  "mechanism_proof": "P03 synthetic order form (delivery/evidence/P03/dev-machine.json)",
+  "shipped": false,
+  "open_decision": "Which real, stable web target and which independent system-of-record check (API/export) the Beta ships. Without it, no browser template is announced as functional."
+}

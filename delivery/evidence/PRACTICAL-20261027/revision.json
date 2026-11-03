@@ -1,0 +1,127 @@
+{
+  "graph": "normative task; canonical sources; no rebuild",
+  "implementation_of_new_error_convention": "not_performed",
+  "type": "documentation-revision",
+  "artifacts": [
+    {
+      "sha256": "33f43ac3435a5e72c9ba394286788e68e0e0284ca96e9f78ca72b7cd11500f80",
+      "path": "docs/TESTING-STRATEGY.md"
+    },
+    {
+      "sha256": "b4a28bfd6fded93577d7dcea133ab8d8f9a49eb14ce8e482180e7751e74d7952",
+      "path": "docs/ERROR-DIAGNOSTICS.md"
+    },
+    {
+      "sha256": "c0636dc78c0fa0136bcd6a9a7aa954ef03d5016bcc4be718fcd8b61ea850c57d",
+      "path": "docs/ROADMAP.md"
+    },
+    {
+      "sha256": "3848aa76ae1146d0c222288b7ad660dc6cc9f98e17558dc6b25f02e83bc5481e",
+      "path": "docs/AGENT-START-BETA.md"
+    },
+    {
+      "sha256": "6c4a61d7db2580e79e3f864976dd8980b3ed061e55c274b7aaa00314e65bc45d",
+      "path": "docs/BETA-ACCEPTANCE.md"
+    },
+    {
+      "sha256": "c9263006fdd434446a58c5e3c2a90ebecf38215d753f0c9954e2af3bf2353e6f",
+      "path": "docs/BASELINE.md"
+    },
+    {
+      "sha256": "dbc89473f1b50c5f1987057088acac13dc915fca1a8b1fb3284cd84627cd25ac",
+      "path": "docs/ENGINE.md"
+    },
+    {
+      "sha256": "e980daa2aa867c74810ab3e99b0a3f3639216ba28445f60e498bbba2700807e5",
+      "path": "docs/ENGINE-INVESTIGATION-PLAN.md"
+    },
+    {
+      "sha256": "95346fa052a7d0b178f7825ce8647afebf9ada222ce491e332d97d5049cb373d",
+      "path": "docs/requirements.json"
+    },
+    {
+      "sha256": "904d3267fc483db2b3b685fe766cc16fced2c3012ae508b2afc07d85930de05f",
+      "path": "docs/sources.lock.json"
+    },
+    {
+      "sha256": "e95c0d38bea49b70400f53322ad664cce2e6a63520063488c59a76bd8dc958df",
+      "path": "docs/WORK-ORDER.md"
+    },
+    {
+      "sha256": "27aa4e0a375185bb3720a85c5f59066dbe1bf401965221f65aa613cf1e5dc3a5",
+      "path": "docs/EVIDENCE.md"
+    },
+    {
+      "sha256": "6aada2f700c4868f5453370300aa2be5bb2e6972d769c5e79952f45d3be9a6f3",
+      "path": "AGENTS.md"
+    },
+    {
+      "sha256": "664ad41132435c249ef8889553d0eef60959800eef2abbdb5f5457ed65c12b85",
+      "path": "README.md"
+    },
+    {
+      "sha256": "93cb9dea75460f55cd6921eee41c7e4e9e609666588d876dbdbdaf11037cdfbb",
+      "path": "project.json"
+    },
+    {
+      "sha256": "c5a1457d113c24b75f2456f80b04c6587835bd0979a0e58d6c1482d492ce998b",
+      "path": "delivery/status.json"
+    },
+    {
+      "sha256": "846c3a068e079ed666692f0c94e4afcaa9545caa48b139b1b0c96e25be678e72",
+      "path": "scripts/validate-base.mjs"
+    }
+  ],
+  "checks": [
+    {
+      "result": "passed",
+      "name": "node syntax"
+    },
+    {
+      "name": "foundation validator --check-sources from C drive",
+      "checks": 362,
+      "result": "passed"
+    },
+    {
+      "result": "passed",
+      "name": "manifest schema and normative/registry hashes"
+    },
+    {
+      "result": "passed",
+      "name": "previous verified and dev-machine evidence hashes unchanged"
+    }
+  ],
+  "published": false,
+  "scope": "planning-and-structural-metadata-only",
+  "beta_ready": false,
+  "transition": {
+    "trigger": "User changes acceptance timing/environment and asks richer diagnostics; current implementation advanced in another session",
+    "previous_assumptions_superseded": [
+      "complete Excel proof before broad UI",
+      "clean-VM gate on P02-P04"
+    ],
+    "evidence_handling": "Prior source/proof records retained byte-identical; new diagnostic requirements explicitly pending",
+    "skills": [
+      "scope-planning",
+      "runtime-skill-routing"
+    ]
+  },
+  "status": "verified",
+  "roadmap_revision": 4,
+  "memory": {
+    "workspace": "correnth",
+    "status": "MEMORY_UNAVAILABLE",
+    "fallback": "canonical-files-and-checkpoint",
+    "project": "redrise-v2"
+  },
+  "native_tests_run_by_this_task": false,
+  "task_id": "TASK-REDRISE-V2-PRACTICAL-20261027",
+  "next_action": "Executor reconciles existing P02-P04 capabilities, completes localized checks and follows roadmap4 through installed closed beta then practical P13 validation",
+  "review": {
+    "result": "passed",
+    "findings": "No blockers or material inconsistencies; capability isolation, boundary checks, four-topic error/footer, actual continuation state and installed-beta timing consistent",
+    "limitations": "No runtime tests or new diagnostic implementation assessed",
+    "mode": "read-only-document-review",
+    "reviewer": "/root/engine_plan_review"
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "excel-pedido",
+  "version": "1.2.0",
+  "title": "Excel: preencher pedido",
+  "purpose": "Abrir a planilha modelo no Excel, preencher Cliente (B2) e Valor do pedido (B3) pela UI e salvar uma cópia.",
+  "category": "windows",
+  "inputs": {
+    "input_path": {
+      "role": "input_path",
+      "required": true
+    },
+    "output_path": {
+      "role": "output_path",
+      "required": true
+    },
+    "cliente": {
+      "role": "text",
+      "default": "Cliente Teste 01"
+    },
+    "valor": {
+      "role": "text",
+      "default": "1500"
+    }
+  },
+  "preconditions": [
+    {
+      "kind": "app_installed",
+      "app": "excel"
+    },
+    {
+      "kind": "file_exists",
+      "input": "input_path"
+    },
+    {
+      "kind": "output_absent",
+      "input": "output_path",
+      "on_violation": "refuse"
+    }
+  ],
+  "launch": {
+    "app": "excel",
+    "args": [
+      "{input_path}"
+    ]
+  },
+  "procedure": "procedure.json",
+  "end_state": "An app opened only for this run is closed after a verified result; an app that was already open stays open; on any other result it stays open for checking.",
+  "step_timeout_ms": 45000,
+  "char_delay_ms": 60,
+  "collision": "refuse: an existing output workbook is never overwritten",
+  "verifier": {
+    "kind": "xlsx_cells",
+    "checks": [
+      {
+        "input": "output_path",
+        "cells": {
+          "A1": "Campo",
+          "B1": "Valor",
+          "A2": "Cliente",
+          "A3": "Valor do pedido",
+          "B2": "{cliente}",
+          "B3": "number:{valor}"
+        }
+      },
+      {
+        "input": "input_path",
+        "cells": {
+          "A1": "Campo",
+          "B1": "Valor",
+          "A2": "Cliente",
+          "A3": "Valor do pedido",
+          "B2": null,
+          "B3": null
+        }
+      }
+    ]
+  },
+  "notes": "Promoted from the P01 Engine scenario as an authored keyboard-only procedure. cliente/valor are inputs (T10/T11 candidate).",
+  "stable_ms": 1500,
+  "save_as": "folder via the dialog's navigation field (Alt+D); only the file name in 'Nome do arquivo' (Alt+N). Derived inputs output_dir/output_name come from output_path."
+}

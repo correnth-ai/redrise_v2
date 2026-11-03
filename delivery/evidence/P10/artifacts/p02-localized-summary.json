@@ -1,0 +1,27 @@
+﻿{
+    "health_hostile":  {
+                           "engine":  "%USERPROFILE%\\RedRise-v2-dev\\stage\\beta-20261027-215359\\@redrise\\engine\\redrise-engine.exe",
+                           "integrity_ok":  true,
+                           "env_python_vars_present":  [
+                                                           "PYTHONDONTWRITEBYTECODE",
+                                                           "PYTHONHOME",
+                                                           "PYTHONIOENCODING",
+                                                           "PYTHONPATH",
+                                                           "PYTHONSTARTUP"
+                                                       ],
+                           "exit":  0,
+                           "status":  "healthy",
+                           "runtime_ok":  true
+                       },
+    "tampered":  {
+                     "status":  "unhealthy",
+                     "unexpected":  [
+                                        "runner/redrise_runner/injected.py"
+                                    ],
+                     "exit":  6
+                 },
+    "restored":  {
+                     "exit":  0
+                 },
+    "imports_from_layout":  true
+}

@@ -1,0 +1,254 @@
+{
+  "ir_version": 1,
+  "category": "windows",
+  "platform": "windows-x86_64",
+  "source": {
+    "recording_id": "authored:boas-vindas@1.0.0",
+    "events_sha256": "authored",
+    "input_origin": "authored-template"
+  },
+  "target_process": "notepad.exe",
+  "params": [
+    {
+      "name": "output_path",
+      "role": "output_path"
+    },
+    {
+      "name": "output_dir",
+      "role": "text"
+    },
+    {
+      "name": "output_name",
+      "role": "text"
+    }
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "Notepad"
+      },
+      "action": {
+        "type": "key",
+        "vk": 78,
+        "mods": {
+          "ctrl": true
+        }
+      }
+    },
+    {
+      "id": 1,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "Notepad"
+      },
+      "action": {
+        "type": "type_text",
+        "text": {
+          "literal": "Boas vindas à RedRise! Estamos felizes em tê-los conosco! Esperamos que as automações lhes seja útil!"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "Notepad"
+      },
+      "action": {
+        "type": "key",
+        "vk": 187,
+        "mods": {
+          "ctrl": true
+        }
+      }
+    },
+    {
+      "id": 3,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "Notepad"
+      },
+      "action": {
+        "type": "key",
+        "vk": 187,
+        "mods": {
+          "ctrl": true
+        }
+      }
+    },
+    {
+      "id": 4,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "Notepad"
+      },
+      "action": {
+        "type": "key",
+        "vk": 187,
+        "mods": {
+          "ctrl": true
+        }
+      }
+    },
+    {
+      "id": 5,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "Notepad"
+      },
+      "action": {
+        "type": "key",
+        "vk": 83,
+        "mods": {
+          "ctrl": true
+        }
+      },
+      "effectful": true
+    },
+    {
+      "id": 6,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "key",
+        "vk": 68,
+        "mods": {
+          "alt": true
+        }
+      }
+    },
+    {
+      "id": 7,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "type_text",
+        "text": {
+          "param": "output_dir"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "key",
+        "vk": 13
+      }
+    },
+    {
+      "id": 9,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "key",
+        "vk": 78,
+        "mods": {
+          "alt": true
+        }
+      }
+    },
+    {
+      "id": 10,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "key",
+        "vk": 65,
+        "mods": {
+          "ctrl": true
+        }
+      }
+    },
+    {
+      "id": 11,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "type_text",
+        "text": {
+          "param": "output_name"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "from_seq": [
+        0,
+        0
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "key",
+        "vk": 13
+      },
+      "effectful": true
+    }
+  ]
+}

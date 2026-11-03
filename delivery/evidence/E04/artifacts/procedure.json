@@ -1,0 +1,121 @@
+{
+  "ir_version": 1,
+  "category": "windows",
+  "platform": "windows-x86_64",
+  "source": {
+    "recording_id": "recording",
+    "events_sha256": "0dde1aa7aeb17664aa895d23c278f5ab20af3e79ce6860070753a1d582b9904f",
+    "input_origin": "injected-accepted"
+  },
+  "target_process": "notepad.exe",
+  "params": [
+    {
+      "name": "output_path",
+      "role": "output_path"
+    }
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "from_seq": [
+        1,
+        1
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "Notepad"
+      },
+      "action": {
+        "type": "key",
+        "vk": 78,
+        "mods": {
+          "ctrl": true,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 1,
+      "from_seq": [
+        5,
+        56
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "Notepad"
+      },
+      "action": {
+        "type": "type_text",
+        "text": {
+          "literal": "Teste RedRise E04 ç 123"
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 2,
+      "from_seq": [
+        59,
+        59
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "Notepad"
+      },
+      "action": {
+        "type": "key",
+        "vk": 83,
+        "mods": {
+          "ctrl": true,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": true
+    },
+    {
+      "id": 3,
+      "from_seq": [
+        63,
+        242
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "type_text",
+        "text": {
+          "param": "output_path"
+        }
+      },
+      "effectful": false
+    },
+    {
+      "id": 4,
+      "from_seq": [
+        244,
+        244
+      ],
+      "expect": {
+        "process_image": "notepad.exe",
+        "class": "#32770"
+      },
+      "action": {
+        "type": "key",
+        "vk": 13,
+        "mods": {
+          "ctrl": false,
+          "shift": false,
+          "alt": false,
+          "win": false
+        }
+      },
+      "effectful": true
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+# P04 — everyday templates (decisions)
+
+Status: development (2026-10-27). Not verifiable before P02/P03.
+
+| ID | Decision | Why |
+|---|---|---|
+| P04-D1 | A template is a folder `templates/<id>/` with `template.json` (id, version, purpose, category, inputs, preconditions, launch, collision policy, verifier) and `procedure.json` (Engine IR). The Runner command `run-template` resolves inputs, checks preconditions, launches the target app, runs the procedure as a job and runs the template's verifier | Minimal metadata (roadmap P04.1); no domain model ahead of P05 |
+| P04-D2 | Shipped template procedures are **authored IR**, keyboard-only, with no window-geometry clicks. Customer recordings remain Engine recordings | Robust across window placement; text containing `à ê ç õ ú` is typed through Unicode input (pt-BR dead keys are refused only when *recorded*) |
+| P04-D3 | Paths resolved by the Runner through the Shell known-folder API (Desktop handles OneDrive/folder redirection). The collision policy for Boas-vindas is **refuse** with `output_exists`; never overwrite, never rename silently | Roadmap P04.2: explicit behaviour if the file exists |
+| P04-D4 | Verifiers ship with the Runner and use the stdlib only: UTF-8 text equality for TXT; a minimal read-only XLSX cell reader (zip + XML) for Excel; process + top-level window class for Outlook; final URL classification for Gmail | Independent of the Engine; works on the clean machine (openpyxl stays a lab tool) |
+| P04-D5 | Outlook template = open the installed client and confirm its main window (classic `OUTLOOK.EXE` / window class `rctrl_renwnd32`, or new Outlook `olk.exe`). Absent → `precondition_missing: outlook_not_installed`. It never reads, lists or sends mail | Roadmap P04.4 |
+| P04-D6 | Gmail template = Browser category: open `https://mail.google.com/` in RedRise's own browser profile and classify the final URL: `accounts.google.com` → `login_required`, `mail.google.com/mail/` → `inbox_authenticated`. RedRise never types credentials; the user signs in by hand inside the RedRise browser when they choose to. The profile is persistent per user under the data root | Roadmap P04.4: distinguish the login page from an authenticated inbox |
+| P04-D7 | Browser everyday template: **candidate pending a product choice of target**. The P03 synthetic form proves the mechanism; a shipped template needs a real, stable target site, which is a product decision | Avoids inventing a fictitious public site or a bundled server/port |
+
+| P04-D8 | **Save As rule (user direction, 2026-10-27):** the folder is set in the dialog's navigation field (Alt+D, folder, Enter) and **only the file name** goes into "Nome do arquivo" (Alt+N, Ctrl+A, name, Enter). The full path is never typed into the name field. Templates derive `output_dir`/`output_name` from `output_path`, which stays the collision guard. Applied to the templates and to the synthetic-operator demonstrations (E04, P01). Corporate skill: `windows-file-dialog-navigation` | A full path in the name field once produced no save at all (observed by the user); after the change Boas-vindas passed 5/5 |
+| P04-D9 | Per-template pacing (`settle_ms`, `char_delay_ms`, `stable_ms`) is passed to the Engine | Cold-started editors and dialogs need longer settling than the defaults |
+
+**Development-machine limits (this run):** this user's Desktop is OneDrive-redirected, so the Boas-vindas proof binds the output to a lab folder (the Desktop resolution itself is checked read-only). Outlook is installed with a real account, so only detection and preconditions are exercised; the launch proof runs on the VM or with explicit user consent. Gmail is opened only in a fresh RedRise profile, with no login.

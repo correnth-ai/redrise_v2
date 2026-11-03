@@ -1,0 +1,29 @@
+﻿{
+    "discover":  {
+                     "status":  "found",
+                     "version":  "16.0.20527.20088",
+                     "method":  "app_paths",
+                     "exit":  0
+                 },
+    "start":  {
+                  "exit":  0,
+                  "close":  "closed",
+                  "dismissed":  true,
+                  "excel_before":  0,
+                  "pid":  15884,
+                  "status":  "ready"
+              },
+    "invalid":  {
+                    "launched":  false,
+                    "footer":  "Código: CONTRACT-EXCEL-DESCRIPTOR | Módulos para investigação: RR-EXCEL-DISC, RR-EXCEL-START, RR-CONTRACT, RR-FLOW",
+                    "error_code":  "CONTRACT-EXCEL-DESCRIPTOR",
+                    "exit":  3
+                },
+    "new":  {
+                "close":  "closed",
+                "status":  "ready",
+                "pid":  19356,
+                "stage":  "start",
+                "exit":  0
+            }
+}

@@ -1,0 +1,198 @@
+{
+  "step": "P10",
+  "status": "closed_beta_available_pending_review",
+  "run_id": "RUN-U27-20261027-01",
+  "build": {
+    "app_version": "0.1.0-beta.1",
+    "installer": {
+      "file": "RedRise-Setup-0.1.0-beta.1.exe",
+      "sha256": "67a666787c337c6dca3f023700e28c1eb87e45b95a717e0ccdeede8250992071",
+      "bytes": 308261468,
+      "lab_path": "%USERPROFILE%/RedRise-v2-dev/release/0.1.0-beta.1/"
+    },
+    "payload_sha256": "1453ce16a1eb9a0d1bb90d988d06301e584859179a2d3ce3c7e820ffa72284e7",
+    "installed_manifest_sha256": "557c79f3494fea3a6f8bce5732ba85020f933a3084520ec7ddb76f92d1c26f86",
+    "layout_files": 3734,
+    "engine_sha256": "5f0c5b3b00fe94adf6c5946d82e6a19b7b11bae4e6c63f4ee20f3969ec99563c",
+    "desktop_sha256": "9155fa6cf5df9dc6d1c34cd65dad3c61f2b61587ed79b408b0f67b52e1beb90b",
+    "components": [
+      "RedRise.exe (Tauri 2.12.5)",
+      "engine/redrise-engine.exe",
+      "runtime/python (CPython 3.12.10 private)",
+      "runner",
+      "core",
+      "contracts",
+      "browser adapter + Playwright 1.63.0 + Chrome for Testing 153.0.8010.12",
+      "postgres (17.6-1 EDB, bin/share/lib DLLs)",
+      "templates (5, 1 candidate not shipped)"
+    ]
+  },
+  "environment": {
+    "os": "Windows 11 Pro 10.0.26200 x64",
+    "user": "the developer's own Windows user (not a clean machine; global toolchains present, by U27 not a gate)",
+    "install_root": "%LOCALAPPDATA%/Programs/@redrise (real path; MSIX LocalCache checked empty)",
+    "data_root": "%LOCALAPPDATA%/RedRise"
+  },
+  "checks": [
+    {
+      "kind": "component",
+      "native": true,
+      "name": "P02 localized on beta layout: hostile PYTHON* env, tamper, private imports",
+      "result": "passed",
+      "artifact": "p02-localized-summary.json"
+    },
+    {
+      "kind": "component",
+      "native": true,
+      "name": "P03 browser on beta layout: package-only Chromium, fake success refuted",
+      "result": "passed (verified true)",
+      "artifact": "p03-browser-summary.json"
+    },
+    {
+      "kind": "component",
+      "native": true,
+      "name": "P04 template suite on beta layout (diagnostic footers present)",
+      "result": "all as expected",
+      "artifact": "p04-templates-summary.json"
+    },
+    {
+      "kind": "component",
+      "native": true,
+      "name": "installer isolated: corrupted refused, install+health, previous kept, rollback, uninstall keeps data",
+      "result": "passed",
+      "artifact": "installer-checks-summary.json"
+    },
+    {
+      "kind": "practical_e2e",
+      "native": true,
+      "manual": "synthetic operator (SendInput) + window screenshots",
+      "name": "real install via Explorer (as double-click), app relaunched",
+      "result": "installed 0.1.0-beta.1; RedRise.exe running from install root",
+      "artifact": "real-install-result.json"
+    },
+    {
+      "kind": "practical_e2e",
+      "native": true,
+      "manual": "synthetic operator",
+      "name": "first open + host bootstrap through UI: create team, first admin, host station",
+      "result": "passed: private PostgreSQL + Core + Runner agent started by the app; station 'pronta'; join code shown",
+      "artifact": "ui-06-config.png"
+    },
+    {
+      "kind": "practical_e2e",
+      "native": true,
+      "name": "upgrade beta.1 -> beta.2 with the installer (app closed by WM_CLOSE: children stopped, PostgreSQL shutdown checkpoint)",
+      "result": "installed 0.1.0-beta.2, previous kept, app reopened on login (team preserved)",
+      "artifact": "beta2-install-result.json, ui-07-beta2-after-upgrade.png"
+    },
+    {
+      "kind": "contract",
+      "native": true,
+      "name": "post-upgrade API read: team/users/stations/templates persisted; host station online, session ready",
+      "result": "passed"
+    }
+  ],
+  "interventions": [
+    "Install launched through a shortcut with --quiet --relaunch opened by Explorer (the desktop-control tool was unavailable; equivalent to double-click without the confirmation dialog)",
+    "UI driven by a synthetic SendInput operator; first attempt mis-ordered keystrokes (Tab vs Unicode in WebView2) and was redone field by field"
+  ],
+  "defects_found": [
+    "Team-created message uses a native alert titled 'tauri.localhost diz' (UX) -> replace with in-app panel",
+    "Windows Firewall decision for LAN port 47800 not exercised (single-machine arrangement); LAN with a second station remains for P13"
+  ],
+  "not_executed": [
+    "second physical station / LAN",
+    "installation dialog path (confirmation click)",
+    "offline install with network disconnected"
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/P10/artifacts/beta2-install-result.json",
+      "sha256": "03d563f52a8e07a01d17bea1ec36e7f971bef0e5daf0f1158066036bbc236b26"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/installer-checks-summary.json",
+      "sha256": "e760ad925325003e8d93dfff7035d16882caa7ac1eefa0474ee9d8411cf6361a"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/p02-imports.txt",
+      "sha256": "28abe5578c6f5cdc07e5258c19e2a24615a2a2c0e360bec7c80cce7b39c3b3ad"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/p02-localized-summary.json",
+      "sha256": "2f79764b72b06b16ddeeca702d70bde2ded561371a0817a28ebad004a9b4e4ea"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/p03-browser-summary.json",
+      "sha256": "e4e3ebff0b16a8c1e83de05fa934afff2126e15f594ff9ed26db871dc0ec11f3"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/p04-templates-summary.json",
+      "sha256": "5e4ddafe2e11d6595328dac06f9b99e9638503d1466bec15b2cf50808f8e1dbf"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/pack.json",
+      "sha256": "8fc51817dc342917fa5558843aaf250a9635c441a949ce3554d033dfc34f234a"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/real-install-result.json",
+      "sha256": "2605790a508d8710c448504f2f78b6e692e10c26b8cdfa3e7a66636e02e9dbab"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/ui-01-welcome.png",
+      "sha256": "40be57ec31e8ee9a27f5b43235addd5a0c5b1c2877f955aafc7ac8710f385eb1"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/ui-04-after-create.png",
+      "sha256": "040146697ed59adf7a8e2a8d600118804cee79964ec36b18a611368e836de8ac"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/ui-05-shell.png",
+      "sha256": "aa01f0bfdc91b3af27c8f94393a3fc15eefb340cf3207288062641703ffc5216"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/ui-06-config.png",
+      "sha256": "8ba896f93243d0eba4719146ad82d32e0e784d33bb78c0132522e722f22f518a"
+    },
+    {
+      "path": "delivery/evidence/P10/artifacts/ui-07-beta2-after-upgrade.png",
+      "sha256": "e492e540509e9f99df96b2f5a4243c4023aeee3432389edad321d6baf5f69622"
+    }
+  ],
+  "evidence_note": "Profile path redacted to %USERPROFILE%; screenshots contain only synthetic data, the machine name and the team certificate fingerprint (not secret).",
+  "review": {
+    "date": "2026-10-27",
+    "reviewer": "independent read-only subagent",
+    "verdicts": {
+      "P05": "APPROVE (fix correlation)",
+      "P06": "REJECT B1: /setup reachable from LAN before first admin",
+      "P07": "APPROVE",
+      "P08": "REJECT B2: new request_id per click -> duplicate job",
+      "P10": "APPROVE availability; rebuild after fixes"
+    }
+  },
+  "fixes_after_review": [
+    "B1: /api/v1/setup accepted only from loopback (test_12b binds 0.0.0.0 and calls from the LAN address -> AUTH-FORBIDDEN)",
+    "B2: one request_id per run form, kept until a definitive answer; submit disabled while pending",
+    "TLS handshake moved to the connection thread with a 30 s timeout (accept() no longer blockable)",
+    "lease sweep also on list/get jobs (offline/revoked station jobs become uncertain)",
+    "agent: single-flight outbox flush; tick survives unexpected exceptions",
+    "Core errors return the caller's X-Correlation-Id; invalid UUIDs -> 400 VALIDATION",
+    "concurrent identical request_id answers with the existing job; last-admin check locks all admin rows",
+    "diagnostic validate rejects unknown fields and non-object version/technical_details/boundary",
+    "long Tauri commands async; record_compile canonicalizes paths; native alert/prompt/confirm replaced by in-app UI"
+  ],
+  "candidate": {
+    "app_version": "0.1.0-beta.2",
+    "installer": {
+      "file": "RedRise-Setup-0.1.0-beta.2.exe",
+      "sha256": "d8383c1a439e67dd0a984889b6711cecc4889f1974488d633b726c75b358a4d3",
+      "bytes": 308353242
+    },
+    "payload_sha256": "6c534c869774f1e81d43fe11ccd17b635d528c27477dd5e574227122975ec19b",
+    "installed_manifest_sha256": "a74d32ffe85a1039034d25b9270233c2baf1b4dd08b90c0b09f19450aac2a565",
+    "desktop_sha256": "ec60514cfcf05e544506dd1c7f559715378b2cffa301a22cda10d44b53200d42",
+    "tests": "contracts 15, runtime 41, core+agent 20 (real PostgreSQL 17.6 temp cluster), desktop update unit 4, engine 46: all pass"
+  },
+  "incident": "One screen-region capture during the upgrade caught another application's window (RedRise was not in front); the image was deleted immediately and never used. Captures now use PrintWindow on the RedRise window only, and the synthetic operator aborts if RedRise is not the foreground window."
+}

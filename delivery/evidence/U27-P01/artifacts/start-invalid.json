@@ -1,0 +1,35 @@
+{
+  "status": "error",
+  "diagnostic": {
+    "error_code": "CONTRACT-EXCEL-DESCRIPTOR",
+    "category": "contract",
+    "what_happened": "Não foi possível usar a resposta da localização do Excel para iniciar a planilha.",
+    "completed": "A resposta foi recebida, mas o contrato foi recusado.",
+    "pending": "A inicialização não foi executada.",
+    "effect_state": "none",
+    "next_action": "Copie o diagnóstico e encaminhe ao suporte. Repetir a mesma operação pode não resolver.",
+    "retry": "not_useful",
+    "details_summary": "Descritor incompatível na fronteira localizar → iniciar (schema 'redrise.excel-descriptor/0'). A origem precisa ser investigada no produtor, consumidor ou composição.",
+    "reported_by": "RR-EXCEL-START",
+    "module_hints": [
+      "RR-EXCEL-DISC",
+      "RR-EXCEL-START",
+      "RR-CONTRACT",
+      "RR-FLOW"
+    ],
+    "diagnosis_status": "unconfirmed",
+    "boundary": {
+      "producer": "RR-EXCEL-DISC",
+      "consumer": "RR-EXCEL-START",
+      "contract": "redrise.excel-descriptor/1"
+    },
+    "correlation_id": "b1e02235e8934fa8",
+    "version": {},
+    "technical_details": {
+      "reason": "schema 'redrise.excel-descriptor/0'"
+    },
+    "cause": null,
+    "schema": "redrise.diagnostic/1"
+  },
+  "message": "O que aconteceu: Não foi possível usar a resposta da localização do Excel para iniciar a planilha.\nResultado: A resposta foi recebida, mas o contrato foi recusado. A inicialização não foi executada.\nPróxima ação: Copie o diagnóstico e encaminhe ao suporte. Repetir a mesma operação pode não resolver.\nDetalhes para diagnóstico: Descritor incompatível na fronteira localizar → iniciar (schema 'redrise.excel-descriptor/0'). A origem precisa ser investigada no produtor, consumidor ou composição. Referência: b1e02235e8934fa8.\nCódigo: CONTRACT-EXCEL-DESCRIPTOR | Módulos para investigação: RR-EXCEL-DISC, RR-EXCEL-START, RR-CONTRACT, RR-FLOW"
+}

@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "product_id": "product:redrise-v2",
+  "authorization": "user-follow-up:2026-10-24:reuse-existing-redrise-logos",
+  "source_repository": "repo:redrise-platform",
+  "source_manifest": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\manifest.json",
+  "source_manifest_sha256": "992c4167466a1b5e4bbc2625549e88d02d0e2269e5d066c4d5a45d99a84138fb",
+  "source_revision": 3,
+  "source_provenance": "doc/plans/brandbook/logo-assets/manifest.json",
+  "kind": "raster-symbol-and-raster-lockups",
+  "wordmark_description": "Montserrat ExtraBold 800",
+  "tagline_description": "Montserrat Medium 500",
+  "replacement_allowlist": [
+    "Copy listed logo bytes into new product assets"
+  ],
+  "preservation_allowlist": [
+    "Original filenames and artwork",
+    "Original source/provenance and typography descriptions"
+  ],
+  "excluded": [
+    "Old product source code and runtime",
+    "Hero/background artwork",
+    "Font binaries",
+    "Old product UI/theme"
+  ],
+  "assets": [
+    {
+      "file": "redrise-icon-16x16.png",
+      "sha256": "3f9acc48225a7196c3979c058cacee65028720ed1935458be1d4a94d00fb6c91",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-16x16.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-24x24.png",
+      "sha256": "f9edd5cf5f9764e1fa20b0408552d89405a2f3406734213b4ddb98b727746f09",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-24x24.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-32x32.png",
+      "sha256": "f28498a57fc7251be3ee3afadf06aa313fa27e428dd2cc989d886bdcfeb431ea",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-32x32.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-48x48.png",
+      "sha256": "f50c90043fad48b693a2ec981df06ddd9b40cf2ac5bbcd6dd424de2a6b849a79",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-48x48.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-64x64.png",
+      "sha256": "a42aaf51fb1f0e66c84722252f65e1cb9f70c0e73822175d7b176fa79feb4f8c",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-64x64.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-96x96.png",
+      "sha256": "bfc599e8f10d8562b22b311fa9a0c8cd75409f4a8031c2cd932d7542645636d1",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-96x96.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-128x128.png",
+      "sha256": "3409459462595e53642286cf9f441444eabaa2489c5d38cc2a9265f483a12162",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-128x128.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-192x192.png",
+      "sha256": "952291c8ffdf3fa8a93fafa0aeaad867d3a0929e5de0e35b33823c228938ea1a",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-192x192.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-256x256.png",
+      "sha256": "22295656e70de7efdb24579873fac4c2afcfa2eb20879be288a8b9ad9fe40ede",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-256x256.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-384x384.png",
+      "sha256": "2429627f7622761b5f28ed25a4a1b3cf0dd7ce5acd5731c8c5ca9ebad43dc64e",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-384x384.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-512x512.png",
+      "sha256": "fd1ccf3d3a6fb17d0c83ec8a2d7c5d094717c76c1f2a9a845346e480a9563124",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-512x512.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-768x768.png",
+      "sha256": "116ad5f8768450e4d59eb78f8ba233dfb327cd2a1c695519857ead64a28aa5ac",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-768x768.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-icon-1024x1024.png",
+      "sha256": "4ac10274ef6370073f001dd3a96da92f5075b3a50e29e918a6d63668cd416df1",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-icon-1024x1024.png",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-lockup-light.svg",
+      "sha256": "941ef74759d929aff30520279264c31cf372232ac678830030c0d74ad32c2cbd",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-lockup-light.svg",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    },
+    {
+      "file": "redrise-lockup-dark.svg",
+      "sha256": "75d0d5248002297e698ba06558f1c379160ae80fef0d66035bc92069f4f96b9f",
+      "source_path": "D:\\Correnth\\products\\redrise\\repos\\platform\\ui\\public\\brand\\redrise\\redrise-lockup-dark.svg",
+      "classification": "public-presentation-logo",
+      "operation": "byte-identical-copy"
+    }
+  ]
+}

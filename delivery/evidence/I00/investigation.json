@@ -1,0 +1,162 @@
+{
+  "step": "I00",
+  "status": "verified",
+  "run_id": "RUN-I00-20261026-01",
+  "work_order": "delivery/work-orders/I00-openadapt-investigation.md",
+  "source_revision": "unborn",
+  "source_tree_sha256_at_start": "dba9b34313b4cd720006c9f07f4cd9789d49cc873ddcd0e73843f57b259417f8",
+  "predecessor": {
+    "step": "P00",
+    "evidence": "delivery/evidence/P00/bootstrap.json",
+    "sha256": "ef88f0ffe4eb0be43a429a03bd77b17954af6a234d53dea25db837fef2650b88"
+  },
+  "targets": [
+    {
+      "repo": "https://github.com/morluto/awesome-reverse-engineering",
+      "commit": "63d23e3197245a28028b21c8f342df18a9ac7859",
+      "role": "method catalogue"
+    },
+    {
+      "repo": "https://github.com/OpenAdaptAI/OpenAdapt",
+      "commit": "a016fd67ed28a14ef624f765840b9ab92448e8cc",
+      "role": "canonical source (packages/capture 1.3.0, packages/flow 2.4.0)"
+    },
+    {
+      "repo": "https://github.com/OpenAdaptAI/openadapt-capture",
+      "commit": "6e2e1ad6e882a99b6e6e742a85cb812aee82c59f",
+      "role": "frozen mirror, diff only"
+    },
+    {
+      "repo": "https://github.com/OpenAdaptAI/openadapt-flow",
+      "commit": "c31f23d07e442dbcde2d58cbf23ae4fe7d0c5df1",
+      "role": "frozen mirror, diff only"
+    }
+  ],
+  "lab": "C:/Users/raulv/RedRise-v2-dev/research (public clones, depth 1)",
+  "actions_performed": [
+    "git clone --depth 1 of the four targets into the C: lab; git rev-parse HEAD recorded",
+    "Catalogue README sections read: Start here, Dynamic instrumentation, Debuggers, Native analysis, Language runtimes, Web and protocols, File formats, Binary diffing, AI-assisted",
+    "Static source reading of manifests, packages/capture and packages/flow (principal plus two read-only subagents)",
+    "diff -rq standalone vs monorepo capture",
+    "Principal spot-checked subagent citations in source (ir.py:46/81/91/5916, backend.py:33, windows_backend.py:1-12, server.py:18-38, recorder.py:994/1608-1629/3701/4612/4641, windows.py:61-64/940, synchronized_queue.py:104-113)"
+  ],
+  "not_executed": [
+    "No upstream code installed or run; no dynamic analysis (ProcMon/WinDbg/Frida evaluated and dismissed with reasons)",
+    "Hypotheses C11 (writer CPU spin), C12 (silent LL-hook removal) and F11 (no cancel token) not reproduced"
+  ],
+  "deliverables": [
+    {
+      "path": "docs/investigation/OPENADAPT-SOURCE-MAP.md",
+      "sha256": "67d5166d606f467311170ad3964e94702a3e13aa95f70745b63629e5d303bc0c"
+    },
+    {
+      "path": "docs/investigation/ENGINE-BEHAVIOR-SPEC.md",
+      "sha256": "261a970f76146512a82732bac2e2008293dbe82e916a1be0e27ccbddeda11cf9"
+    },
+    {
+      "path": "docs/investigation/ENGINE-BUILD-PLAN.md",
+      "sha256": "a946d1d4159bb521df9efdec5d7afaf8761b311c56fc4b0cdd30a54d083e5a30"
+    }
+  ],
+  "confirmed_findings_summary": [
+    "Standalone capture/flow repos are frozen; canonical sources are monorepo packages/*",
+    "Upstream capture writer drain is a non-blocking loop with no sleep (recorder.py:1608-1629); termination depends on a shared counter around a multiprocessing queue; joins after startup have no timeout",
+    "Upstream drops injected input in capture",
+    "Flow IR (SCHEMA_VERSION 2) imports qualification modules; delivery receipts are never outcome-verified; uncertain delivery is never retried",
+    "Licences: MIT for launcher/capture/flow; benchmark configurations AGPL-3.0/GPL-3.0; no upstream code incorporated"
+  ],
+  "support_tools": {
+    "skills": [
+      {
+        "name": "scope-planning",
+        "sha256": "fd7b13af53a7853d7cbd43ac9f72e801d602c7fb4e592981ac4842e4ded58bfa"
+      },
+      {
+        "name": "upstream-license-governance",
+        "sha256": "74699dbd93027deebbb30d04af0be7cea5a90ccefdcc9bcb4f0a81268c0f3ec1"
+      },
+      {
+        "name": "task-context-checkpoint",
+        "sha256": "88c25b1e0dd233056be4b9f6dfa7ff8c1543d3844f6827f90efc97ec315a3437"
+      }
+    ],
+    "skills_catalog_commit": "63ffa260e8807b9a3fa28a59e16103a591fbea22",
+    "memory": {
+      "workspace": "correnth",
+      "project": "redrise-v2",
+      "status": "degraded",
+      "reason": "ai-memory CLI not present at %LOCALAPPDATA%/ai-memory-correnth/bin",
+      "fallback": "canonical files"
+    },
+    "graph": {
+      "status": "not_used",
+      "reason": "repo:redrise-v2 has no registered graphify root"
+    }
+  },
+  "delegation": [
+    {
+      "agent": "read-only Explore",
+      "scope": "packages/capture stop/finalization",
+      "result": "cited report; principal spot-checked"
+    },
+    {
+      "agent": "read-only Explore",
+      "scope": "packages/flow compile/IR/replay/verify",
+      "result": "cited report; principal spot-checked"
+    }
+  ],
+  "review": {
+    "reviewer": "independent read-only review subagent, Claude session 2026-10-26 (not the author)",
+    "date": "2026-10-26",
+    "first_verdict": "approve-with-fixes (10 defects: SOLID map, language alternatives, increment completeness, 5 citation errors, Q5 wording, tests mapping, hook liveness detection, missing evidence file)",
+    "fixes": "all 10 addressed; re-checked by the same reviewer",
+    "final_verdict": "approve (residual note: record reviewer identity/date — done here)"
+  },
+  "limitations": [
+    "Investigation is source-reading only; upstream failure modes are documented or hypotheses, not reproductions",
+    "Recording/replay of the first slice uses window geometry plus keyboard; UIA structural targeting deferred"
+  ],
+  "next_action": "E01: record decision E01-D1..D6 and contracts in engine/crates/engine-core with tests",
+  "checks": [
+    {
+      "name": "pinned revisions",
+      "command": "git -C <lab>/<repo> rev-parse HEAD (4 repos)",
+      "expected": "commits recorded in targets[]",
+      "actual": "match; independently re-checked by reviewer",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "citation spot-check (principal)",
+      "command": "sed/grep at cited lines in OpenAdapt a016fd6",
+      "expected": "claims present",
+      "actual": "13 citations confirmed",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "citation check (independent reviewer)",
+      "command": "reviewer opened 19 citations",
+      "expected": "OK",
+      "actual": "17 OK, 2 wrong -> fixed, re-check approved",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "catalogue traceability",
+      "command": "review of SOURCE-MAP §2 Q1-Q8",
+      "expected": "question->resource->doc->target->result incl. dismissed",
+      "actual": "approved",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "foundation validator",
+      "command": "node scripts/validate-base.mjs",
+      "expected": "passed",
+      "actual": "passed after evidence completion",
+      "exit_code": 0,
+      "result": "passed"
+    }
+  ]
+}

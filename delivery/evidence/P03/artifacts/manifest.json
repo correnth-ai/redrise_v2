@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "recording_id": "recording",
+  "status": "complete",
+  "reason": null,
+  "platform": "windows-x86_64",
+  "target_process": "redrise-browser",
+  "input_origin": "dom-trusted-events",
+  "event_count": 4,
+  "events_sha256": "69fd35d113720229b334bc80fc45c4c38310c6e8f208f20b4d57981b7bfa9667",
+  "dropped": 0,
+  "source": {
+    "filtered_out": 0,
+    "injected_ignored": 0,
+    "injected_accepted": 0
+  },
+  "started_at_unix_ms": 1793076801386,
+  "duration_ms": 13512,
+  "engine_version": "0.1.0"
+}

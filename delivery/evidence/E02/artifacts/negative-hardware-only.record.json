@@ -1,0 +1,25 @@
+{
+  "finalize_ms": 1,
+  "manifest": {
+    "dropped": 0,
+    "duration_ms": 2724,
+    "engine_version": "0.1.0",
+    "event_count": 0,
+    "events_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format": 1,
+    "input_origin": "hardware-only",
+    "platform": "windows-x86_64",
+    "reason": "no events captured on the target",
+    "recording_id": "hardware-only",
+    "source": {
+      "filtered_out": 0,
+      "injected_accepted": 0,
+      "injected_ignored": 8
+    },
+    "started_at_unix_ms": 1793070321655,
+    "status": "empty",
+    "target_process": "notepad.exe"
+  },
+  "reason": "no events captured on the target",
+  "status": "empty"
+}

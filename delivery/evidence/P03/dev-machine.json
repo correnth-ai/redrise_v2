@@ -1,0 +1,143 @@
+{
+  "step": "P03",
+  "status": "in_progress",
+  "scope_of_this_record": "dev-machine development checks; P03 cannot be verified before P02 (clean VM) and its own clean-machine pass",
+  "run_id": "RUN-P03-20261027-01",
+  "work_order": "delivery/work-orders/P03-browser-private.md",
+  "decision": "docs/decisions/P03-browser-private.md",
+  "candidate": {
+    "engine_sha256": "2a8b830f9642007423aca9cb4bda774e70b572acc5d417734516460132489305",
+    "layout_manifest_sha256": "3380aa25c1b57753ac611b3807dbb3bbae20d77b9ec3457336a4663796069735",
+    "layout_files": 1283,
+    "layout_bytes": 597828276,
+    "lab_stage": "%USERPROFILE%/RedRise-v2-dev/stage/p03-20261027-015212/@redrise",
+    "playwright": "1.63.0 (+ greenlet 3.5.6, pyee 13.0.1, typing-extensions 4.16.0)",
+    "chromium": "Chrome for Testing 153.0.8010.12 (playwright chromium rev 1243)",
+    "wheel_sha256": {
+      "playwright-1.63.0-py3-none-win_amd64.whl": "2f9a707a6c6c91157ed77bff2b8caeb04b3c8d46e70d585fc134298cbe4b5cc6"
+    }
+  },
+  "checks": [
+    {
+      "name": "engine suite incl. browser",
+      "command": "cargo test --release; cargo clippy -- -D warnings",
+      "expected": "pass",
+      "actual": "46 passed (browser 9: IR v2, duplicate fill collapse, fill param, refusals, mixed category, non-http goto, origin, driver-only replay, origin mismatch, failed vs uncertain)",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "adapter serve smoke",
+      "command": "python -m redrise_browser serve (JSON lines)",
+      "expected": "package chromium; missing selector not_attempted; store persisted",
+      "actual": "as expected",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "native record through Chromium UI",
+      "command": "redrise-engine record --category browser --url http://127.0.0.1:47321/ (operator: focus click, Tab, typing, Space)",
+      "expected": "manifest complete; form submitted",
+      "actual": "complete; store 1 record; recorder ready before input",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "compile",
+      "command": "redrise-engine compile",
+      "expected": "goto, fill, fill, click",
+      "actual": "4 steps (focus click ignored)",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "replay + independent store read",
+      "command": "redrise-engine run; verify_browser_result.py --expect-records 2",
+      "expected": "2 matching records",
+      "actual": "verified",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "fault injection refuted",
+      "command": "server --fake-success; run; verify --expect-records 1",
+      "expected": "engine completed_unverified, verifier refutes",
+      "actual": "engine exit 0 (completed_unverified), verifier exit 1",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "name": "packaged browser only",
+      "command": "Win32_Process chrome.exe paths; mtime of %LOCALAPPDATA%/ms-playwright",
+      "expected": "package path; global cache untouched",
+      "actual": "package path only; mtime unchanged",
+      "exit_code": 0,
+      "result": "passed"
+    }
+  ],
+  "defects_found_and_fixed": [
+    "record loop stalled while a thread blocked on stdin ReadFile -> PeekNamedPipe polling on the main loop",
+    "keyboard focus started in the address bar; recorder now ignores focus-only clicks and the operator focuses the page",
+    "adapter reported ready before the start page loaded (early input lost) -> ready emitted after load",
+    "Enter on a button would replay activation twice -> Enter recorded only on text inputs"
+  ],
+  "not_executed": [
+    "clean-machine pass (needs P02 VM)",
+    "network physically disconnected (only loopback traffic was used)",
+    "sites other than the synthetic local form"
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/P03/artifacts/compile.json",
+      "sha256": "45a62adefa1c082c2eecbff5fc391587df224213f77096dec9ed115110cb68ac"
+    },
+    {
+      "path": "delivery/evidence/P03/artifacts/manifest.json",
+      "sha256": "463d354b37b107dc83afe967d75346399e35885c9d566479707ca8e91253aae3"
+    },
+    {
+      "path": "delivery/evidence/P03/artifacts/operator-demo.scenario.json",
+      "sha256": "f1d3e77e537ee61b2cb7a2bcc88f0351121509e91422442096cf6b14290a3000"
+    },
+    {
+      "path": "delivery/evidence/P03/artifacts/procedure.json",
+      "sha256": "3269c0a291cb3f2e97107fe103c8366e9e701c3459e852462c7cdc387d92df5e"
+    },
+    {
+      "path": "delivery/evidence/P03/artifacts/run-fake.json",
+      "sha256": "c8286a9a5e5e96a8328dd31963da95fbc63be7c4d81eb932d44a092b4115beeb"
+    },
+    {
+      "path": "delivery/evidence/P03/artifacts/run.json",
+      "sha256": "fcf64efb67d76b4e271034f3a50448fafddcfc4980e5891964618d1c385e0b39"
+    },
+    {
+      "path": "delivery/evidence/P03/artifacts/summary.json",
+      "sha256": "4350623aa114bece2997c77beaa8c77466aa0c5646429abc973ce97d72c737aa"
+    },
+    {
+      "path": "delivery/evidence/P03/artifacts/verify-fake.json",
+      "sha256": "765d74c994e29989b5e24efbb55890aa60cde0c04a15d225f15d11e4c2c83313"
+    },
+    {
+      "path": "delivery/evidence/P03/artifacts/verify.json",
+      "sha256": "31f8624a436b2543fbb85fe56d2c959a035eb8ec241c454a198569d7971b6aa0"
+    }
+  ],
+  "evidence_note": "Artifacts have the Windows profile path redacted to %USERPROFILE%.",
+  "review": null,
+  "next_action": "After P02 is verified on the clean VM: include the browser layout in the VM bundle, repeat p03-browser.ps1 there, independent review, then P03 verified.",
+  "revalidations": [
+    {
+      "date": "2026-10-27",
+      "engine_sha256": "2a8b830f9642007423aca9cb4bda774e70b572acc5d417734516460132489305",
+      "reason": "Engine changed in P04 (pacing/stable-ms/--declare flags; browser finalize deadline); Save As now folder via navigation field, bare name in 'Nome do arquivo' (user correction)",
+      "p03_runs": [
+        "run-20261027-091039",
+        "run-20261027-091105"
+      ],
+      "verified": true,
+      "note": "finalize ~0.8-1.1 s after adapter emits 'stopped' before closing Chromium"
+    }
+  ]
+}

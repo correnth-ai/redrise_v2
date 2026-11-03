@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "product_id": "product:redrise-v2",
+  "repository_id": "repo:redrise-v2",
+  "commercial_name": "RedRise",
+  "working_label": "RedRise v2",
+  "remote": "https://github.com/correnth-ai/redrise_v2.git",
+  "workspace_manifest": "../../product.yaml",
+  "workspace_decision": "D:/Correnth/company/state/decisions/REDRISE_V2_PRACTICAL_TESTING_2026-10-27.md",
+  "authority_entrypoint": "docs/BASELINE.md",
+  "roadmap": "docs/ROADMAP.md",
+  "delivery_status": "delivery/status.json",
+  "runtime_status": "not_implemented",
+  "old_product_runtime_dependency": false,
+  "workspace_identity_decision": "D:/Correnth/company/state/decisions/REDRISE_V2_PRODUCT_BASELINE_2026-10-24.md",
+  "engine": {
+    "name": "Engine",
+    "implementation": "owned-from-scratch",
+    "status": "v0.1.0-proven-in-P01 (Rust, engine/; native Notepad+Excel proofs; not packaged)",
+    "direction": "docs/ENGINE.md",
+    "openadapt_runtime_required": false,
+    "upstream_cloud_mcp_qualification_required": false,
+    "investigation_prerequisite": "I00",
+    "investigation_plan": "docs/ENGINE-INVESTIGATION-PLAN.md"
+  },
+  "windows_installation": {
+    "scope": "per-user",
+    "default_directory": "%LOCALAPPDATA%\\Programs\\@redrise",
+    "components": "app + Engine + private runtime + required dependencies",
+    "customer_manual_plugin_or_port_setup": false,
+    "data_and_vault_separate": true
+  },
+  "validation_policy": {
+    "functional_verifiers": "implemented-in-scope-features-only",
+    "excluded_features_have_functional_gates": false,
+    "future_acceptance": "becomes executable only with corresponding implemented feature",
+    "construction": "localized-capability-and-relevant-contract-checks",
+    "full_e2e": "manual-practical-after-installed-internal-closed-beta",
+    "clean_machine_required": false,
+    "environment": "own-available-environment; another-local-user-optional",
+    "strategy": "docs/TESTING-STRATEGY.md"
+  },
+  "error_diagnostics": {
+    "final_visible_line": "error code and one or more stable module investigation codes",
+    "status": "planned-not-verified",
+    "message_topics": [
+      "what_happened",
+      "completed_and_pending",
+      "next_action",
+      "separate_technical_details"
+    ],
+    "specification": "docs/ERROR-DIAGNOSTICS.md",
+    "module_hints_are_confirmed_root_cause": false
+  }
+}

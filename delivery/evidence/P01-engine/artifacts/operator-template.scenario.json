@@ -1,0 +1,67 @@
+﻿[
+    {
+        "launch":  "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE"
+    },
+    {
+        "wait_window":  30000
+    },
+    {
+        "sleep":  4000
+    },
+    {
+        "keys":  "{ESC}"
+    },
+    {
+        "timeout_ms":  15000,
+        "wait_class":  "XLMAIN"
+    },
+    {
+        "sleep":  2500
+    },
+    {
+        "keys":  "^{HOME}"
+    },
+    {
+        "text":  "Campo"
+    },
+    {
+        "keys":  "{TAB}"
+    },
+    {
+        "text":  "Valor"
+    },
+    {
+        "keys":  "{ENTER}"
+    },
+    {
+        "text":  "Cliente"
+    },
+    {
+        "keys":  "{ENTER}"
+    },
+    {
+        "text":  "Valor do pedido"
+    },
+    {
+        "keys":  "{ENTER}"
+    },
+    {
+        "keys":  "{F12}"
+    },
+    {
+        "timeout_ms":  15000,
+        "wait_class":  "#32770"
+    },
+    {
+        "sleep":  800
+    },
+    {
+        "text":  "%USERPROFILE%\\RedRise-v2-dev\\proofs\\p01-engine\\run-20261027-000410\\entrada\\template_redrise.xlsx"
+    },
+    {
+        "keys":  "{ENTER}"
+    },
+    {
+        "sleep":  2500
+    }
+]

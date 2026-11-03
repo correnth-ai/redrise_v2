@@ -1,0 +1,273 @@
+{
+  "step": "IDENTITY-UI-20261102",
+  "work_order": "delivery/work-orders/IDENTITY-UI-20261102.md",
+  "status": "external_identity_suspended_by_user",
+  "source_revision": "unborn",
+  "source_tree_sha256_before": "395f5bf3159c6e76b94233a88286743dfc8088df61178b9e2b9f8c94533df500",
+  "source_tree_sha256_after_code": "a0cb32cc5c35082282cb021c40ccacefe602cf6bd11577a1f6db5cac776caea9",
+  "code_version": {
+    "desktop": "0.1.0-beta.16",
+    "runner": "0.3.3",
+    "core": "0.3.1"
+  },
+  "candidate": {
+    "version": "0.1.0-beta.15",
+    "installer_sha256": "878e0b8e9efbce955b3aec1ba464bd9310074d1c51678743ce3d5afa880e69d3",
+    "payload_sha256": "6ee5fcca1b2fc1783cd934b99beb10bfabe64f96e36828919d6fa567f82e8d41",
+    "files": 3741,
+    "engine_sha256": "057ed44544548b5c5f2a4bf838e36635b46f9d331fa93c61937aaf6ffbd81c0d",
+    "gate": {
+      "passed": true,
+      "at": "2026-11-02T19:58",
+      "record_sha256": "7756260384393ab2823ca87bf61b20917a2d142d048f9d9c031e5a100158589d"
+    },
+    "signed_lab_channel": true,
+    "installed": "through the app, beta.14 -> beta.15, 2026-11-02 20:00; Core backup before migration 003"
+  },
+  "states": {
+    "implemented": [
+      "N1 access screens",
+      "N2 adapter and Core contract",
+      "N3 vault, coordinator, devices",
+      "N4 navigation and Empresa",
+      "N5 F3 F4 F5 F6 F7 F8 code changes"
+    ],
+    "locally_tested": [
+      "Core identity contract with a simulated provider",
+      "native unit tests including the real Windows vault in a test target",
+      "UI typecheck, build and demo inspection"
+    ],
+    "remote_configured": [],
+    "installed_tested": [],
+    "reviewed": []
+  },
+  "increments": {
+    "N0": {
+      "status": "done_locally",
+      "artifact": "docs/identity/IDENTITY-N0-CONTRACT-20261102.md",
+      "note": "Public settings read: sign-up on, confirmation required, providers email and github; Google is off. No write made; V1 .env not read."
+    },
+    "N1": {
+      "status": "implemented_demo_inspected",
+      "note": "login-03/signup-03 layout over the supplied image, in 1180x760; validation 7/8 characters and mismatch exercised in the demo build. Blocks rebuilt by hand from the references; npx shadcn not run."
+    },
+    "N2": {
+      "status": "implemented_blocked_remote",
+      "note": "Real sign-up attempted by the user and refused by the provider (unexpected_failure). No confirmation, login or recovery has happened. Stopped: no guard removal, no auto-confirm, no retry. Hosted service written in services/identity-function, not deployed; the installed beta.15 still calls public sign-up."
+    },
+    "N3": {
+      "status": "implemented_partially_tested",
+      "note": "Device rules tested on the Core; vault round trip tested. Restore, rotation against a real provider, the renewal lock under contention, reboot and update not exercised."
+    },
+    "N4": {
+      "status": "implemented_demo_inspected",
+      "note": "Eight pages opened in the demo build with no console errors; Empresa seen in dark mode."
+    },
+    "N5": {
+      "status": "code_changed_not_closed",
+      "findings": {
+        "F2": "open: depends on N3 real proof",
+        "F3": "code: step diagnostic in the execution panel; not seen with real data",
+        "F4": "code: 30 s idle, 3 s while running, none while hidden; after-measure pending on the installed app (before: 55 GET per 30 s)",
+        "F5": "code: Enter/Space and focus ring on technical rows; not exercised by keyboard yet",
+        "F6": "code: last item shows fim da sequencia",
+        "F7": "code: labels, Fechar, menu name, full names in the composer",
+        "F8": "code and test: title reread after load; not seen in a real browser"
+      }
+    },
+    "N6": {
+      "status": "in_progress",
+      "note": "Gate passed, signed, installed through the app. Campaign blocked by the sign-up refusal."
+    }
+  },
+  "checks": [
+    {
+      "kind": "contract_check",
+      "command": "cd tests/core && python -B -m unittest test_identity",
+      "scope": "real Core + isolated PostgreSQL + simulated provider (includes 14 test_core)",
+      "result": "32 passed",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "cd tests/core && python -B -m unittest test_browser_processes",
+      "result": "24 passed",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "cd tests/core && python -B -m unittest test_agent",
+      "result": "6 passed",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "cd tests/contracts && python -B -m unittest test_diagnostics",
+      "result": "17 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "cd tests/runtime && python -B -m unittest test_browser_open test_runner test_templates test_excel",
+      "result": "76 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "cargo test --lib (desktop, on C:)",
+      "result": "10 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "npm run build:ui (on C:)",
+      "result": "passed; pt-BR identity text in the bundle; no service_role in it",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "node scripts/validate-base.mjs",
+      "result": "341 checks (foundation only)",
+      "exit": 0
+    },
+    {
+      "kind": "not_run",
+      "command": "real sign-up, confirmation, login, recovery on the Supabase project",
+      "reason": "needs identity.json and the approvals in docs/identity/IDENTITY-N0-CONTRACT-20261102.md section 4"
+    },
+    {
+      "kind": "not_run",
+      "command": "verify-candidate, installed campaign, reboot, update with a remembered session, Browser P1/P2 smoke, V1 non-regression",
+      "reason": "no candidate yet"
+    },
+    {
+      "kind": "component_check",
+      "command": "node --test services/identity-function/handler.test.ts",
+      "scope": "handler with simulated effects; index.ts not run",
+      "result": "7 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "npm run build:ui and cargo test --lib, after pointing the app at the service",
+      "result": "passed; 10 native tests",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "cd tests/core && python -B -m unittest test_identity.SignUpTest",
+      "result": "5 passed",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "test_identity.IdentityTest, test_browser_processes, test_agent, each in its own process",
+      "result": "16, 24 and 6 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "contracts, runtime, cargo test --lib, build:ui, validate-base after the simplification",
+      "result": "passed; 4 native tests",
+      "exit": 0
+    }
+  ],
+  "notes": [
+    "Running the test_core-derived modules in one process fails with AUTH-REQUIRED: the class caches an admin token across databases. Existing harness limit; modules are run in separate processes.",
+    "A membership path was decided here for review: explicit one-time link with the team user and password. Invitations not implemented.",
+    "Google/GitHub are shown disabled as unavailable; no desktop return path exists."
+  ],
+  "artifacts_sha256": {
+    "core/redrise_core/identity.py": "26cbd4cdb8db4c64a61230184bd75ca02190e19ea7d9b45c8dafb5e1c28506cc",
+    "core/redrise_core/migrations/003_identity.sql": "6b2d0af0a0d8f8fc37992c8f5364dccef8c404c606592dfc957f781b5fe11b40",
+    "desktop/src-tauri/src/identity.rs": "a6fdaa583a48a4564f1fc9ccc9670077d4c77902ce5429641e7a58c8e73ed5f8",
+    "desktop/src-tauri/src/vault.rs": "b6cd4a3b1b98ea224568bab42f99353093d5fd54e9e75b96100edcbdd3c3afbb",
+    "desktop/src/features/auth.tsx": "1a48eb43df4cc8a0f4ad75c780a4327ecdfd849e3ce46e6aef4cae43b888e355",
+    "desktop/src/features/empresa.tsx": "6599fb78143c0ca48d9cd0e5ebfae5a9f708b7e47cff97c73b55d84850309941",
+    "contracts/errors.json": "24d5816d1d9755c4499bc2420d8c249cd5eb624bd7f685b77dfb5434c468030a",
+    "desktop/locale/pt-BR.json": "e055efe009bb4f321c384dda0a2a631400dd9f273939710fb3488b93f45ec458",
+    "tests/core/test_identity.py": "50c1b49e08ff91ba4f074224af7ff5f0c0340f83024a81b60808919a0245e519"
+  },
+  "routing": {
+    "harness_router": "degraded: networkx missing in the available runtime; skills chosen by catalog description and resolved by the corporate resolver",
+    "skills": {
+      "supabase-setup": "11e03e18f14b6c77e37cab4704842b9a6181175e483e316028e54fc0e2faf8d4",
+      "auth-rbac-hardening": "dc7a0b0e9802c8f3487fe22dea210181603442fbf9740179dbd3894044755d47",
+      "frontend-localization-contract": "cf62e05ecbe3285eb4f67e67746fadf0606e719b4061fbc75626d9f065ba16a2",
+      "react-frontend-setup": "1f8efa29e70a40036d66f4c07fbbd345f74ee9b194dadf1a5d171d475072b9d2"
+    },
+    "memory": "not consulted: earlier runs found the service unavailable; canonical sources used",
+    "graph": "not used"
+  },
+  "review": null,
+  "next_action": "Update the installed app to beta.16 through the app on user order; then automations.",
+  "remote_read_only": {
+    "when": "2026-11-02",
+    "call": "GET /auth/v1/settings with the publishable key (user authorized)",
+    "status": 200,
+    "disable_signup": false,
+    "mailer_autoconfirm": false,
+    "enabled_external": [
+      "email",
+      "github"
+    ],
+    "not_proven": "R1 guard trigger, R3 password policy, R4 e-mail delivery, R5 link targets, R6 V1 impact. Settings do not show them.",
+    "note": "Project URL and key read from the lab config and not printed or recorded. The key is not a privileged sb_secret key."
+  },
+  "lab_incident": "A first F5 was sent while the RedRise window was minimized, so the key went to whichever window was in the foreground. The lab driver now restores the window and refuses input unless RedRise is in front.",
+  "remote_sign_up_attempt": {
+    "when": "2026-11-02",
+    "by": "user, in the installed beta.15",
+    "attempts_known": 1,
+    "result": "IDENTITY-SIGNUP-BLOCKED, provider code unexpected_failure",
+    "known": "The provider failed internally on the sign-up. The app reported it honestly and did not retry.",
+    "unknown": "Whether an account row exists. No confirmation e-mail can be assumed.",
+    "cause": "Trigger reported present on the project by the user. Consistent with the refusal; the Auth log message was not reported."
+  },
+  "defects_found": [
+    "Identity diagnostics from the native layer named RR-UI, RR-RUNTIME instead of RR-IDENTITY. Fixed in source; not in the installed beta.15."
+  ],
+  "decisions": [
+    "2026-11-02 user: confirmation by a link in the Resend onboarding template; click recorded by the backend.",
+    "2026-11-02 user: remove confirmation and the external flow for now; sign-up only sends to the backend; automations come first."
+  ],
+  "open_points": [
+    "F2 stays open: no remembered session.",
+    "Installed app is beta.15 until updated through the app; the channel offers beta.16.",
+    "Sign-up and login on the installed beta.16 not exercised."
+  ],
+  "simplification": {
+    "sign_up": "POST /api/v1/register on the Core: inactive operator, migration 004, no e-mail.",
+    "default_chosen_for_review": "Inactive until an administrator activates it, so sign-up grants no team access on a LAN-reachable API.",
+    "login": "Core, by e-mail or username.",
+    "removed": [
+      "services/identity-function",
+      "desktop identity.rs and vault.rs",
+      "desktop lib/identity.ts",
+      "remember me, resend, recovery, link and social UI",
+      "identity.json in packaging"
+    ],
+    "kept": [
+      "Core identity module and endpoints (no client; 503 without identity.json)",
+      "migration 003, already applied on the installed database",
+      "Empresa, navigation, F3-F8 changes"
+    ],
+    "backup": "C:/Users/raulv/RedRise-v2-dev/research/identity-supabase-backup-20261102"
+  },
+  "candidate_beta16": {
+    "version": "0.1.0-beta.16",
+    "installer_sha256": "80e41e92aaa1da210867e9c42beaeda3f573ffcf984624f4619cecd344b8180b",
+    "payload_sha256": "f1b48c2497a54ccb960208167d9a0ecb28e6d633accf395108bb8ef2bfe5aab2",
+    "files": 3741,
+    "engine_sha256": "057ed44544548b5c5f2a4bf838e36635b46f9d331fa93c61937aaf6ffbd81c0d",
+    "desktop_sha256": "1754c4bc8e9fd08e1b99415bafd593faf596d8dce6211ad5f9a8ca2dae5db4f1",
+    "identity_json_in_package": false,
+    "gate": {
+      "passed": true,
+      "at": "2026-11-02T21:35",
+      "record_sha256": "15031b1edff161f0b5cf2f2099659abdffba0226657aa1700283f16c2012973e"
+    },
+    "signed_lab_channel": true,
+    "installed": false
+  }
+}
