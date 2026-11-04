@@ -51,6 +51,19 @@ _BROWSER: dict[str, tuple[str, str]] = {
     "browser_page_not_ready": ("BROWSER-PAGE-NOT-READY", "RR-BROWSER-OPEN"),
     "browser_uia_unavailable": ("BROWSER-IDENTIFY-UNAVAILABLE", "RR-BROWSER-OPEN"),
 }
+# Boas-vindas process (notepad_steps.py): a lost target or an unconfirmed effect keeps its own message.
+_NOTEPAD: dict[str, str] = {
+    "notepad_window_not_found": "APP-WINDOW-NOT-FOUND",
+    "notepad_context_missing": "NOTEPAD-CONTEXT-MISSING",
+    "notepad_tabs_unavailable": "NOTEPAD-TABS-UNAVAILABLE",
+    "notepad_tab_not_identified": "NOTEPAD-TAB-NOT-IDENTIFIED",
+    "notepad_target_lost": "NOTEPAD-TARGET-LOST",
+    "notepad_text_mismatch": "NOTEPAD-TEXT-MISMATCH",
+    "notepad_file_mismatch": "NOTEPAD-FILE-MISMATCH",
+    "notepad_save_unconfirmed": "NOTEPAD-SAVE-UNCONFIRMED",
+    "notepad_close_unexpected_changes": "NOTEPAD-CLOSE-CHANGES",
+    "notepad_close_unconfirmed": "NOTEPAD-CLOSE-UNCONFIRMED",
+}
 _STATES = {"failed": "STEP-FAILED", "uncertain": "STEP-UNCERTAIN", "cancelled": "RUN-CANCELLED"}
 SUCCESS = {"verified", "completed_unverified", "ready"}
 
@@ -68,6 +81,9 @@ def for_result(res: dict, correlation_id: str | None = None) -> dg.Diagnostic | 
     if code in _BROWSER:
         ecode, by = _BROWSER[code]
         params["browser"] = detail if isinstance(detail, str) else "-"
+    elif code in _NOTEPAD:
+        ecode, by = _NOTEPAD[code], "RR-NOTEPAD"
+        params["app"] = "notepad"
     elif state in ("failed", "uncertain") and code == "user_input_detected":
         ecode, by = "RUN-INTERRUPTED-BY-INPUT", "RR-ENGINE-EXEC"
     elif state in _STATES:  # Engine outcome; its own code stays in the details

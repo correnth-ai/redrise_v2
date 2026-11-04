@@ -27,6 +27,11 @@ CATEGORIES = ("browser", "windows", "mac", "linux")
 # Browser ids a station Runner can report (redrise_runner.browsers.CANDIDATES).
 BROWSER_IDS = ("chrome", "msedge", "firefox", "chromium")
 MAX_PROCESS_ITEMS = 50
+PROCESS_KINDS = ("browser_open", "notepad_step")
+WELCOME_KEY = "boas-vindas"
+WELCOME_PROCESS = "Boas-vindas"
+# Routines of the ready-made process; the Runner reads `step` (redrise_runner.notepad_steps).
+WELCOME_STEPS = (("Abrir e identificar", "open"), ("Digitar e salvar", "save"), ("Fechar e verificar", "close"))
 _URL = re.compile(r"^https?://[^\s/$.?#][^\s]*$", re.IGNORECASE)
 _HTML_PATH = re.compile(r"^([a-zA-Z]:\\|\\\\[^\\]+\\[^\\]+\\).+\.html?$", re.IGNORECASE)
 JOB_SCHEMA, RESULT_SCHEMA = "redrise.job/1", "redrise.job-result/1"
@@ -122,7 +127,28 @@ class Core:
                 raise err(409, "SETUP-ALREADY-DONE")
             u = c.execute("INSERT INTO users (username, display, pw_hash, role) VALUES (%s, %s, %s, 'admin') RETURNING *",
                           (username, display or username, auth.hash_password(password))).fetchone()
+        self.ensure_welcome_process()
         return _public_user(u)
+
+    def ensure_welcome_process(self) -> None:
+        """The ready-made Boas-vindas process, created once per team (at setup, or at the first start
+        of this version on an existing team). Without an administrator there is no team yet."""
+        with self.db.tx() as c:
+            if c.execute("SELECT 1 FROM processes WHERE system_key = %s", (WELCOME_KEY,)).fetchone():
+                return
+            admin = c.execute("SELECT id FROM users WHERE role = 'admin' ORDER BY id LIMIT 1").fetchone()
+            if not admin:
+                return
+            p = c.execute("INSERT INTO processes (name, created_by, system_key) VALUES (%s, %s, %s) RETURNING id",
+                          (WELCOME_PROCESS, admin["id"], WELCOME_KEY)).fetchone()
+            for i, (name, step) in enumerate(WELCOME_STEPS, 1):
+                r = c.execute("INSERT INTO routines (name, category, created_by) VALUES (%s, 'windows', %s) RETURNING id",
+                              (name, admin["id"])).fetchone()
+                c.execute("""INSERT INTO routine_versions (routine_id, version, kind, platform, inputs, note, created_by, config)
+                             VALUES (%s, 1, 'notepad_step', 'windows-x86_64', '{}', %s, %s, %s)""",
+                          (r["id"], "ready-made Boas-vindas process", admin["id"], Jsonb({"step": step, "isolated": False})))
+                c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, %s, %s, true)",
+                          (p["id"], i, r["id"]))
 
     def register(self, full_name, email, password) -> dict:
         """Sign-up: records the account and nothing else. It starts inactive, as an operator, so creating an
@@ -424,12 +450,20 @@ class Core:
             v = self._insert_version(c, actor, r, version)
         return {"routine": _jsonable(r), "version": v}
 
+    @staticmethod
+    def _refuse_ready_made(c, routine_id: int) -> None:
+        """The routines of the ready-made process are not changed or archived: it would stop running."""
+        if c.execute("""SELECT 1 FROM process_items i JOIN processes p ON p.id = i.process_id
+                        WHERE i.routine_id = %s AND p.system_key IS NOT NULL LIMIT 1""", (routine_id,)).fetchone():
+            raise err(400, "VALIDATION", reason="this routine belongs to the ready-made process")
+
     def add_version(self, actor: dict, routine_id: int, version: dict) -> dict:
         self.require_admin(actor)
         with self.db.tx() as c:
             r = c.execute("SELECT * FROM routines WHERE id = %s AND NOT archived FOR UPDATE", (routine_id,)).fetchone()
             if not r:
                 raise err(404, "NOT-FOUND", what_missing="routine")
+            self._refuse_ready_made(c, routine_id)
             name = version.get("name")
             if name is not None:
                 if not isinstance(name, str) or not 1 <= len(name.strip()) <= 120:
@@ -499,6 +533,7 @@ class Core:
     def archive_routine(self, actor: dict, routine_id: int) -> None:
         self.require_admin(actor)
         with self.db.tx() as c:
+            self._refuse_ready_made(c, routine_id)
             if not c.execute("UPDATE routines SET archived = true WHERE id = %s RETURNING id", (routine_id,)).fetchone():
                 raise err(404, "NOT-FOUND", what_missing="routine")
 
@@ -527,8 +562,8 @@ class Core:
                              WHERE v.id = %s""", (version_id,)).fetchone()
             if not v or v["archived"]:
                 raise err(404, "NOT-FOUND", correlation_id, what_missing="routine version")
-            if v["kind"] == "browser_open":
-                raise err(400, "VALIDATION", correlation_id, reason="browser routines run through executions")
+            if v["kind"] in PROCESS_KINDS:
+                raise err(400, "VALIDATION", correlation_id, reason="these routines run through executions")
             s = c.execute("SELECT * FROM stations WHERE id = %s", (station_id,)).fetchone()
             if not s or s["revoked_at"]:
                 raise err(404, "NOT-FOUND", correlation_id, what_missing="station")
@@ -667,7 +702,7 @@ class Core:
                              ORDER BY version DESC LIMIT 1) v ON true WHERE r.id = %s AND NOT r.archived""", (it["routine_id"],)).fetchone()
             if not v:
                 raise err(404, "NOT-FOUND", what_missing="routine")
-            if v["kind"] != "browser_open":
+            if v["kind"] not in PROCESS_KINDS:
                 raise err(400, "VALIDATION", reason="only browser routines can be linked to a process in this version")
             out.append({"routine_id": it["routine_id"], "continue_next": it["continue_next"]})
         return out
@@ -694,8 +729,11 @@ class Core:
         self.require_admin(actor)
         name = self._process_name(name)
         with self.db.tx() as c:
-            if not c.execute("SELECT id FROM processes WHERE id = %s AND NOT archived FOR UPDATE", (process_id,)).fetchone():
+            row = c.execute("SELECT id, system_key FROM processes WHERE id = %s AND NOT archived FOR UPDATE", (process_id,)).fetchone()
+            if not row:
                 raise err(404, "NOT-FOUND", what_missing="process")
+            if row["system_key"]:
+                raise err(400, "VALIDATION", reason="the ready-made process cannot be changed")
             links = self._items(c, items)
             c.execute("UPDATE processes SET name = %s, updated_at = now() WHERE id = %s", (name, process_id))
             c.execute("DELETE FROM process_items WHERE process_id = %s", (process_id,))
@@ -706,7 +744,7 @@ class Core:
 
     def list_processes(self, actor: dict, process_id: int | None = None) -> list[dict]:
         with self.db.tx() as c:
-            procs = c.execute("""SELECT id, name, created_at, updated_at FROM processes
+            procs = c.execute("""SELECT id, name, system_key, created_at, updated_at FROM processes
                                  WHERE NOT archived AND (%s::bigint IS NULL OR id = %s) ORDER BY id""",
                               (process_id, process_id)).fetchall()
             items = c.execute("""SELECT i.process_id, i.position, i.routine_id, i.continue_next, r.name AS routine_name, v.kind, v.config
@@ -753,19 +791,21 @@ class Core:
             s = c.execute("SELECT * FROM stations WHERE id = %s", (station_id,)).fetchone() if isinstance(station_id, int) else None
             if not s or s["revoked_at"]:
                 raise err(404, "NOT-FOUND", cid, what_missing="station")
-            reason = compat_reason("browser", None, s)
-            if reason:
-                raise err(409, "STATION-INCOMPATIBLE", cid, reason=reason)
             if routine_id is not None:
                 rows = c.execute("""SELECT 1 AS position, r.id AS routine_id, v.id AS routine_version_id, r.name, false AS continue_next,
-                                           v.kind, v.config, r.archived
+                                           v.kind, v.config, v.platform, r.category, r.archived
                                     FROM routines r JOIN LATERAL (SELECT * FROM routine_versions WHERE routine_id = r.id
                                                                   ORDER BY version DESC LIMIT 1) v ON true
                                     WHERE r.id = %s""", (routine_id,)).fetchall()
                 if not rows or rows[0]["archived"]:
                     raise err(404, "NOT-FOUND", cid, what_missing="routine")
-                if rows[0]["kind"] != "browser_open":
+                if rows[0]["kind"] not in PROCESS_KINDS:
                     raise err(400, "VALIDATION", cid, reason="only browser routines run as executions in this version")
+                # A linked routine, even as the only step, runs through its process.
+                linked = c.execute("""SELECT p.name FROM process_items i JOIN processes p ON p.id = i.process_id
+                                      WHERE i.routine_id = %s AND NOT p.archived ORDER BY p.id LIMIT 1""", (routine_id,)).fetchone()
+                if linked:
+                    raise err(409, "ROUTINE-LINKED", cid, process=linked["name"])
                 if not (rows[0]["config"] or {}).get("isolated"):
                     # G25: enforced here, not only by a disabled button.
                     raise err(409, "ROUTINE-NOT-ISOLATED", cid, routine=rows[0]["name"])
@@ -773,15 +813,19 @@ class Core:
                 if not c.execute("SELECT id FROM processes WHERE id = %s AND NOT archived", (process_id,)).fetchone():
                     raise err(404, "NOT-FOUND", cid, what_missing="process")
                 rows = c.execute("""SELECT i.position, r.id AS routine_id, v.id AS routine_version_id, r.name, i.continue_next,
-                                           v.kind, v.config, r.archived
+                                           v.kind, v.config, v.platform, r.category, r.archived
                                     FROM process_items i JOIN routines r ON r.id = i.routine_id
                                     JOIN LATERAL (SELECT * FROM routine_versions WHERE routine_id = r.id
                                                   ORDER BY version DESC LIMIT 1) v ON true
                                     WHERE i.process_id = %s ORDER BY i.position""", (process_id,)).fetchall()
                 if not rows:
                     raise err(400, "VALIDATION", cid, reason="the process has no linked routine")
-                if any(r["archived"] or r["kind"] != "browser_open" for r in rows):
+                if any(r["archived"] or r["kind"] not in PROCESS_KINDS for r in rows):
                     raise err(400, "VALIDATION", cid, reason="the process links a routine that cannot run")
+            for r in rows:  # every step must be able to run on the chosen station
+                reason = compat_reason(r["category"], r["platform"], s)
+                if reason:
+                    raise err(409, "STATION-INCOMPATIBLE", cid, reason=reason)
             # G27: versions and links fixed at start; later edits only affect new executions.
             snapshot = [{"position": i, "routine_id": r["routine_id"], "routine_version_id": r["routine_version_id"],
                          "name": r["name"], "continue_next": bool(r["continue_next"]), "config": r["config"]}

@@ -5,4 +5,4 @@ machine that owns the window, then coordinates the Engine. Standard library
 only: the private runtime ships no third-party packages.
 """
 
-__version__ = "0.3.3"
+__version__ = "0.3.8"

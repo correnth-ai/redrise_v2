@@ -132,6 +132,7 @@ export function HistoryPage({ focus }: { focus?: string }) {
               {sel.state === "finished" && sel.steps.some((s) => s.state === null) && (
                 <p className="text-muted-foreground">Não executadas: {sel.steps.filter((s) => s.state === null).map((s) => s.name).join(", ")}.</p>
               )}
+              {typeof (sel.context as any)?.last?.output_path === "string" && <p>Arquivo salvo: <span className="break-all font-medium">{(sel.context as any).last.output_path}</span></p>}
               <ExecutionLog e={sel} />
               <div><p className="mb-2 font-medium">Linha do tempo</p><Timeline e={sel} /></div>
               {Object.keys(sel.context ?? {}).length > 0 && <details><summary className="cursor-pointer font-medium">Contexto desta execução</summary>

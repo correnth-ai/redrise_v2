@@ -914,6 +914,141 @@
       "pending": "No new account was created.",
       "next": "Sign in with this e-mail, or ask a team administrator to activate the account.",
       "details": "One account per e-mail in this team."
+    },
+    "ROUTINE-LINKED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This routine is part of a process and runs through it.",
+      "completed": "The request was refused before anything was started.",
+      "pending": "Nothing was run.",
+      "next": "Run the process {process}, which contains this routine.",
+      "details": "Linked routines run in the order of their process, with its context."
+    },
+    "NOTEPAD-CONTEXT-MISSING": {
+      "category": "contract",
+      "modules": [
+        "RR-NOTEPAD",
+        "RR-FLOW"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This step did not receive the window and tab of the run.",
+      "completed": "Nothing was typed, saved or closed by this step.",
+      "pending": "This step and the next ones did not run.",
+      "next": "Run the whole process again from the first step.",
+      "details": "Context from the previous step is missing ({reason})."
+    },
+    "NOTEPAD-TABS-UNAVAILABLE": {
+      "category": "environment",
+      "modules": [
+        "RR-NOTEPAD"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This version of the Notepad shows no tabs.",
+      "completed": "The Notepad may have been opened, but nothing was typed.",
+      "pending": "The process stopped at the first step.",
+      "next": "Use the Notepad of Windows 11 with tabs, then run again.",
+      "details": "No tab strip was found ({reason})."
+    },
+    "NOTEPAD-TAB-NOT-IDENTIFIED": {
+      "category": "unknown",
+      "modules": [
+        "RR-NOTEPAD",
+        "RR-ENGINE-EXEC"
+      ],
+      "effect_state": "partial",
+      "retry": "check_first",
+      "what": "The tab for this run could not be identified.",
+      "completed": "A new tab was requested in the Notepad; nothing was typed.",
+      "pending": "The next steps did not run.",
+      "next": "Check the Notepad: a tab that was created stays as it is and your tabs were not changed. Then run again.",
+      "details": "Tab identification failed ({reason})."
+    },
+    "NOTEPAD-TARGET-LOST": {
+      "category": "precondition",
+      "modules": [
+        "RR-NOTEPAD"
+      ],
+      "effect_state": "partial",
+      "retry": "check_first",
+      "what": "The window or tab of this run was lost, so the step stopped before acting.",
+      "completed": "This step stopped before typing, saving or closing.",
+      "pending": "The next steps did not run.",
+      "next": "Check the Notepad: what was already there stays as it is. Then run the process again.",
+      "details": "Target check failed ({reason}). Not repeated automatically."
+    },
+    "NOTEPAD-TEXT-MISMATCH": {
+      "category": "unknown",
+      "modules": [
+        "RR-NOTEPAD",
+        "RR-ENGINE-EXEC"
+      ],
+      "effect_state": "partial",
+      "retry": "check_first",
+      "what": "The editor did not show the text that was typed.",
+      "completed": "The text was typed in the tab of this run; nothing was saved.",
+      "pending": "The file was not saved and the next steps did not run.",
+      "next": "Check the tab of this run, which stays open, then run again.",
+      "details": "Text comparison failed ({reason})."
+    },
+    "NOTEPAD-FILE-MISMATCH": {
+      "category": "unknown",
+      "modules": [
+        "RR-NOTEPAD"
+      ],
+      "effect_state": "partial",
+      "retry": "check_first",
+      "what": "The saved file does not have the expected content.",
+      "completed": "A file was saved on the Desktop.",
+      "pending": "The result was not verified and the next steps did not run.",
+      "next": "Check the file on the Desktop before running again.",
+      "details": "File verification failed ({reason})."
+    },
+    "NOTEPAD-SAVE-UNCONFIRMED": {
+      "category": "unknown",
+      "modules": [
+        "RR-NOTEPAD",
+        "RR-ENGINE-EXEC"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "It could not be confirmed that the file was saved.",
+      "completed": "The save was requested in the Notepad; the result is unknown.",
+      "pending": "The next steps did not run.",
+      "next": "Check the Desktop and the Save As dialog before running again, so nothing is repeated.",
+      "details": "Save not confirmed ({reason}). Not repeated automatically."
+    },
+    "NOTEPAD-CLOSE-CHANGES": {
+      "category": "precondition",
+      "modules": [
+        "RR-NOTEPAD"
+      ],
+      "effect_state": "none",
+      "retry": "check_first",
+      "what": "The tab of this run has changes the run did not make, so it was not closed.",
+      "completed": "The file was already saved; the tab stays open.",
+      "pending": "The tab and the window remain open.",
+      "next": "Check the tab and close it yourself if you no longer need those changes.",
+      "details": "Unexpected save prompt ({reason})."
+    },
+    "NOTEPAD-CLOSE-UNCONFIRMED": {
+      "category": "unknown",
+      "modules": [
+        "RR-NOTEPAD",
+        "RR-ENGINE-EXEC"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "It could not be confirmed that the tabs closed as expected.",
+      "completed": "The file was already saved; closing was requested.",
+      "pending": "The final state of the window is unknown.",
+      "next": "Check the Notepad before running again.",
+      "details": "Close not confirmed ({reason}). Not repeated automatically."
     }
   }
 }

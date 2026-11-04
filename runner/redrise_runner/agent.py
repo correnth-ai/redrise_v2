@@ -22,7 +22,7 @@ from pathlib import Path
 from redrise_contracts import diagnostics as dg
 from redrise_contracts.client import CoreClient, CoreError
 
-from . import __version__, browser_open, browsers, diagnose, templates
+from . import __version__, browser_open, browsers, diagnose, notepad_steps, templates
 from .engine import EngineClient, EngineError
 from .jobs import RUNNER_CATEGORIES, RUNNER_PLATFORM, JobSpec, SessionBusy, _write_atomic, run_job, session_lock
 from .paths import Layout
@@ -118,6 +118,26 @@ class Agent:
         except SessionBusy as e:
             return {"state": "refused", "code": "session_busy", "detail": str(e)}
 
+    def _notepad_step(self, job: dict) -> dict:
+        """Same order as other jobs. The context is what the previous routine of this execution produced."""
+        step = (job.get("config") or {}).get("step")
+        try:
+            ready = self.engine.readiness(probe_hooks=False)
+        except EngineError as e:
+            return {"state": "error", "code": e.code, "detail": e.detail}
+        if not ready.get("ready"):
+            return {"state": "refused", "code": "session_unavailable", "detail": (ready.get("readiness") or {}).get("detail")}
+        try:
+            with session_lock(self.layout.locks_dir):
+                desk = notepad_steps.UiaDesk()
+                try:
+                    send = notepad_steps.engine_sender(f"core-{job['job_id']}", self.layout, self.engine, self.state.cancel)
+                    return notepad_steps.run(step, (job.get("context") or {}).get("last") or {}, desk, send)
+                finally:
+                    desk.close()
+        except SessionBusy as e:
+            return {"state": "refused", "code": "session_busy", "detail": str(e)}
+
     # ------------------------------------------------------------ loop
     def recover(self) -> None:
         """At start: re-send pending results; unfinished local records become
@@ -193,6 +213,8 @@ class Agent:
         try:
             if job["kind"] == "browser_open":
                 local = self._browser_open(job)
+            elif job["kind"] == "notepad_step":
+                local = self._notepad_step(job)
             elif job["kind"] == "template":
                 local = templates.run_template(job["template_id"], self.layout, self.engine, dict(job.get("inputs") or {}),
                                                cancel=self.state.cancel)

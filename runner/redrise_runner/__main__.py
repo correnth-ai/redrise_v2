@@ -58,6 +58,9 @@ def main(argv: list[str] | None = None) -> int:
     bo.add_argument("--browser", help="site only: chrome | msedge | firefox | chromium")
     bo.add_argument("--url")
     bo.add_argument("--path", help="html only: full path of the file")
+    ns = sub.add_parser("notepad-step", help="one routine of the Boas-vindas process, outside a team (lab checks)")
+    ns.add_argument("--step", required=True, choices=["open", "save", "close"])
+    ns.add_argument("--context-file", type=Path, help="JSON the previous step printed under `context`")
     ag = sub.add_parser("agent", help="station loop: heartbeat, claim, execute, report")
     ag.add_argument("--stop-file", type=Path)
     ag.add_argument("--poll-s", type=float, default=3.0)
@@ -78,6 +81,24 @@ def main(argv: list[str] | None = None) -> int:
         from . import browser_open
         config = {"origin": a.origin, "browser": a.browser, "url": a.url, "path": a.path, "isolated": True}
         res = diagnose.attach(browser_open.run(config), cid)
+        emit(res)
+        return 0 if res["state"] == "verified" else EXIT.get(res["state"], 1)
+
+    if a.cmd == "notepad-step":
+        import time
+        from . import notepad_steps
+        from .jobs import SessionBusy, session_lock
+        ctx = json.loads(a.context_file.read_text(encoding="utf-8-sig")) if a.context_file else {}
+        desk = notepad_steps.UiaDesk()
+        try:
+            with session_lock(layout.locks_dir):
+                send = notepad_steps.engine_sender(f"cli-{a.step}-{time.strftime('%Y%m%d-%H%M%S')}", layout,
+                                                   EngineClient.at(layout.engine), threading.Event())
+                res = diagnose.attach(notepad_steps.run(a.step, ctx, desk, send), cid)
+        except SessionBusy as e:
+            res = diagnose.attach({"state": "refused", "code": "session_busy", "detail": str(e)}, cid)
+        finally:
+            desk.close()
         emit(res)
         return 0 if res["state"] == "verified" else EXIT.get(res["state"], 1)
 

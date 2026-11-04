@@ -105,6 +105,7 @@ class Host:
         cfg = _read_config(self.p)
         self.database = db.Database(db.conninfo(cfg["pg_port"], db.APP_ROLE, self.vault.get("pg-app")))
         self.core = core = Core(self.database, load_templates(self.p.install_root), identity.load_verifier(self.p.install_root))
+        core.ensure_welcome_process()
         self.api = ApiServer(core, bind, cfg["lan_port"], self.p.host / "tls" / "host-cert.pem",
                              self.p.host / "tls" / "host-key.pem", log=self.log).start()
         info["lan_port"] = self.api.port

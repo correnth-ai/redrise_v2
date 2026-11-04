@@ -699,6 +699,16 @@ fn bound_run_accepts_its_window_and_the_dialog_it_owns() {
 }
 
 #[test]
+fn bound_run_does_not_activate_when_its_dialog_is_already_in_front() {
+    // A batch that starts on a dialog: activating the owner would take the focus from it.
+    let world = save_world();
+    *world.roots.borrow_mut() = vec![Some(1)];
+    let r = run(&save_proc(), &ports(&world), &bound(1));
+    assert_eq!(r.outcome, Outcome::CompletedUnverified, "{:?}", r.code);
+    assert!(!world.log.borrow().iter().any(|l| l.starts_with("activate")));
+}
+
+#[test]
 fn bound_run_stops_typing_when_another_window_of_the_app_takes_focus() {
     let world = save_world();
     // First query: the step's wait; second: the check before the 2nd character.

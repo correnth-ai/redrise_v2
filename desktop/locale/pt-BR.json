@@ -552,6 +552,76 @@
       "pending": "Nenhuma conta nova foi criada.",
       "next": "Entre com este e-mail ou peça a um administrador da equipe para ativar a conta.",
       "details": "Uma conta por e-mail nesta equipe."
+    },
+    "ROUTINE-LINKED": {
+      "what": "Esta rotina faz parte de um processo e executa por ele.",
+      "completed": "O pedido foi recusado antes de iniciar qualquer ação.",
+      "pending": "Nada foi executado.",
+      "next": "Execute o processo {process}, que contém esta rotina.",
+      "details": "Rotinas vinculadas executam na ordem do processo, com o contexto dele."
+    },
+    "NOTEPAD-CONTEXT-MISSING": {
+      "what": "Esta etapa não recebeu a janela e a guia da execução.",
+      "completed": "Esta etapa não digitou, salvou nem fechou nada.",
+      "pending": "Esta etapa e as seguintes não executaram.",
+      "next": "Execute o processo inteiro novamente, desde a primeira etapa.",
+      "details": "Falta o contexto da etapa anterior ({reason})."
+    },
+    "NOTEPAD-TABS-UNAVAILABLE": {
+      "what": "Esta versão do Bloco de Notas não mostra guias.",
+      "completed": "O Bloco de Notas pode ter sido aberto, mas nada foi digitado.",
+      "pending": "O processo parou na primeira etapa.",
+      "next": "Use o Bloco de Notas do Windows 11 com guias e execute novamente.",
+      "details": "Nenhuma faixa de guias foi encontrada ({reason})."
+    },
+    "NOTEPAD-TAB-NOT-IDENTIFIED": {
+      "what": "Não foi possível identificar a guia desta execução.",
+      "completed": "Uma nova guia foi pedida ao Bloco de Notas; nada foi digitado.",
+      "pending": "As próximas etapas não executaram.",
+      "next": "Confira o Bloco de Notas: uma guia criada fica como está e as suas guias não foram alteradas. Depois execute novamente.",
+      "details": "A identificação da guia falhou ({reason})."
+    },
+    "NOTEPAD-TARGET-LOST": {
+      "what": "A janela ou a guia desta execução foi perdida, e a etapa parou antes de agir.",
+      "completed": "Esta etapa parou antes de digitar, salvar ou fechar.",
+      "pending": "As próximas etapas não executaram.",
+      "next": "Confira o Bloco de Notas: o que já estava lá fica como está. Depois execute o processo novamente.",
+      "details": "A conferência do alvo falhou ({reason}). Sem repetição automática."
+    },
+    "NOTEPAD-TEXT-MISMATCH": {
+      "what": "O editor não mostrou o texto digitado.",
+      "completed": "O texto foi digitado na guia desta execução; nada foi salvo.",
+      "pending": "O arquivo não foi salvo e as próximas etapas não executaram.",
+      "next": "Confira a guia desta execução, que fica aberta, e execute novamente.",
+      "details": "A comparação do texto falhou ({reason})."
+    },
+    "NOTEPAD-FILE-MISMATCH": {
+      "what": "O arquivo salvo não tem o conteúdo esperado.",
+      "completed": "Um arquivo foi salvo na Área de Trabalho.",
+      "pending": "O resultado não foi verificado e as próximas etapas não executaram.",
+      "next": "Confira o arquivo na Área de Trabalho antes de executar novamente.",
+      "details": "A verificação do arquivo falhou ({reason})."
+    },
+    "NOTEPAD-SAVE-UNCONFIRMED": {
+      "what": "Não foi possível confirmar que o arquivo foi salvo.",
+      "completed": "O salvamento foi pedido ao Bloco de Notas; o resultado é desconhecido.",
+      "pending": "As próximas etapas não executaram.",
+      "next": "Confira a Área de Trabalho e a janela Salvar como antes de executar novamente, para nada se repetir.",
+      "details": "Salvamento não confirmado ({reason}). Sem repetição automática."
+    },
+    "NOTEPAD-CLOSE-CHANGES": {
+      "what": "A guia desta execução tem alterações que a execução não fez, então não foi fechada.",
+      "completed": "O arquivo já estava salvo; a guia fica aberta.",
+      "pending": "A guia e a janela continuam abertas.",
+      "next": "Confira a guia e feche-a você mesmo se não precisar mais dessas alterações.",
+      "details": "Pedido de salvar inesperado ({reason})."
+    },
+    "NOTEPAD-CLOSE-UNCONFIRMED": {
+      "what": "Não foi possível confirmar que as guias fecharam como esperado.",
+      "completed": "O arquivo já estava salvo; o fechamento foi pedido.",
+      "pending": "O estado final da janela é desconhecido.",
+      "next": "Confira o Bloco de Notas antes de executar novamente.",
+      "details": "Fechamento não confirmado ({reason}). Sem repetição automática."
     }
   },
   "values": {

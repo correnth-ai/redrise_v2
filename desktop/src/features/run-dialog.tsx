@@ -13,6 +13,7 @@ import type { BrowserConfig } from "@/data/types";
 
 export function describeConfig(c: BrowserConfig | null, browserName?: (id: string) => string): string {
   if (!c) return "Rotina legada (modelo/gravação)";
+  if ("step" in c) return "Bloco de Notas, pela interface";
   return c.origin === "site" ? `Site ${c.url} · ${browserName ? browserName(c.browser ?? "") : c.browser}` : `HTML local ${c.path}`;
 }
 
@@ -28,13 +29,14 @@ export function RunDialog({ open, target, onClose }: { open: boolean; target: Ru
 
   const eligible = useMemo(() => [
     ...(processes ?? []).filter((p) => p.items.length).map((p) => ({ key: `process:${p.id}`, label: `Processo · ${p.name}` })),
-    ...(routines ?? []).filter((r) => r.kind === "browser_open" && r.config?.isolated).map((r) => ({ key: `routine:${r.id}`, label: `Rotina avulsa · ${r.name}` })),
+    ...(routines ?? []).filter((r) => r.kind === "browser_open" && r.config?.isolated && !(processes ?? []).some((p) => p.items.some((i) => i.routine_id === r.id))).map((r) => ({ key: `routine:${r.id}`, label: `Rotina avulsa · ${r.name}` })),
   ], [processes, routines]);
   const [kind, idStr] = pick.split(":");
   const id = Number(idStr);
   const proc = kind === "process" ? processes?.find((p) => p.id === id) : undefined;
   const routine = kind === "routine" ? routines?.find((r) => r.id === id) : undefined;
-  const compatible = (stations ?? []).filter((s) => !s.revoked && s.categories.includes("browser"));
+  const categories = proc?.items.some((i) => i.kind === "notepad_step") ? ["windows"] : ["browser"];
+  const compatible = (stations ?? []).filter((s) => !s.revoked && categories.every((c) => s.categories.includes(c)));
   useEffect(() => { if (!station && compatible.length) setStation(String(compatible[0].id)); }, [compatible, station]);
   const browserName = (bid: string) => compatible.flatMap((s) => s.browsers ?? []).find((b) => b.id === bid)?.name ?? bid;
   const blocked = routine && !routine.config?.isolated;
@@ -85,7 +87,7 @@ export function RunDialog({ open, target, onClose }: { open: boolean; target: Ru
                   <SelectItem key={s.id} value={String(s.id)}>{s.name}{s.online ? "" : " (offline)"}{s.session_state && s.session_state !== "ready" ? " — sessão indisponível" : ""}</SelectItem>
                 ))}</SelectContent>
               </Select>
-            ) : <p className="text-sm text-muted-foreground">Nenhuma estação compatível com Browser.</p>}
+            ) : <p className="text-sm text-muted-foreground">Nenhuma estação compatível.</p>}
           </div>
           <ErrorView error={error} />
         </div>

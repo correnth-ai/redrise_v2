@@ -69,6 +69,23 @@ O usuário autorizou remover os registros locais da tentativa antiga P01; não h
 T01–T09 do roteiro Excel permanecem referência **funcional** adaptada ao novo executor: pré-condições, gravação finalizada, compilação, backend Windows pronto, replay e verificação independente dos arquivos. T02/T05 validam Engine/prontidão gerenciada, não pacote Flow/WAA. T07 usa células/labels preservados; SHA256 é informativo, não condição de igualdade binária. Parametrização é um incremento separado da prova mínima.
 
 
+## Bloco de Notas: comportamento observado (03/11/2026)
+
+Windows 11 25H2 (build 26200.9711), Bloco de Notas 11.2607.14.0, pt-BR. Sondagem e prova com guias sintéticas; vale para essa combinação até nova evidência. Windows 10 x64 não foi exercitado.
+
+| Situação | Observado | Uso em [notepad_steps.py](../runner/redrise_runner/notepad_steps.py) |
+|---|---|---|
+| Identidade da guia | Cada guia é um TabItem com runtime id de UI Automation estável na sessão do app; muda ao reabrir | Referência da guia no contexto; título nunca identifica |
+| Título da guia | `"<título>. Modificado."` ou `"<título>. Não modificado."`; acompanha o início do texto antes de salvar | Só o título antes do primeiro `". "` é lido, para reconhecer guia sem título e arquivo salvo |
+| Texto do editor | O Document expõe o texto por ValuePattern | Vazio antes de digitar; igual ao digitado antes de salvar |
+| Correção automática | O editor pode trocar palavras digitadas ("sintetico" virou "sintético"); a frase do Boas-vindas não foi alterada | Texto do editor comparado antes de salvar; divergência para em NOTEPAD-TEXT-MISMATCH |
+| Abertura limpa | Uma janela, uma guia “Sem título” vazia, em primeiro plano | Guia reutilizada |
+| Ctrl+T | Nova guia vazia, selecionada, com foco no editor | Guia dedicada |
+| Ctrl+W em guia alterada | Pergunta dentro da janela com Salvar, Não salvar e Cancelar; foco em Salvar; Tab leva a Não salvar | Descarte só em guia da execução, com o foco conferido no botão |
+| Ctrl+W na última guia sem alteração | Fecha a janela e não deixa sessão em LocalState\TabState | Encerramento da janela dedicada |
+| Fechar a janela (X) com guia salva | Fecha sem perguntar; a guia também volta na próxima abertura. O modelo antigo `boas-vindas`, usado no gate, deixa uma guia a cada execução | Etapas novas fecham com Ctrl+W, sem deixar sessão |
+| Fechar a janela (X) com guia alterada | Fecha sem perguntar; a guia volta na próxima abertura, com novo runtime id | Sessão restaurada recebe guia dedicada; as restauradas ficam |
+
 ## Direção U27 — construção e diagnóstico
 
 Aplicar [testes localizados](TESTING-STRATEGY.md) e [mensagens/códigos](ERROR-DIAGNOSTICS.md). Cada capacidade é testável com inputs diretos; ao conectar capacidades, conferir contratos e propagação de erro. Não impor campanha Excel/Browser completa antes de UI/instalador; campanha prática vem depois do closed beta instalado, no ambiente próprio disponível. Códigos orientam a investigação de responsabilidade/fronteira e não garantem qual código precisa ser atualizado. Preservar evidências já obtidas com seu escopo original.

@@ -1,7 +1,7 @@
 {
   "name": "redrise-desktop",
   "private": true,
-  "version": "0.1.0-beta.17",
+  "version": "0.1.0-beta.22",
   "type": "module",
   "description": "RedRise desktop UI (React + TypeScript, shadcn/ui primitives, Vite as build-only bundler) inside Tauri",
   "scripts": {

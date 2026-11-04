@@ -388,16 +388,20 @@ pub fn run(proc: &Procedure, ports: &Ports<'_>, opts: &RunOptions) -> RunReport 
                         break Some(w);
                     }
                 }
-                _ => stable_since = None,
-            }
-            if i == 0 && !activated {
-                activated = true;
-                match opts.bound_window {
-                    Some(b) => ports.windows.activate_window(b),
-                    None => ports
-                        .windows
-                        .activate(&step.expect.process_image, &step.expect.class),
-                };
+                _ => {
+                    stable_since = None;
+                    // Only when the target is not in front: activating the root of a
+                    // bound run would take the focus from the dialog it owns.
+                    if i == 0 && !activated {
+                        activated = true;
+                        match opts.bound_window {
+                            Some(b) => ports.windows.activate_window(b),
+                            None => ports
+                                .windows
+                                .activate(&step.expect.process_image, &step.expect.class),
+                        };
+                    }
+                }
             }
             if ports.cancel.is_cancelled()
                 || ports.pacer.now_ms().saturating_sub(t0) >= opts.step_timeout_ms

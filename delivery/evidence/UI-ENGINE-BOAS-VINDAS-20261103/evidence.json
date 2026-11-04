@@ -1,0 +1,116 @@
+{
+  "step": "UI-ENGINE-BOAS-VINDAS-20261103",
+  "status": "automation_slice_accepted",
+  "scope": "Priority slice of the work order: the Boas-vindas process and its acceptance. The rest of the work order is listed under not_done.",
+  "source_revision": "base 41294f1a456da3f96abe0425bb4e16fc3b48eb16; this commit holds the code proved here",
+  "versions": {
+    "desktop": "0.1.0-beta.22",
+    "core": "0.3.3",
+    "runner": "0.3.8",
+    "engine_sha256": "b4f13d237db2b75d7107c046e8868738400f483e11bb0a76493a891237fd7ca9",
+    "engine_sha256_previous": "057ed44544548b5c5f2a4bf838e36635b46f9d331fa93c61937aaf6ffbd81c0d",
+    "installer_sha256": "b851d5b4173a6c2165d7723e7cafa6404408dbfa8a8cd179dffc5cf1bafe3e0a"
+  },
+  "environment": {
+    "os": "Windows 11 Pro 25H2 x64, build 26200.9711",
+    "notepad": "11.2607.14.0",
+    "language": "pt-BR",
+    "session": "interactive session of the station user, computer idle",
+    "team": "isolated synthetic team of the installed build (own data folder and vault namespace); the installed team was not used for the proof"
+  },
+  "acceptance": {
+    "report": "delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/accept-20261104-010625.json",
+    "report_sha256": "be56d0b8be91f8cd30b64b1bd0866cf444209fa027a1fa5c71dabc48343e2496",
+    "passed": true,
+    "kind": "practical_e2e",
+    "scenarios": {
+      "s1": "Clean start through the app: only empty untitled tab reused, Boas_Vindas[2].txt, window closed, no session left.",
+      "s2": "Window already open with an unsaved synthetic tab, through the app: dedicated tab, only it closed, unsaved text kept, window open.",
+      "s3": "Restored session through the app: dedicated tab next to the restored one, restored text kept, window open.",
+      "s4": "Installed Runner CLI: two extra tabs of the run in its window closed, discard only on them, window closed.",
+      "s4b": "Installed Runner CLI: another tab in the window of the run kept with its text, window stays open, nothing discarded.",
+      "s5": "Collision through the app: a file appeared under the chosen name while Save As was open; the overwrite question was answered No, the other file was preserved and the save used the next free name.",
+      "s6": "Installed Runner CLI: target gone before the second step: NOTEPAD-TARGET-LOST before typing, nothing saved or opened."
+    },
+    "desktop_file": "The file Boas_Vindas.txt already on the Desktop kept its hash in every run. Files of the runs were moved to the lab folder."
+  },
+  "checks": [
+    {
+      "kind": "contract_check",
+      "command": "cd tests/contracts && python -B -m unittest test_diagnostics",
+      "result": "17 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "cd tests/runtime && python -B -m unittest test_browser_open test_runner test_templates test_excel test_notepad_steps",
+      "result": "passed; simulated desktop and Engine",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "cd tests/core && python -B -m unittest test_browser_processes, then test_core, test_agent, test_identity, each in its own process",
+      "result": "30, 14, 6 and 37 passed; real Core and PostgreSQL, simulated Runner where noted",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "cargo test --workspace (engine, on C:)",
+      "result": "passed, with the regression for activation",
+      "exit": 0
+    },
+    {
+      "kind": "release_gate",
+      "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.22",
+      "result": "passed",
+      "exit": 0
+    },
+    {
+      "kind": "practical_e2e",
+      "command": "proofs/boas-vindas/accept_boas_vindas.py on the installed beta.22",
+      "result": "7 of 7 scenarios passed",
+      "exit": 0
+    },
+    {
+      "kind": "base",
+      "command": "node scripts/validate-base.mjs",
+      "result": "passed",
+      "exit": 0
+    }
+  ],
+  "review": {
+    "by": "independent read-only reviewer (subagent), two passes on the source; it did not write code",
+    "first_pass_blocking": [
+      "a person's tab in the window of the run could be discarded",
+      "an empty read of the tabs counted as closed",
+      "POST /api/v1/jobs ran a linked step outside its process",
+      "the proof could overclaim"
+    ],
+    "fixed": "All of them, plus changes to or archiving of the ready-made routines, and a re-check of the text at the moment of discarding.",
+    "accepted_limit": "The Engine binds to the window, and the tab is checked before and after input. If another program opens a file in that window in the instant before input, the text may land there; the next check then stops the run."
+  },
+  "defects_found_by_the_proof": [
+    "Runner could not bring an open Notepad forward with the app in front: Windows refuses a background process. The Engine does it now, with an F24 key that nothing binds.",
+    "Engine always activated the root of a bound run in its first step, taking the focus from a dialog it owns. Fixed in engine-core/src/execute.rs, so the Engine hash changed; gate repeated.",
+    "The overwrite question is a task dialog: Esc and WM_CLOSE do not answer it. Now Enter on No, with the focus confirmed first."
+  ],
+  "open_points": [
+    "The old boas-vindas template, still used by the release gate, closes with the title-bar X: Notepad keeps each saved tab for the next start. Each gate left 7 tabs, closed by hand in the lab before the proof. A customer running the old template gets the same.",
+    "The free-name base case (Boas_Vindas.txt itself) is covered by component tests only: that file already exists on the proof Desktop and was not moved.",
+    "s4 and s4b use the Runner CLI so that tabs can be added between steps; the steps themselves are the same code as through the app.",
+    "Windows 10 x64 was not exercised; no support is claimed.",
+    "Text may be autocorrected by Notepad; the Boas-vindas sentence was not changed in any run, and a change stops at NOTEPAD-TEXT-MISMATCH.",
+    "Installed app reopened on the real team: migration 005 applied with a pre-migration backup; its Boas-vindas process was not run there."
+  ],
+  "not_done": [
+    "Interface: main and submenu titles in Playfair Display, common navigation cards, reusable table component.",
+    "Nova Rotina: rename, Testes and Por gravacao disabled, three-step assistant, app selector, progress checks, Deu tudo certo link.",
+    "Integrating a standalone routine into a process, and replacing step 1 with approval.",
+    "Follow-up actions: notify, PDF report, review with Aprovado, reassignment.",
+    "Abas Visao Geral and Marcado para mim, notification bell.",
+    "Live table updates and their inventory."
+  ],
+  "published": false,
+  "homologation": "not declared",
+  "next_action": "User decides the next part of the work order; suggested: fix the old template's closing, then the Nova Rotina assistant."
+}

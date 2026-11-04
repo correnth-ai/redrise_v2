@@ -212,7 +212,7 @@
     }
   ],
   "roadmap_revision": 4,
-  "next_action": "Browser update: 0.1.0-beta.14 passed verify-candidate, signed into the lab channel and installed through the app (2026-11-01); installed Browser campaign passed with open findings. Next: user review of homologation and findings. Evidence: delivery/evidence/BROWSER-UPDATE-20261101/evidence.json.",
+  "next_action": "Boas-vindas process accepted on the installed 0.1.0-beta.22 (delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/evidence.json; 2026-11-04); not homologation or publication. Next: user chooses the next part of the work order. Earlier: Browser update: 0.1.0-beta.14 passed verify-candidate, signed into the lab channel and installed through the app (2026-11-01); installed Browser campaign passed with open findings. Next: user review of homologation and findings. Evidence: delivery/evidence/BROWSER-UPDATE-20261101/evidence.json.",
   "direction_revision_evidence": "delivery/evidence/PRACTICAL-20261027/revision.json",
   "closed_beta_available": true,
   "closed_beta_evidence": "delivery/evidence/P10/closed-beta.json",

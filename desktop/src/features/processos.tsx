@@ -25,6 +25,8 @@ import { when } from "@/lib/utils";
 
 const CATEGORY: Record<string, string> = { windows: "Windows", browser: "Navegador", mac: "Mac", linux: "Linux" };
 
+const originLabel = (kind: string, c: Routine["config"]) => kind === "notepad_step" ? "Bloco de Notas" : c ? (c.origin === "site" ? "Site" : "HTML local") : "Legada";
+
 function Loading({ what }: { what: string }) {
   return <p className="text-sm text-muted-foreground">Carregando {what}…</p>;
 }
@@ -75,7 +77,7 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
       <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Rotina</TableHead><TableHead>Origem</TableHead><TableHead>Continuação</TableHead><TableHead>Isolada</TableHead><TableHead className="text-right">Ações</TableHead>
+            <TableHead>Rotina</TableHead><TableHead>Origem</TableHead><TableHead>Continuação</TableHead><TableHead>Execução</TableHead><TableHead className="text-right">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {!shown.length && <TableRow><TableCell colSpan={5} className="text-muted-foreground">Nenhum processo corresponde aos filtros.</TableCell></TableRow>}
@@ -89,7 +91,7 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
                   <TableCell>{p.last_execution ? <ExecutionBadge e={{ state: p.last_execution.state, outcome: p.last_execution.outcome } as any} /> : <Badge variant="outline">Nunca executado</Badge>}</TableCell>
                   <TableCell className="text-right">
                     <Action label="Executar processo" onClick={() => run({ kind: "process", id: p.id })} disabled={!p.items.length}><Play /></Action>
-                    {me.role === "admin" && <Action label="Editar composição" onClick={() => setCompose(p)}><Pencil /></Action>}
+                    {me.role === "admin" && !p.system_key && <Action label="Editar composição" onClick={() => setCompose(p)}><Pencil /></Action>}
                   </TableCell>
                 </TableRow>
                 {p.items.map((it) => {
@@ -97,11 +99,10 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
                   return (
                     <TableRow key={`${p.id}-${it.position}`}>
                       <TableCell className="pl-8">{it.position}. {it.routine_name}</TableCell>
-                      <TableCell className="text-muted-foreground">{it.config ? (it.config.origin === "site" ? "Site" : "HTML local") : "Legada"}</TableCell>
+                      <TableCell className="text-muted-foreground">{originLabel(it.kind, it.config)}</TableCell>
                       <TableCell>{it.position === p.items.length ? "Fim da sequência" : it.continue_next ? "Continua para a próxima" : "Encerra aqui"}</TableCell>
-                      <TableCell>{it.config?.isolated ? "Sim" : "Não"}</TableCell>
+                      <TableCell>Pelo processo</TableCell>
                       <TableCell className="text-right">
-                        <Action label="Executar rotina isolada" disabled={!it.config?.isolated} onClick={() => run({ kind: "routine", id: it.routine_id })}><Play /></Action>
                         {rt && <Action label="Ver detalhes" onClick={() => setDetail(rt)}><Eye /></Action>}
                       </TableCell>
                     </TableRow>
@@ -120,9 +121,11 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
 
 // ---------------------------------------------------------------- routine library
 export function RoutinesPage() {
-  const { routines, run, go, me } = useStore();
+  const { routines, processes, run, go, me } = useStore();
   const [detail, setDetail] = useState<Routine | null>(null);
   const [q, setQ] = useState("");
+  // A linked routine, even as the only step, runs through its process.
+  const linkOf = (id: number) => (processes ?? []).filter((p) => p.items.some((i) => i.routine_id === id));
   const [origin, setOrigin] = useState("all");
   if (!routines) return <Loading what="rotinas" />;
   const shown = routines.filter((r) => r.name.toLowerCase().includes(q.toLowerCase()) &&
@@ -145,21 +148,21 @@ export function RoutinesPage() {
       </div>
       <div className="overflow-x-auto rounded-md border">
         <Table>
-          <TableHeader><TableRow><TableHead>Rotina</TableHead><TableHead>Tipo</TableHead><TableHead>Destino</TableHead><TableHead>Versão</TableHead><TableHead>Isolada</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Rotina</TableHead><TableHead>Tipo</TableHead><TableHead>Destino</TableHead><TableHead>Versão</TableHead><TableHead>Processo</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
             {!shown.length && <TableRow><TableCell colSpan={6} className="text-muted-foreground">Nenhuma rotina.</TableCell></TableRow>}
             {shown.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="font-medium">{r.name}</TableCell>
-                <TableCell>{r.config ? (r.config.origin === "site" ? "Navegar em site" : "Abrir HTML local") : r.kind === "template" ? `Modelo ${r.template_id}` : "Gravação"}</TableCell>
-                <TableCell className="max-w-64 truncate text-muted-foreground" title={r.config ? (r.config.url ?? r.config.path ?? "") : undefined}>{r.config ? (r.config.url ?? r.config.path) : CATEGORY[r.category] ?? r.category}</TableCell>
+                <TableCell>{r.kind === "notepad_step" ? "Bloco de Notas" : r.config ? (r.config.origin === "site" ? "Navegar em site" : "Abrir HTML local") : r.kind === "template" ? `Modelo ${r.template_id}` : "Gravação"}</TableCell>
+                <TableCell className="max-w-64 truncate text-muted-foreground" title={r.kind === "browser_open" && r.config ? (r.config.url ?? r.config.path ?? "") : undefined}>{r.kind === "browser_open" && r.config ? (r.config.url ?? r.config.path) : CATEGORY[r.category] ?? r.category}</TableCell>
                 <TableCell>v{r.version}</TableCell>
-                <TableCell>{r.config ? (r.config.isolated ? "Sim" : "Não") : "—"}</TableCell>
+                <TableCell>{linkOf(r.id).length ? linkOf(r.id).map((p) => p.name).join(", ") : "Avulsa"}</TableCell>
                 <TableCell className="text-right">
-                  <Action label={r.config ? "Executar rotina isolada" : "Executar"} disabled={!!r.config && !r.config.isolated}
+                  <Action label={linkOf(r.id).length ? "Executa pelo processo" : r.config ? "Executar rotina avulsa" : "Executar"} disabled={!!linkOf(r.id).length || (!!r.config && !r.config.isolated)}
                     onClick={() => (r.config ? run({ kind: "routine", id: r.id }) : go({ menu: "rotina", page: "executar-legada", id: r.id }))}><Play /></Action>
                   <Action label="Ver detalhes" onClick={() => setDetail(r)}><Eye /></Action>
-                  {me.role === "admin" && r.config && <Action label="Editar" onClick={() => go({ menu: "rotina", page: "editar", id: r.id })}><Pencil /></Action>}
+                  {me.role === "admin" && r.kind === "browser_open" && <Action label="Editar" onClick={() => go({ menu: "rotina", page: "editar", id: r.id })}><Pencil /></Action>}
                 </TableCell>
               </TableRow>
             ))}
@@ -198,14 +201,14 @@ function RoutineSheet({ routine, onClose }: { routine: Routine | null; onClose: 
           <SheetHeader><SheetTitle>{routine.name}</SheetTitle><SheetDescription>Versão {routine.version} · cadastrada em {when(routine.created_at)}</SheetDescription></SheetHeader>
           <div className="space-y-4 px-4 text-sm">
             <p>{describeConfig(routine.config)}</p>
-            {routine.config && <p>Execução isolada: <b>{routine.config.isolated ? "permitida" : "não permitida (requer contexto do processo)"}</b></p>}
+            {routine.config && <p>Execução: <b>{used.length ? "pelo processo" : routine.config.isolated ? "avulsa" : "só em processo (requer contexto)"}</b></p>}
             <div><p className="font-medium">Usada em</p>
               {used.length ? <ul className="list-disc pl-5">{used.map((p) => <li key={p.id}>{p.name}</li>)}</ul> : <p className="text-muted-foreground">Nenhum processo.</p>}
               {used.length > 1 && <p className="mt-1 text-xs text-muted-foreground">Alterações valem para todos esses processos na próxima execução.</p>}
             </div>
             <div className="flex flex-wrap gap-2">
-              {routine.config && <Button size="sm" disabled={!routine.config.isolated} onClick={() => { onClose(); run({ kind: "routine", id: routine.id }); }}><Play /> Executar</Button>}
-              {me.role === "admin" && routine.config && <Button size="sm" variant="outline" onClick={() => { onClose(); go({ menu: "rotina", page: "editar", id: routine.id }); }}><Pencil /> Editar</Button>}
+              {routine.config && !used.length && <Button size="sm" disabled={!routine.config.isolated} onClick={() => { onClose(); run({ kind: "routine", id: routine.id }); }}><Play /> Executar</Button>}
+              {me.role === "admin" && routine.kind === "browser_open" && <Button size="sm" variant="outline" onClick={() => { onClose(); go({ menu: "rotina", page: "editar", id: routine.id }); }}><Pencil /> Editar</Button>}
             </div>
           </div>
         </>}

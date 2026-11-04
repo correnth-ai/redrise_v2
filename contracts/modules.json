@@ -330,6 +330,33 @@
         "IDENTITY-VAULT-FAILED",
         "ACCOUNT-EXISTS"
       ]
+    },
+    "RR-NOTEPAD": {
+      "responsibility": "Processo Boas-vindas: identificar janela e guias do Bloco de Notas, digitar, salvar e fechar pela interface",
+      "symbols": [
+        "redrise_runner.notepad_steps.run",
+        "redrise_runner.notepad_steps.free_name",
+        "redrise_runner.notepad_steps.UiaDesk",
+        "redrise_runner.uia.Uia"
+      ],
+      "contracts": [
+        "notepad_step config (core/redrise_core/service.py WELCOME_STEPS)"
+      ],
+      "paths": [
+        "runner/redrise_runner/notepad_steps.py",
+        "runner/redrise_runner/uia.py"
+      ],
+      "conditions": [
+        "NOTEPAD-CONTEXT-MISSING",
+        "NOTEPAD-TABS-UNAVAILABLE",
+        "NOTEPAD-TAB-NOT-IDENTIFIED",
+        "NOTEPAD-TARGET-LOST",
+        "NOTEPAD-TEXT-MISMATCH",
+        "NOTEPAD-FILE-MISMATCH",
+        "NOTEPAD-SAVE-UNCONFIRMED",
+        "NOTEPAD-CLOSE-CHANGES",
+        "NOTEPAD-CLOSE-UNCONFIRMED"
+      ]
     }
   }
 }

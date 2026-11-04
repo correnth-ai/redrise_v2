@@ -1,0 +1,52 @@
+# Work order — interface, processos e Engine Boas-vindas
+
+- **ID:** UI-ENGINE-BOAS-VINDAS-20261103. Escopo decidido no grill de 03/11/2026. Estado: planejamento consolidado.
+- **Produto / repo:** product:redrise-v2 / repo:redrise-v2. Root D:/Correnth/products/redrise-v2/repos/app, main, HEAD 41294f1a456da3f96abe0425bb4e16fc3b48eb16. Árvore limpa antes da redação, digest 2d66e8850e90923cf97b7502db149cf4fa549ecdff18091912e133117089022e.
+- **Roadmap:** refinamento de P08/P09 e cenário de aceite P13. Predecessor [evidência da beta.17](../evidence/IDENTITY-UI-20261102/evidence.json), SHA256 2fb17c09c722e033b41d98c7539a12e6b08a3afc953ac487c98b974cad5a9579. Revalidar árvore, versão instalada e status antes de executar.
+
+## Interface e tabelas
+
+- Ordem dos menus principais: **Empresa → Processo → Rotina → Configuração**. Título e subtítulo nas páginas principais, título menor com o nome nos submenus, títulos em Playfair Display. Cards de navegação no topo seguem um padrão comum com ícones e levam aos submenus correspondentes. Preservar as funções existentes de Empresa e Configuração ao aplicar o padrão.
+- Criar componente de tabela reutilizável para o app. Usar a captura do grill como referência de abas de filtro, busca, badges e paginação. Incluir seleção por linha, ordenação por menu de coluna e reorganização de colunas pelos controles do cabeçalho. Arraste de linhas retirado do escopo. Em Rotina › Lista, apresentar vínculos reais com processos e ações de executar, ver detalhes, editar e excluir conforme a disponibilidade de cada registro.
+- Usar dados reais quando a tela já estiver integrada. Inventariar as demais tabelas, suas fontes, eventos de mudança e regras de atualização antes de ligar a atualização em tempo real. Esse mapeamento e integração ficam entre as últimas entregas antes do go-live do Beta.
+
+## Processo e Nova Rotina
+
+- Cadastrar processos em **Processo › Ação** antes de vinculá-los no assistente. A Lista executa somente rotinas avulsas. Rotina vinculada, mesmo quando é a única etapa, executa pelo processo. Mostrar o vínculo na Lista. Permitir integrar uma avulsa a processo existente em Processo › Ação. Aplicar a restrição também no Core.
+- Renomear para **Nova Rotina**. Exibir **Testes (em breve)** e **Por gravação (em breve)** desabilitados.
+- Etapa 1 do assistente: escolher entre iniciar um processo, fazer follow-up ou criar rotina avulsa. Para iniciar, selecionar processo existente sem etapa 1. Um processo tem no máximo uma rotina inicial. Para follow-up, selecionar processo existente e a etapa anterior, com busca por nome de processo ou rotina e exibição do número da etapa. O follow-up recebe o contexto daquela etapa na mesma execução. A avulsa salva sem vínculo.
+- Etapa 2: para abrir um destino, usar seletor pesquisável de aplicativos instalados que a Engine consegue iniciar. **Outro…** abre o seletor de arquivos do Windows. Para follow-up, escolher uma das três ações abaixo.
+- Etapa 3: resolver destino e dependências, mostrar indicadores de progresso e checks reais por operação. Na rotina inicial, após sucesso, exibir **Deu tudo certo! Quer testar?**, com o trecho **Quer testar?** clicável. O clique abre o destino exato resolvido. A preparação sozinha não abre o destino. Follow-ups não exibem esse link.
+- Executar as etapas em ordem, uma por vez, com avanço após verificar o resultado anterior. Substituir a etapa 1 em Processo › Ação, com o processo fora de execução e aprovação de membro elegível vinculado ao processo. Manter esse fluxo de alteração separado da revisão que pausa a execução. Detalhar permissões por função e elegibilidade de assinantes em etapa posterior. A direção registrada para aprovação de alteração é que assinantes elegíveis atuais vejam pedidos pendentes, com autoria da aprovação registrada.
+
+## Follow-up e revisão
+
+| Ação | Resultado esperado |
+|---|---|
+| Notificar alguém | Escolher aplicativo de e-mail instalado e compatível ou Browser, que leva à configuração de navegador/webmail. Preparar rascunho com os dados e artefatos disponíveis no contexto. A pessoa revisa e envia. Registrar “Mensagem preparada”. |
+| Gerar relatório | Gerar PDF com template RedRise, resumo do que foi feito, etapas, resultado e pendências a partir da execução real. Após salvar, exibir **Veja aqui!**, que abre no Explorador a pasta em que o arquivo foi salvo. |
+| Solicitar revisão | Selecionar um membro da equipe. Pausar a execução em **Aguardando revisão** e abrir pedido com o contexto. Somente o responsável atual pode clicar em **Aprovado!**. Registrar autor e horário e retomar a mesma execução na próxima etapa uma única vez. |
+
+- Em **Processo › Ação**, apresentar abas **Visão Geral** e **Marcado para mim**, com Visão Geral como padrão. Usar as referências do grill para cards e lista por status. Visão Geral mostra contagens e execuções. Marcado para mim agrupa pedidos pendentes e aprovados do usuário conectado. O detalhe mostra contexto e resultados para conferência. Gráfico de horas e cronômetro ficam para outro escopo.
+- Sino imediatamente à direita do seletor de tema. Badge vermelho com quantidade de notificações não vistas, oculto quando a contagem for zero. Abrir a notificação leva ao pedido em Marcado para mim e marca a notificação como vista. Aprovação é uma ação separada.
+- Ao editar o responsável na etapa da rotina, mover os pedidos ainda pendentes para o novo responsável, ajustar as caixas e notificações, e retirar a permissão de aprovar do anterior. Pedidos concluídos preservam autoria e horário. Não criar ação separada de transferência ou parametrização de ausências. Validar no Core que troca e aprovação concorrentes não concedem duas decisões ou duas retomadas.
+
+## Engine e aceite do Boas-vindas
+
+Alvo do aceite: **Windows 11 x64**, na sessão interativa do usuário da estação. Windows 10 x64 requer evidência própria antes de declarar suporte. As ações da automação devem produzir efeito na interface visível, com digitação por eventos de teclado no controle em foco. Abrir, digitar, salvar e fechar pelo fluxo da interface. Leitura independente do arquivo é permitida para verificação. Terminal só é alvo quando a própria rotina explicitamente prevê abri-lo e digitar nele. CLI, PowerShell e escrita direta do TXT não substituem o fluxo de aceite.
+
+Disponibilizar em Processo › Ação um processo de teste pronto chamado **Boas-vindas**:
+
+1. **Abrir e identificar.** Se o Bloco de Notas estiver fechado, abrir e identificar a janela e as guias. Reutilizar a única guia vazia “Sem título” criada na abertura limpa. Quando o aplicativo já estiver aberto ou restaurar guias anteriores, criar uma guia dedicada ao teste e preservar as existentes. O título sozinho não identifica uma guia como pertencente ao teste. Registrar a referência de janela e guia no contexto.
+2. **Digitar e salvar.** Confirmar foco na guia do teste, digitar **“Boas-vindas a Redrise Automações B2B”** e salvar pela interface na Área de Trabalho efetiva do usuário Windows logado. Usar `Boas_Vindas.txt` se disponível. Preservar arquivos existentes e usar o primeiro sufixo livre, começando por `Boas_Vindas[2].txt`, seguido de `Boas_Vindas[3].txt` e assim por diante. Se surgir um conflito no diálogo de salvamento, recusar sobrescrita e resolver outro nome livre. Verificar o conteúdo do arquivo efetivamente salvo e registrar seu caminho.
+3. **Fechar e verificar.** Em janela com guias preexistentes, fechar somente a guia do teste e manter o aplicativo aberto. Em janela dedicada à execução, contar as guias, fechar as extras identificadas como do teste e usar **Não salvar** somente para alterações em guias do teste. Quando restar uma única guia do teste, encerrar a janela. Confirmar o estado final das guias e da janela. Se a Engine perder foco ou identidade do alvo, parar com diagnóstico antes de digitar, salvar ou fechar.
+
+As referências da Microsoft documentam a configuração de abertura em guias ou janelas e a restauração de sessão, inclusive conteúdo não salvo. Registrar a versão do Windows e do Bloco de Notas exercitadas e catalogar o comportamento observado na documentação da Engine. [Guias no Bloco de Notas](https://blogs.windows.com/windows-insider/2023/01/19/tabs-in-notepad-begins-rolling-out-to-windows-insiders/) · [Restauração de sessão](https://blogs.windows.com/windows-insider/2023/08/31/new-updates-for-snipping-tool-and-notepad-for-windows-insiders/)
+
+## Execução, verificação e limites
+
+- Esta entrega documental modifica apenas esta work order. Para engenharia, delimitar os arquivos por incremento em desktop, Core, Runner, Engine, contratos, templates, testes e documentação diretamente afetados. Ler primeiro [regras do app](../../docs/APP-RULES.md), [Engine](../../docs/ENGINE.md), [estratégia de testes](../../docs/TESTING-STRATEGY.md) e [diagnóstico](../../docs/ERROR-DIAGNOSTICS.md). As decisões deste grill prevalecem para o escopo descrito.
+- Priorizar a fatia completa do Boas-vindas. Em build instalada, comprovar abertura limpa com uma guia, janela preexistente com guia não salva, sessão restaurada, fechamento de múltiplas guias sintéticas próprias e colisão de nome, inclusive preservar o arquivo original e verificar o arquivo com colchetes. Registrar resultado por etapa, caminho de saída e preservação das guias anteriores. Usar dados sintéticos e evidência sem conteúdo pessoal.
+- Verificar separadamente os contratos de sequência, vínculo, aprovação, reatribuição e retomada, e inspecionar as telas com dados persistidos. Para falha ou efeito incerto, parar no diagnóstico, conferir o estado antes de tentar novamente e evitar repetição automática de escrita, aprovação ou descarte. Fazer revisão independente antes de marcar aceite. A prova do Boas-vindas é o critério desta fatia de automação, com homologação e publicação registradas separadamente.
+- Fora desta fatia: identidade externa, envio automático de mensagens, gestão de ausências, matriz detalhada de funções e publicação. Referências anexadas são insumos visuais, não instruções de instalação. Sem escrita externa, credenciais, custos, commit ou push por autorização implícita. Preservar evidências anteriores e preparar recuperação de dados antes de migração ou instalação.
+- Consulta de memória em correnth/redrise-v2 indisponível. Revisão documental com fontes locais e decisões da sessão, sem grafo. Resolver skills pertinentes antes das futuras mutações de engenharia. Próxima ação: preparar a fatia Boas-vindas e executar o aceite prático no candidato instalado.

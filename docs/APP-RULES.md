@@ -2,6 +2,8 @@
 
 Atualizado: 02/11/2026. Produto: `product:redrise-v2`. **Detalhamento: nível 1 — visão simples.**
 
+**Revisão de 03/11/2026 ([UI-ENGINE-BOAS-VINDAS](../delivery/work-orders/UI-ENGINE-BOAS-VINDAS-20261103.md)):** menus na ordem Empresa → Processo → Rotina → Configuração. Rotina vinculada, mesmo como única etapa, executa só pelo processo (Core recusa com ROUTINE-LINKED); a Lista executa apenas avulsas e mostra o vínculo. Processo de teste pronto **Boas-vindas** em Processo › Ação, criado uma vez por equipe e sem edição. Prevalece sobre M01, M06 e R06 nos pontos alterados.
+
 **Revisão de 02/11/2026 (usuário):** identidade externa suspensa até as automações funcionarem. Cadastro grava só no Core, sem e-mail nem confirmação; a conta nasce inativa como operador e um administrador a ativa em Configuração › Equipe. Login no Core por e-mail ou usuário. Fora de uso por enquanto: Supabase, Resend, confirmação, reenvio, recuperação, Lembrar de mim, Estações lembradas, Google/GitHub. A01–A07 voltam quando a identidade for retomada.
 
 **Direção vigente de identidade/UI:** [IDENTITY-UI-20261102](../delivery/work-orders/IDENTITY-UI-20261102.md), com [prompt de engenharia](AGENT-START-IDENTITY-UI.md). Implementação local em andamento (código beta.15, sem candidato); cadastro e login reais bloqueados para aceite: [estado e pendências remotas](identity/IDENTITY-N0-CONTRACT-20261102.md). Substitui as referências login/signup-05 e o cadastro sem senha: login-03/signup-03 com fundo fornecido, nome completo/e-mail/senha, mínimo 8 caracteres, mesma infraestrutura Supabase V1 seletivamente reutilizada e sessão lembrada segura. Demais fontes históricas abaixo preservam o estado anterior; esta direção prevalece nos pontos alterados.

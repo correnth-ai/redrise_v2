@@ -13,6 +13,7 @@ build/
 # Local data and captures; only reviewed synthetic evidence belongs in Git.
 .local/
 data/
+!desktop/src/data/
 recordings/
 captures/
 raw/

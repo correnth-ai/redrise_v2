@@ -1,6 +1,6 @@
 // sidebar-03 (shadcn, MIT) adapted: RedRise brand and the singular menus of the
-// work order: Empresa, Rotina (Lista, Atividade), Processo (Ação, Histórico,
-// Kanban), Configuração (Equipe, Estação, Aplicativo). A main item with sub
+// work order: Empresa, Processo (Ação, Histórico, Kanban), Rotina (Lista,
+// Atividade), Configuração (Equipe, Estação, Aplicativo). A main item with sub
 // items opens its first one. No demo navigation.
 import { Building2, LogOut, Workflow, ListChecks, Settings2, CircleDot } from "lucide-react";
 import {
@@ -12,8 +12,8 @@ import { HOME, type Route } from "@/routes";
 
 const NAV: { menu: Route["menu"]; title: string; icon: typeof Workflow; items: { page: string; title: string }[] }[] = [
   { menu: "empresa", title: "Empresa", icon: Building2, items: [] },
-  { menu: "rotina", title: "Rotina", icon: Workflow, items: [{ page: "lista", title: "Lista" }, { page: "atividade", title: "Atividade" }] },
   { menu: "processo", title: "Processo", icon: ListChecks, items: [{ page: "acao", title: "Ação" }, { page: "historico", title: "Histórico" }, { page: "kanban", title: "Kanban" }] },
+  { menu: "rotina", title: "Rotina", icon: Workflow, items: [{ page: "lista", title: "Lista" }, { page: "atividade", title: "Atividade" }] },
   { menu: "configuracao", title: "Configuração", icon: Settings2, items: [{ page: "equipe", title: "Equipe" }, { page: "estacao", title: "Estação" }, { page: "aplicativo", title: "Aplicativo" }] },
 ];
 

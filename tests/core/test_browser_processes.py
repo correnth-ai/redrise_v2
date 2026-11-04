@@ -193,6 +193,74 @@ class BrowserProcessTest(unittest.TestCase):
         op.call("GET", "/api/v1/processes")
         op.call("GET", "/api/v1/executions")
 
+    def welcome(self):
+        return next(p for p in self.admin().call("GET", "/api/v1/processes") if p["system_key"] == "boas-vindas")
+
+    def test_11_welcome_process_is_ready_and_created_once(self):
+        a = self.admin()
+        p = self.welcome()
+        self.assertEqual(p["name"], "Boas-vindas")
+        self.assertEqual([(i["routine_name"], i["kind"], i["config"]["step"], i["continue_next"]) for i in p["items"]],
+                         [("Abrir e identificar", "notepad_step", "open", True), ("Digitar e salvar", "notepad_step", "save", True),
+                          ("Fechar e verificar", "notepad_step", "close", True)])
+        self.su_core().ensure_welcome_process()  # a later start of the same team creates nothing
+        self.assertEqual(sum(1 for x in a.call("GET", "/api/v1/processes") if x["system_key"] == "boas-vindas"), 1)
+        self.expect("VALIDATION", lambda: a.call("PUT", f"/api/v1/processes/{p['id']}", {"name": "x", "items": [{"routine_id": p["items"][0]["routine_id"], "continue_next": True}]}), 400)
+
+    def test_12_welcome_steps_run_in_order_with_context_of_the_same_execution(self):
+        sid, r, hb = self.station("bv-st", categories=("windows",))
+        p = self.welcome()
+        e = self.execute(sid, process_id=p["id"])
+        first, _ = self.run_claimed(r, hb, context={"notepad": {"window": 1, "tab_id": "42.1"}})
+        self.assertEqual((first["kind"], first["config"]["step"], first["context"]), ("notepad_step", "open", {}))
+        second, _ = self.run_claimed(r, hb, context={"notepad": {"window": 1, "tab_id": "42.1"}, "output_path": "x"})
+        self.assertEqual(second["config"]["step"], "save")
+        self.assertEqual(second["context"]["last"]["notepad"]["tab_id"], "42.1")
+        third = r.call("POST", "/api/v1/runner/claim", hb)["job"]
+        self.assertEqual(third["config"]["step"], "close")
+        self.assertEqual(third["context"]["last"]["output_path"], "x")
+        self.assertEqual(self.get(e["id"])["state"], "running")
+
+    def test_13_failed_step_stops_the_welcome_process(self):
+        sid, r, hb = self.station("bv-st2", categories=("windows",))
+        e = self.execute(sid, process_id=self.welcome()["id"])
+        self.run_claimed(r, hb)
+        self.run_claimed(r, hb, state="uncertain")
+        got = self.get(e["id"])
+        self.assertEqual((got["state"], got["outcome"], got["end_reason"], got["steps"][2]["state"]), ("finished", "uncertain", "not_verified", None))
+        self.assertIsNone(r.call("POST", "/api/v1/runner/claim", hb)["job"])
+
+    def test_14_welcome_process_needs_a_windows_station(self):
+        sid, _, _ = self.station("bv-browser", categories=("browser",))
+        self.expect("STATION-INCOMPATIBLE", lambda: self.execute(sid, process_id=self.welcome()["id"]), 409)
+
+    def test_15_linked_routine_runs_only_through_its_process(self):
+        sid, r, hb = self.station("link-st", categories=("browser",))
+        rid, _ = self.browser_routine()
+        self.assertEqual(self.execute(sid, routine_id=rid)["steps"][0]["state"], "queued")  # still standalone
+        self.run_claimed(r, hb)
+        p = self.process([(rid, False)], "Processo do vinculo")
+        e = self.expect("ROUTINE-LINKED", lambda: self.execute(sid, routine_id=rid), 409)
+        self.assertIn("Processo do vinculo", e.diagnostic.next_action)
+        self.assertEqual(self.execute(sid, process_id=p["id"])["steps"][0]["state"], "queued")
+        self.expect("ROUTINE-LINKED", lambda: self.execute(sid, routine_id=self.welcome()["items"][0]["routine_id"]), 409)
+
+    def test_16_ready_made_routines_have_no_side_doors(self):
+        a = self.admin()
+        sid, _, _ = self.station("bv-door", categories=("windows",))
+        item = self.welcome()["items"][0]
+        vid = next(r for r in a.call("GET", "/api/v1/routines") if r["id"] == item["routine_id"])["version_id"]
+        self.expect("VALIDATION", lambda: a.call("POST", "/api/v1/jobs", {"request_id": uuid.uuid4().hex, "version_id": vid,
+                                                                          "station_id": sid, "inputs": {}}), 400)
+        self.expect("VALIDATION", lambda: a.call("POST", f"/api/v1/routines/{item['routine_id']}/versions",
+                                                 {"kind": "template", "template_id": "boas-vindas"}), 400)
+        self.expect("VALIDATION", lambda: a.call("DELETE", f"/api/v1/routines/{item['routine_id']}"), 400)
+        self.assertEqual(self.welcome()["items"][0]["kind"], "notepad_step")
+
+    def su_core(self):
+        from redrise_core.service import Core
+        return Core(self.h.database, {})
+
     def su(self):
         return CoreTest.su(self)
 

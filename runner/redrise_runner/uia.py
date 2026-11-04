@@ -22,7 +22,7 @@ UIA_ControlTypePropertyId = 30003
 UIA_NamePropertyId = 30005
 UIA_ValueValuePropertyId = 30045
 UIA_SelectionItemIsSelectedPropertyId = 30079
-CT_EDIT, CT_TAB, CT_TABITEM, CT_DOCUMENT = 50004, 50018, 50019, 50030
+CT_BUTTON, CT_EDIT, CT_TAB, CT_TABITEM, CT_DOCUMENT = 50000, 50004, 50018, 50019, 50030
 TreeScope_Children, TreeScope_Descendants = 2, 4
 VT_I4, VT_BSTR, VT_BOOL = 3, 8, 11
 
@@ -76,6 +76,13 @@ class TabStrip:
     count: int
     selected: str | None
     names: list[str]
+
+
+@dataclass
+class TabRef:
+    tab_id: str
+    name: str
+    selected: bool
 
 
 class Uia:
@@ -136,6 +143,25 @@ class Uia:
             _release(arr)
 
     @staticmethod
+    def _runtime_id(el) -> str:
+        arr = ctypes.c_void_p()
+        hr = _method(el, 4, ctypes.POINTER(ctypes.c_void_p))(el, ctypes.byref(arr))
+        if hr != 0 or not arr:
+            raise UiaError(f"GetRuntimeId hr=0x{hr & 0xFFFFFFFF:08x}")
+        try:
+            low, high = ctypes.c_long(), ctypes.c_long()
+            _oleaut32.SafeArrayGetLBound(arr, 1, ctypes.byref(low))
+            _oleaut32.SafeArrayGetUBound(arr, 1, ctypes.byref(high))
+            data = ctypes.POINTER(ctypes.c_int)()
+            _oleaut32.SafeArrayAccessData(arr, ctypes.byref(data))
+            try:
+                return ".".join(str(data[i]) for i in range(high.value - low.value + 1))
+            finally:
+                _oleaut32.SafeArrayUnaccessData(arr)
+        finally:
+            _oleaut32.SafeArrayDestroy(arr)
+
+    @staticmethod
     def _prop(el, prop: int):
         v = VARIANT()
         hr = _method(el, 10, ctypes.c_int, ctypes.POINTER(VARIANT))(el, prop, ctypes.byref(v))
@@ -180,6 +206,78 @@ class Uia:
         finally:
             for c in conds:
                 _release(c)
+            _release(root)
+
+    def tabs(self, hwnd: int) -> list[TabRef]:
+        """Tab items of the first Tab control with their UIA runtime ids. The id, not the title, is the
+        identity of a tab: titles repeat and change when a document is saved."""
+        root = self._from_handle(hwnd)
+        conds = []
+        try:
+            conds.append(self._condition(UIA_ControlTypePropertyId, CT_TAB))
+            strip = self._find_first(root, TreeScope_Descendants, conds[-1])
+            if not strip:
+                return []
+            try:
+                conds.append(self._condition(UIA_ControlTypePropertyId, CT_TABITEM))
+                out = []
+                for t in self._find_all(strip, TreeScope_Descendants, conds[-1]):
+                    try:
+                        out.append(TabRef(self._runtime_id(t), self._prop(t, UIA_NamePropertyId) or "",
+                                          bool(self._prop(t, UIA_SelectionItemIsSelectedPropertyId))))
+                    finally:
+                        _release(t)
+                return out
+            finally:
+                _release(strip)
+        finally:
+            for c in conds:
+                _release(c)
+            _release(root)
+
+    def buttons(self, hwnd: int) -> list[str]:
+        """Names of the buttons inside a top-level window."""
+        root = self._from_handle(hwnd)
+        cond = self._condition(UIA_ControlTypePropertyId, CT_BUTTON)
+        try:
+            names = []
+            for b in self._find_all(root, TreeScope_Descendants, cond):
+                try:
+                    names.append(self._prop(b, UIA_NamePropertyId) or "")
+                finally:
+                    _release(b)
+            return names
+        finally:
+            _release(cond)
+            _release(root)
+
+    def focused_name(self) -> str | None:
+        """Name of the element with the keyboard focus."""
+        el = ctypes.c_void_p()
+        hr = _method(self._p, 8, ctypes.POINTER(ctypes.c_void_p))(self._p, ctypes.byref(el))
+        if hr != 0 or not el:
+            return None
+        try:
+            name = self._prop(el, UIA_NamePropertyId)
+            return name if isinstance(name, str) else None
+        finally:
+            _release(el)
+
+    def document_text(self, hwnd: int) -> str | None:
+        """Text of the first Document of a window through ValuePattern, None when it does not expose one."""
+        root = self._from_handle(hwnd)
+        cond = self._condition(UIA_ControlTypePropertyId, CT_DOCUMENT)
+        try:
+            doc = self._find_first(root, TreeScope_Descendants, cond)
+            if not doc:
+                return None
+            try:
+                v = self._prop(doc, UIA_ValueValuePropertyId)
+                return v if isinstance(v, str) else None
+            finally:
+                _release(doc)
+        finally:
+            _release(cond)
             _release(root)
 
     def address(self, hwnd: int) -> str | None:
