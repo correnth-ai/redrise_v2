@@ -83,7 +83,7 @@ Windows 11 25H2 (build 26200.9711), Bloco de Notas 11.2607.14.0, pt-BR. Sondagem
 | Ctrl+T | Nova guia vazia, selecionada, com foco no editor | Guia dedicada |
 | Ctrl+W em guia alterada | Pergunta dentro da janela com Salvar, Não salvar e Cancelar; foco em Salvar; Tab leva a Não salvar | Descarte só em guia da execução, com o foco conferido no botão |
 | Ctrl+W na última guia sem alteração | Fecha a janela e não deixa sessão em LocalState\TabState | Encerramento da janela dedicada |
-| Fechar a janela (X) com guia salva | Fecha sem perguntar; a guia também volta na próxima abertura. O modelo antigo `boas-vindas`, usado no gate, deixa uma guia a cada execução | Etapas novas fecham com Ctrl+W, sem deixar sessão |
+| Fechar a janela (X) com guia salva | Fecha sem perguntar; a guia também volta na próxima abertura | Etapas e o modelo `boas-vindas` fecham com Ctrl+W, sem deixar sessão |
 | Fechar a janela (X) com guia alterada | Fecha sem perguntar; a guia volta na próxima abertura, com novo runtime id | Sessão restaurada recebe guia dedicada; as restauradas ficam |
 
 ## Direção U27 — construção e diagnóstico

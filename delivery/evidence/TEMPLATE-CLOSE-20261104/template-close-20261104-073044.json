@@ -1,0 +1,70 @@
+{
+ "runner": "0.3.9",
+ "scenarios": {
+  "clean": {
+   "passed": true,
+   "checks": [
+    {
+     "check": "verified",
+     "ok": true
+    },
+    {
+     "check": "the app closed",
+     "ok": true
+    },
+    {
+     "check": "no window left",
+     "ok": true
+    },
+    {
+     "check": "no tab for the next start",
+     "ok": true
+    }
+   ],
+   "state": "verified",
+   "code": null,
+   "opened_app": {
+    "image": "notepad.exe",
+    "was_running": false,
+    "action": "closed"
+   }
+  },
+  "restored": {
+   "passed": true,
+   "checks": [
+    {
+     "check": "the synthetic tab was kept by the session",
+     "ok": true
+    },
+    {
+     "check": "verified",
+     "ok": true
+    },
+    {
+     "check": "the app closed",
+     "ok": true
+    },
+    {
+     "check": "the session holds only the restored tab",
+     "ok": true
+    },
+    {
+     "check": "reopened with that tab alone, text intact",
+     "ok": true
+    }
+   ],
+   "state": "verified",
+   "code": null,
+   "opened_app": {
+    "image": "notepad.exe",
+    "was_running": false,
+    "action": "closed"
+   }
+  }
+ },
+ "left": {
+  "windows": 0,
+  "session_files": 0
+ },
+ "passed": true
+}

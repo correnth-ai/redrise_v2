@@ -10,7 +10,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import apps, verifiers
+from . import apps, notepad_steps, verifiers
 from .engine import EngineClient, EngineError
 from .jobs import JobSpec, SessionBusy, _write_atomic, check_compatibility, run_job, session_lock
 from .paths import Layout
@@ -137,6 +137,8 @@ def _launch_run_verify(t: dict, tdir: Path, layout: Layout, engine: EngineClient
             return finish("error", code="launched_window_not_found",
                           detail=f"no new {opened['image']} {first['class']} window appeared")
         res["launched"]["window"] = bound
+        if t.get("close_by") == "notepad_tab":
+            opened["close_tab"] = _notepad_closer(t, bound, layout, engine, inputs, cancel)
 
     # ---- procedure as a job
     job = None
@@ -191,6 +193,26 @@ def _launch_run_verify(t: dict, tdir: Path, layout: Layout, engine: EngineClient
     return finish(ver.get("state", "refuted"), code=ver.get("code"), reason=ver.get("reason"))
 
 
+def _notepad_closer(t: dict, hwnd: int, layout: Layout, engine: EngineClient, inputs: dict[str, str], cancel: threading.Event):
+    """Reads the tabs now, before the first input; the returned call closes the tab of the run at the end."""
+    desk = notepad_steps.UiaDesk()
+    try:
+        start = notepad_steps.tabs_at_launch(desk, hwnd)
+    finally:
+        desk.close()
+    if start is None:
+        return None
+
+    def close_tab() -> dict:
+        desk = notepad_steps.UiaDesk()
+        try:
+            send = notepad_steps.engine_sender(f"tpl-{t['id']}-close-{time.strftime('%Y%m%d-%H%M%S')}", layout, engine, cancel)
+            return notepad_steps.close_template_tab(desk, send, start, Path(inputs["output_path"]).stem)
+        finally:
+            desk.close()
+    return close_tab
+
+
 def _finisher(t: dict, opened: dict | None, res: dict, done):
     """`done` plus the end-of-run rule for the app this template launched."""
     def finish(state: str, **kw) -> dict:
@@ -203,10 +225,16 @@ def _finisher(t: dict, opened: dict | None, res: dict, done):
             elif state != "verified":
                 info["action"] = "kept_open_for_checking"
             else:
-                new = [w["hwnd"] for w in verifiers.top_windows()
-                       if w["process_image"] == opened["image"] and w["hwnd"] not in opened["before"]]
-                left = apps.close_windows(new)
-                info["action"] = "closed" if not left else "close_requested_still_open"
+                closing = opened["close_tab"]() if opened.get("close_tab") else None
+                if closing and closing["state"] != "verified":
+                    info.update(action="kept_open_close_failed", code=closing.get("code"))
+                elif closing and closing["context"]["notepad"]["window_of_run"] and not closing["context"]["final"]["window_closed"]:
+                    info["action"] = "kept_open_other_tabs"  # a tab this run did not open appeared in its window
+                else:  # a restored session goes back to how it was: its tabs return at the next start
+                    new = [w["hwnd"] for w in verifiers.top_windows()
+                           if w["process_image"] == opened["image"] and w["hwnd"] not in opened["before"]]
+                    left = apps.close_windows(new)
+                    info["action"] = "closed" if not left else "close_requested_still_open"
             res["opened_app"] = info
         return done(state, **kw)
     return finish

@@ -90,10 +90,16 @@ class UiaDesk:
             return []
 
     def text(self, hwnd: int) -> str | None:
-        return self._client.document_text(hwnd)
+        try:
+            return self._client.document_text(hwnd)
+        except self._uia.UiaError:
+            return None
 
     def buttons(self, hwnd: int) -> list[str]:
-        return self._client.buttons(hwnd)
+        try:
+            return self._client.buttons(hwnd)
+        except self._uia.UiaError:
+            return []
 
     def focused(self) -> str | None:
         return self._client.focused_name()
@@ -421,3 +427,21 @@ def run(step: str, ctx: dict, desk: Desk, send: Send) -> dict:
     except _Stop as s:
         return {"state": s.state, "code": s.code, "detail": s.detail, "context": ctx or None}
     return {"state": "verified", "verified": True, "code": None, "context": produced}
+
+
+def tabs_at_launch(desk: Desk, hwnd: int) -> dict | None:
+    """What a template that saves in a new tab needs later to close it, read before its first input.
+    None for a Notepad without tabs, which keeps no session: closing its window is enough."""
+    tabs = desk.tabs(hwnd)
+    if not tabs:
+        return None
+    return {"window": hwnd, "tabs_before": [t.tab_id for t in tabs], "window_of_run": _is_clean_start(tabs, desk.text(hwnd))}
+
+
+def close_template_tab(desk: Desk, send: Send, start: dict, stem: str) -> dict:
+    """Closes the tab a template saved, by the same rules as the close step, so that Notepad does not
+    bring it back at the next start. Closing the window instead would keep every saved tab."""
+    new = [t for t in desk.tabs(start["window"]) if t.tab_id not in start["tabs_before"] and stem in _title_of(t)]
+    if len(new) != 1:
+        return {"state": "failed", "code": "notepad_tab_not_identified", "detail": f"{len(new)} saved tab(s) of this run"}
+    return run("close", {"notepad": {**start, "tab_id": new[0].tab_id}}, desk, send)

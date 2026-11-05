@@ -222,6 +222,27 @@ class EndOfRunApp(unittest.TestCase):
                            capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
         self.assertEqual((r.returncode, r.stdout.strip()), (0, "False True"), r.stderr)
 
+    def closing(self, result):
+        res = {}
+        opened = {"image": "notepad.exe", "was_running": False, "before": {1}, "close_tab": lambda: result}
+        return templates._finisher({}, opened, res, lambda s, **kw: {**res, "state": s, **kw})("verified")
+
+    def test_tab_closed_first_then_what_is_left_of_the_window(self):
+        r = self.closing({"state": "verified", "context": {"notepad": {"window_of_run": False}, "final": {"window_closed": False}}})
+        self.assertEqual(r["opened_app"]["action"], "closed")
+        self.assertEqual(self.closed, [[2]])  # a restored session: its tabs stay in the session
+
+    def test_tab_that_could_not_be_closed_keeps_the_window_and_the_result(self):
+        r = self.closing({"state": "failed", "code": "notepad_tab_not_identified"})
+        self.assertEqual((r["state"], r["opened_app"]["action"], r["opened_app"]["code"]),
+                         ("verified", "kept_open_close_failed", "notepad_tab_not_identified"))
+        self.assertEqual(self.closed, [])
+
+    def test_window_of_the_run_stays_for_a_tab_it_did_not_open(self):
+        r = self.closing({"state": "verified", "context": {"notepad": {"window_of_run": True}, "final": {"window_closed": False}}})
+        self.assertEqual(r["opened_app"]["action"], "kept_open_other_tabs")
+        self.assertEqual(self.closed, [])
+
     def test_close_refused_by_the_app_is_reported(self):
         templates.apps.close_windows = lambda h: h
         self.assertEqual(self.finish("verified")["opened_app"]["action"], "close_requested_still_open")

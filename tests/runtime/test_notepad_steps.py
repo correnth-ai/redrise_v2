@@ -202,6 +202,56 @@ class Base(unittest.TestCase):
         return [a for a in d.sent if a["action"].get("vk") == vk]
 
 
+class TemplateCloseTests(Base):
+    """The template saves in a new tab of the window it opened, then closes that tab, not the window."""
+
+    def saved(self, d):
+        d.launch()
+        start = np.tabs_at_launch(d, d.hwnd)
+        d.send(d.hwnd, [np.key(np.VK_T, "ctrl")])
+        d.sel().name, d.sel().text = "Boas_Vindas. Não modificado.", "outro texto"
+        return start
+
+    def test_clean_start_closes_both_tabs_and_the_window(self):
+        d = FakeNotepad(self.desk_dir)
+        r = np.close_template_tab(d, d.send, self.saved(d), "Boas_Vindas")
+        self.assertEqual(r["state"], "verified", r)
+        self.assertTrue(r["context"]["final"]["window_closed"])
+        self.assertEqual(d.windows(), [])
+        self.assertEqual(self.keys(d, np.VK_RETURN), [])  # nothing was discarded
+
+    def test_restored_session_loses_only_the_tab_of_the_run(self):
+        restored = [Tab("r1", "antigo. Modificado.", True, "antigo")]
+        d = FakeNotepad(self.desk_dir, restored=restored)
+        r = np.close_template_tab(d, d.send, self.saved(d), "Boas_Vindas")
+        self.assertEqual(r["state"], "verified", r)
+        self.assertFalse(r["context"]["final"]["window_closed"])
+        self.assertEqual([t.tab_id for t in d.tabs_], ["r1"])
+        self.assertEqual(d.tabs_[0].text, "antigo")
+
+    def test_a_tab_opened_meanwhile_is_kept(self):
+        d = FakeNotepad(self.desk_dir)
+        start = self.saved(d)
+        d.tabs_.append(Tab("x1", "de uma pessoa. Modificado.", False, "de uma pessoa"))
+        r = np.close_template_tab(d, d.send, start, "Boas_Vindas")
+        self.assertEqual(r["state"], "verified", r)
+        self.assertFalse(r["context"]["final"]["window_closed"])
+        self.assertEqual([t.tab_id for t in d.tabs_], ["x1"])
+
+    def test_unidentified_tab_closes_nothing(self):
+        d = FakeNotepad(self.desk_dir)
+        start = self.saved(d)
+        r = np.close_template_tab(d, d.send, start, "outro_nome")
+        self.assertEqual((r["state"], r["code"]), ("failed", "notepad_tab_not_identified"))
+        self.assertEqual(len(d.tabs_), 2)
+
+    def test_notepad_without_tabs_needs_no_tab_close(self):
+        d = FakeNotepad(self.desk_dir)
+        d.launch()
+        d.tabs_ = []
+        self.assertIsNone(np.tabs_at_launch(d, d.hwnd))
+
+
 class FreeNameTests(Base):
     def test_free_name_sequence(self):
         self.assertEqual(np.free_name(self.desk_dir), "Boas_Vindas.txt")

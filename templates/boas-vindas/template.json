@@ -1,6 +1,6 @@
 {
   "id": "boas-vindas",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "title": "Boas-vindas",
   "purpose": "Abrir o Bloco de Notas pela UI, digitar a mensagem de boas-vindas, ampliar a visualização e salvar Boas_Vindas.txt na Área de Trabalho do usuário.",
   "category": "windows",
@@ -26,7 +26,8 @@
     "args": []
   },
   "procedure": "procedure.json",
-  "end_state": "An app opened only for this run is closed after a verified result; an app that was already open stays open; on any other result it stays open for checking.",
+  "end_state": "An app opened only for this run is closed after a verified result, its saved tab first, so that Notepad does not bring it back at the next start; tabs of a restored session stay in the session; an app that was already open stays open; on any other result it stays open for checking.",
+  "close_by": "notepad_tab",
   "step_timeout_ms": 20000,
   "collision": "refuse: an existing Boas_Vindas.txt is never overwritten or renamed",
   "verifier": {

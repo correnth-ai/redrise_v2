@@ -4,7 +4,7 @@ Runs a template through the runner's own run_template (same app launch,
 Engine spawn without console, verifier and end-of-run rule as the app), with
 the Engine of the installed layout. Output goes to a lab folder, never the
 real Desktop. Each trial must be `verified`, close the app it opened and leave
-no window of that app behind.
+no window of that app behind and no tab for its next start.
 
     python smoke_templates.py --install-root R --out DIR --template boas-vindas --trials N [--load]
 
@@ -38,6 +38,14 @@ def idle_s() -> float:
     li = _LII(ctypes.sizeof(_LII), 0)
     ctypes.windll.user32.GetLastInputInfo(ctypes.byref(li))
     return (ctypes.windll.kernel32.GetTickCount() - li.dwTime) / 1000
+
+
+def session_tabs(image: str) -> set[str]:
+    """Tabs Notepad keeps for its next start, by file name only (a file per tab, `<id>[.n].bin`)."""
+    if image != "notepad.exe":
+        return set()
+    folders = Path(os.environ["LOCALAPPDATA"], "Packages").glob("Microsoft.WindowsNotepad_*/LocalState/TabState")
+    return {f.name.split(".")[0] for d in folders for f in d.iterdir()}
 
 
 def burners(on: bool) -> list[subprocess.Popen]:
@@ -77,12 +85,14 @@ def main() -> int:
             d = a.out / f"{a.template}-{'load' if a.load else 'idle'}-t{t}"
             (d / "Desktop").mkdir(parents=True, exist_ok=True)
             layout = Layout(root, root / "runtime" / "python", engine, d / "data")
+            session = session_tabs(image)
             r = templates.run_template(a.template, layout, EngineClient.at(engine), {}, d / "Desktop")
             time.sleep(2)
             left = [w for w in verifiers.top_windows() if w["process_image"] == image]
+            added = session_tabs(image) - session
             row = {"trial": t, "state": r.get("state"), "code": r.get("code"), "opened_app": r.get("opened_app"),
-                   "windows_left": len(left)}
-            ok = r.get("state") == "verified" and (r.get("opened_app") or {}).get("action") == "closed" and not left
+                   "windows_left": len(left), "session_tabs_added": len(added)}
+            ok = r.get("state") == "verified" and (r.get("opened_app") or {}).get("action") == "closed" and not left and not added
             row["ok"] = ok
             rows.append(row)
             if left:  # never leave lab windows behind for the person

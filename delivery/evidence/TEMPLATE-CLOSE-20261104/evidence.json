@@ -1,0 +1,69 @@
+{
+  "step": "TEMPLATE-CLOSE-20261104",
+  "status": "accepted_on_candidate",
+  "scope": "Closes the open point of UI-ENGINE-BOAS-VINDAS-20261103: the boas-vindas template left a tab in the Notepad session at each run.",
+  "cause": "The end of the run closed the window with WM_CLOSE. Notepad keeps each saved tab of a window closed that way and brings it back at the next start.",
+  "change": "The template declares close_by notepad_tab. The saved tab of the run is closed with Ctrl+W, by the rules of the close step, before what is left of the window. Tabs of a restored session stay in the session; a tab this run did not open keeps the window open. A failure to close is reported in opened_app and does not change the verified result.",
+  "versions": {
+    "desktop": "0.1.0-beta.23",
+    "runner": "0.3.9",
+    "template_boas_vindas": "1.3.0",
+    "engine_sha256": "b4f13d237db2b75d7107c046e8868738400f483e11bb0a76493a891237fd7ca9",
+    "installer_sha256": "f247ee57807e3acc81d9eac68f9303c618bc1f7614c956e96c6cb42f705e7e66"
+  },
+  "environment": {
+    "os": "Windows 11 Pro 25H2 x64, build 26200.9711",
+    "language": "pt-BR",
+    "session": "interactive session of the station user, computer idle"
+  },
+  "acceptance": {
+    "report": "delivery/evidence/TEMPLATE-CLOSE-20261104/template-close-20261104-073044.json",
+    "report_sha256": "d83dde486012f658e92301de8d38ee83ba3b19e65764b59343eb4429a69f9eec",
+    "passed": true,
+    "kind": "practical_e2e",
+    "via": "Runner source on D: with the lab Python and the Engine of the installed build, real Notepad, output in a lab folder",
+    "scenarios": {
+      "clean": "Verified, app closed, no window left, no tab for the next start.",
+      "restored": "A synthetic tab kept by the session: verified, app closed, the session holds only that tab, reopened with its text intact."
+    }
+  },
+  "gate": {
+    "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.23",
+    "passed": true,
+    "result": "3 idle and 3 full-load trials: verified, app closed, no window left, session_tabs_added 0. The smoke now fails a trial that adds a session tab."
+  },
+  "checks": [
+    {
+      "kind": "contract_check",
+      "command": "cd tests/contracts && python -B -m unittest test_diagnostics",
+      "result": "17 passed",
+      "exit": 0
+    },
+    {
+      "kind": "component_check",
+      "command": "cd tests/runtime && python -B -m unittest test_notepad_steps test_templates test_runner test_browser_open test_excel",
+      "result": "110 passed; simulated desktop and Engine",
+      "exit": 0
+    },
+    {
+      "kind": "contract_check",
+      "command": "cd tests/core && python -B -m unittest test_browser_processes, test_core, test_agent, test_identity, each in its own process",
+      "result": "passed",
+      "exit": 0
+    },
+    {
+      "kind": "base",
+      "command": "node scripts/validate-base.mjs",
+      "result": "passed, 342 checks",
+      "exit": 0
+    }
+  ],
+  "not_exercised": [
+    "The case of a tab opened by another program during the run is covered by component tests only.",
+    "A run with Notepad already open keeps its window and tab, as the template's end state says; not changed here.",
+    "Windows 10 x64."
+  ],
+  "installed": "0.1.0-beta.22 remains installed; beta.23 was not installed, signed or published.",
+  "published": false,
+  "homologation": "not declared"
+}
