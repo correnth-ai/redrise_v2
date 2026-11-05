@@ -65,8 +65,8 @@ export function TeamPage() {
 }
 
 function TeamAdmin() {
-  const { src } = useStore();
-  const users = useAsync<any[]>(() => (src.mode === "demo" ? Promise.resolve([]) : api("GET", "/api/v1/users")));
+  const { src, changeTick } = useStore();
+  const users = useAsync<any[]>(() => (src.mode === "demo" ? Promise.resolve([]) : api("GET", "/api/v1/users")), [changeTick]);
   const [form, setForm] = useState({ username: "", display: "", password: "", role: "operator" });
   const [error, setError] = useState<unknown>(null);
   async function act(fn: () => Promise<unknown>) { setError(null); try { await fn(); users.reload(); } catch (e) { setError(e); } }

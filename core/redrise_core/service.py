@@ -15,7 +15,7 @@ from psycopg.types.json import Jsonb
 
 from redrise_contracts import diagnostics as dg
 
-from . import __version__, auth, identity
+from . import __version__, auth, changes, identity
 from .db import Database
 
 SESSION_TTL = timedelta(hours=12)
@@ -27,12 +27,22 @@ CATEGORIES = ("browser", "windows", "mac", "linux")
 # Browser ids a station Runner can report (redrise_runner.browsers.CANDIDATES).
 BROWSER_IDS = ("chrome", "msedge", "firefox", "chromium")
 MAX_PROCESS_ITEMS = 50
-PROCESS_KINDS = ("browser_open", "notepad_step")
+PROCESS_KINDS = ("browser_open", "notepad_step", "app_open", "followup")
+FOLLOWUP_ACTIONS = ("review", "report", "notify")
+MAIL_IDS = ("outlook", "thunderbird", "default")  # redrise_runner.notify_draft.MAIL_IDS
+WEBMAIL_IDS = ("gmail", "outlook")
+PREPARED_KINDS = ("browser_open", "app_open")  # what the Nova Rotina assistant registers
+MAX_STATION_APPS = 1000
+# A routine stays what it is: a new version may not turn it into another kind, or it would skip
+# the rules of the link it already has. Template and procedure are the two forms of a recorded routine.
+KIND_FAMILY = {"template": "recorded", "procedure": "recorded"}
+ASSISTANT_RUNNER = (0, 3, 10)  # first Runner that honours a job's mode; an older one would open on "prepare"
 WELCOME_KEY = "boas-vindas"
 WELCOME_PROCESS = "Boas-vindas"
 # Routines of the ready-made process; the Runner reads `step` (redrise_runner.notepad_steps).
 WELCOME_STEPS = (("Abrir e identificar", "open"), ("Digitar e salvar", "save"), ("Fechar e verificar", "close"))
 _URL = re.compile(r"^https?://[^\s/$.?#][^\s]*$", re.IGNORECASE)
+_FULL_PATH = re.compile(r"^([a-zA-Z]:\\|\\\\[^\\]+\\[^\\]+\\).+$")
 _HTML_PATH = re.compile(r"^([a-zA-Z]:\\|\\\\[^\\]+\\[^\\]+\\).+\.html?$", re.IGNORECASE)
 JOB_SCHEMA, RESULT_SCHEMA = "redrise.job/1", "redrise.job-result/1"
 
@@ -50,6 +60,7 @@ def err(status: int, code: str, cid: str | None = None, **params) -> ApiError:
 
 _USER = re.compile(r"^[a-z0-9._-]{3,40}$")
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_MAIL_TO = re.compile(r"^[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$")
 
 
 def _uuid(v, what: str = "identifier") -> str:
@@ -87,6 +98,78 @@ def browser_config(cfg) -> dict:
     raise err(400, "VALIDATION", reason="origin must be site or html")
 
 
+def app_config(cfg) -> dict:
+    """Validates an app_open registration: an installed application of the station, or a chosen file."""
+    if not isinstance(cfg, dict) or not isinstance(cfg.get("target"), dict):
+        raise err(400, "VALIDATION", reason="config needs a target")
+    if not isinstance(cfg.get("isolated"), bool):
+        raise err(400, "VALIDATION", reason="isolated must be true or false")
+    t = cfg["target"]
+    name = t.get("name")
+    if not isinstance(name, str) or not 1 <= len(name.strip()) <= 200:
+        raise err(400, "VALIDATION", reason="target needs a name")
+    if t.get("kind") == "app":
+        if not isinstance(t.get("app_id"), str) or not 1 <= len(t["app_id"]) <= 1000:
+            raise err(400, "VALIDATION", reason="choose an application of the list")
+        target = {"kind": "app", "app_id": t["app_id"], "name": name.strip()}
+    elif t.get("kind") == "file":
+        path = t.get("path")
+        if not isinstance(path, str) or len(path) > 1000 or not _FULL_PATH.match(path.strip()):
+            raise err(400, "VALIDATION", reason="full path of a file expected")
+        target = {"kind": "file", "path": path.strip(), "name": name.strip()}
+    else:
+        raise err(400, "VALIDATION", reason="target must be an application or a file")
+    return {"target": target, "isolated": cfg["isolated"]}
+
+
+def followup_config(cfg) -> dict:
+    """A follow-up acts after a step of a process, so it never runs alone."""
+    if not isinstance(cfg, dict) or cfg.get("action") not in FOLLOWUP_ACTIONS:
+        raise err(400, "VALIDATION", reason="unknown follow-up action")
+    if cfg["action"] in ("report", "notify"):  # the fixed words, from the mask of the desktop that registered it
+        labels = cfg.get("labels")
+        if not isinstance(labels, dict) or len(labels) > 60 or not all(
+                isinstance(k, str) and len(k) <= 40 and isinstance(v, str) and len(v) <= 200 for k, v in labels.items()):
+            raise err(400, "VALIDATION", reason="invalid report labels")
+        if cfg["action"] == "report":
+            return {"action": "report", "labels": labels, "isolated": False}
+        to, channel = cfg.get("to"), cfg.get("channel")
+        if not isinstance(to, str) or len(to) > 254 or not _MAIL_TO.match(to.strip()):  # plain: it goes into a mailto-like field
+            raise err(400, "VALIDATION", reason="invalid e-mail")
+        if not isinstance(channel, dict):
+            raise err(400, "VALIDATION", reason="choose where to prepare the message")
+        name = str(channel.get("name") or "")[:120]
+        if channel.get("kind") == "app" and channel.get("mail_id") in MAIL_IDS:
+            kept = {"kind": "app", "mail_id": channel["mail_id"], "name": name}
+        elif channel.get("kind") == "webmail" and channel.get("provider") in WEBMAIL_IDS and channel.get("browser") in BROWSER_IDS:
+            kept = {"kind": "webmail", "provider": channel["provider"], "browser": channel["browser"], "name": name}
+        else:
+            raise err(400, "VALIDATION", reason="choose where to prepare the message")
+        return {"action": "notify", "to": to.strip(), "channel": kept, "labels": labels, "isolated": False}
+    if not isinstance(cfg.get("assignee_id"), int):
+        raise err(400, "VALIDATION", reason="choose a team member")
+    return {"action": cfg["action"], "assignee_id": cfg["assignee_id"], "isolated": False}
+
+
+def _is_review(item: dict) -> bool:
+    return (item.get("config") or {}).get("action") == "review"
+
+
+def _station_apps(raw) -> list[dict] | None:
+    if not isinstance(raw, list):
+        return None
+    out = []
+    for a in raw[:MAX_STATION_APPS]:
+        if isinstance(a, dict) and isinstance(a.get("id"), str) and isinstance(a.get("name"), str) and a["id"] and a["name"]:
+            item = {"id": a["id"][:1000], "name": a["name"][:200]}
+            if a.get("browser_id") in BROWSER_IDS:
+                item["browser_id"] = a["browser_id"]
+            if a.get("mail_id") in MAIL_IDS:
+                item["mail_id"] = a["mail_id"]
+            out.append(item)
+    return out
+
+
 def _station_browsers(raw) -> list[dict] | None:
     if not isinstance(raw, list):
         return None
@@ -108,6 +191,7 @@ class Core:
         self.db = db
         self.templates = templates or {}  # id -> template.json of this release
         self.verifier = verifier  # identity provider adapter; None: e-mail sign-in unavailable here
+        self.changes = changes.ChangeFeed(getattr(db, "info", None))
 
     # ------------------------------------------------------------ team / accounts
     def status(self) -> dict:
@@ -390,6 +474,14 @@ class Core:
                                 FROM stations ORDER BY id""").fetchall()
         return [_jsonable(r) for r in rows]
 
+    def station_apps(self, actor: dict, station_id: int) -> dict:
+        """What this station's Runner reported it can launch; apart from the list, which is read often."""
+        with self.db.tx() as c:
+            s = c.execute("SELECT apps FROM stations WHERE id = %s AND revoked_at IS NULL", (station_id,)).fetchone()
+        if not s:
+            raise err(404, "NOT-FOUND", what_missing="station")
+        return {"apps": s["apps"]}
+
     def revoke_station(self, actor: dict, station_id: int) -> None:
         self.require_admin(actor)
         with self.db.tx() as c:
@@ -421,6 +513,9 @@ class Core:
             browsers = _station_browsers(info.get("browsers"))
             if browsers is not None:  # an older Runner does not report them: keep what is stored
                 c.execute("UPDATE stations SET browsers = %s WHERE id = %s", (Jsonb(browsers), station["id"]))
+            reported = _station_apps(info.get("apps"))
+            if reported is not None:  # sent when it changes: keep what is stored otherwise
+                c.execute("UPDATE stations SET apps = %s WHERE id = %s", (Jsonb(reported), station["id"]))
             lease = info.get("lease_id")
             if info.get("job_id") and lease:
                 info = {**info, "job_id": _uuid(info["job_id"]), "lease_id": _uuid(lease, "lease")}
@@ -436,7 +531,8 @@ class Core:
         return {"cancel": cancel, "lease_s": int(LEASE.total_seconds())}
 
     # ------------------------------------------------------------ routines
-    def create_routine(self, actor: dict, name: str, category: str, version: dict) -> dict:
+    def create_routine(self, actor: dict, name: str, category: str, version: dict, link=None) -> dict:
+        """`link` makes it the first step of an empty process, in the same transaction."""
         self.require_admin(actor)
         if not isinstance(name, str) or not 1 <= len(name) <= 120:
             raise err(400, "VALIDATION", reason="invalid routine name")
@@ -444,11 +540,55 @@ class Core:
             raise err(400, "VALIDATION", reason="category must be browser, windows, mac or linux")
         if (version or {}).get("kind") == "browser_open" and category != "browser":
             raise err(400, "VALIDATION", reason="browser routines use the browser category")
+        follow = (version or {}).get("kind") == "followup"
+        if follow and category != "windows":
+            raise err(400, "VALIDATION", reason="follow-up routines use the windows category")
+        if follow and not isinstance(link, dict):
+            raise err(400, "VALIDATION", reason="a follow-up needs a process and a previous step")
+        if not follow and link is not None and (version or {}).get("kind") not in PREPARED_KINDS:
+            raise err(400, "VALIDATION", reason="only routines of the assistant start a process here")
         with self.db.tx() as c:
             r = c.execute("INSERT INTO routines (name, category, created_by) VALUES (%s, %s, %s) RETURNING *",
                           (name, category, actor["id"])).fetchone()
             v = self._insert_version(c, actor, r, version)
+            if follow:
+                self._link_after(c, link, r["id"])
+            elif link is not None:
+                self._link_start(c, link, r["id"])
         return {"routine": _jsonable(r), "version": v}
+
+    def _changeable_process(self, c, process_id) -> dict:
+        p = c.execute("SELECT id, name, system_key FROM processes WHERE id = %s AND NOT archived FOR UPDATE",
+                      (process_id,)).fetchone() if isinstance(process_id, int) else None
+        if not p:
+            raise err(404, "NOT-FOUND", what_missing="process")
+        if p["system_key"]:
+            raise err(400, "VALIDATION", reason="the ready-made process cannot be changed")
+        return p
+
+    def _link_after(self, c, link: dict, routine_id: int) -> None:
+        """The follow-up comes right after the chosen step, which now continues to it; later steps move down.
+        Inside one execution it receives what that step produced. Running executions keep their snapshot."""
+        p = self._changeable_process(c, link.get("process_id"))
+        after = link.get("after_position")
+        if not isinstance(after, int) or not c.execute("SELECT 1 FROM process_items WHERE process_id = %s AND position = %s",
+                                                       (p["id"], after)).fetchone():
+            raise err(400, "VALIDATION", reason="the previous step does not exist in this process")
+        for row in c.execute("""SELECT position FROM process_items WHERE process_id = %s AND position > %s
+                                ORDER BY position DESC""", (p["id"], after)).fetchall():
+            c.execute("UPDATE process_items SET position = position + 1 WHERE process_id = %s AND position = %s", (p["id"], row["position"]))
+        c.execute("UPDATE process_items SET continue_next = true WHERE process_id = %s AND position = %s", (p["id"], after))
+        c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, %s, %s, true)",
+                  (p["id"], after + 1, routine_id))
+        c.execute("UPDATE processes SET updated_at = now() WHERE id = %s", (p["id"],))
+
+    def _link_start(self, c, link, routine_id: int) -> None:
+        """A process has at most one starting routine; the process row lock settles concurrent attempts."""
+        p = self._changeable_process(c, link.get("process_id") if isinstance(link, dict) else None)
+        if c.execute("SELECT 1 FROM process_items WHERE process_id = %s LIMIT 1", (p["id"],)).fetchone():
+            raise err(409, "PROCESS-HAS-START", process=p["name"])
+        c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, 1, %s, true)",
+                  (p["id"], routine_id))
 
     @staticmethod
     def _refuse_ready_made(c, routine_id: int) -> None:
@@ -464,6 +604,12 @@ class Core:
             if not r:
                 raise err(404, "NOT-FOUND", what_missing="routine")
             self._refuse_ready_made(c, routine_id)
+            cur = c.execute("SELECT kind, config FROM routine_versions WHERE routine_id = %s ORDER BY version DESC LIMIT 1", (routine_id,)).fetchone()
+            new = version.get("kind")
+            if cur and KIND_FAMILY.get(new, new) != KIND_FAMILY.get(cur["kind"], cur["kind"]):
+                raise err(400, "VALIDATION", reason="a new version cannot change the kind of a routine")
+            if cur and new == "followup" and (version.get("config") or {}).get("action") != (cur["config"] or {}).get("action"):
+                raise err(400, "VALIDATION", reason="a new version cannot change the action of a follow-up")
             name = version.get("name")
             if name is not None:
                 if not isinstance(name, str) or not 1 <= len(name.strip()) <= 120:
@@ -498,8 +644,18 @@ class Core:
                 raise err(400, "VALIDATION", reason="browser routines use the browser category")
             config = browser_config(v.get("config"))
             row = (kind, None, None, None, None, None, {})
+        elif kind == "app_open":
+            if routine["category"] != "windows":
+                raise err(400, "VALIDATION", reason="application routines use the windows category")
+            config = app_config(v.get("config"))
+            row = (kind, None, None, None, None, "windows-x86_64", {})
+        elif kind == "followup":
+            config = followup_config(v.get("config"))
+            if config["action"] == "review" and not c.execute("SELECT 1 FROM users WHERE id = %s AND active", (config["assignee_id"],)).fetchone():
+                raise err(400, "VALIDATION", reason="choose an active team member")
+            row = (kind, None, None, None, None, None if config["action"] == "review" else "windows-x86_64", {})
         else:
-            raise err(400, "VALIDATION", reason="version kind must be template, procedure or browser_open")
+            raise err(400, "VALIDATION", reason="version kind must be template, procedure, browser_open, app_open or followup")
         n = c.execute("SELECT coalesce(max(version), 0) + 1 AS n FROM routine_versions WHERE routine_id = %s",
                       (routine["id"],)).fetchone()["n"]
         out = c.execute("""INSERT INTO routine_versions (routine_id, version, kind, template_id, template_version, procedure,
@@ -508,16 +664,28 @@ class Core:
                            RETURNING id, routine_id, version, kind, template_id, template_version, procedure_sha256, platform, inputs,
                                      config, created_at""",
                         (routine["id"], n, *row[:6], Jsonb(row[6]), str(v.get("note") or "")[:500], actor["id"],
-                         Jsonb(config) if kind == "browser_open" else None)).fetchone()
+                         Jsonb(config) if kind in PREPARED_KINDS + ("followup",) else None)).fetchone()
+        if kind == "followup" and config["action"] == "review":
+            self._move_pending_reviews(c, routine["id"], config["assignee_id"])
         return _jsonable(out)
+
+    def _move_pending_reviews(self, c, routine_id: int, assignee_id: int) -> None:
+        """Pending requests follow the responsible of the step; the previous one loses them and their
+        notifications. Decided requests keep their author and time."""
+        for r in c.execute("""SELECT id FROM review_requests WHERE routine_id = %s AND status = 'pending' AND assignee_id <> %s
+                              ORDER BY id FOR UPDATE""", (routine_id, assignee_id)).fetchall():
+            c.execute("UPDATE review_requests SET assignee_id = %s WHERE id = %s", (assignee_id, r["id"]))
+            c.execute("DELETE FROM notifications WHERE review_id = %s", (r["id"],))
+            c.execute("INSERT INTO notifications (user_id, kind, review_id) VALUES (%s, 'review_request', %s)", (assignee_id, r["id"]))
 
     def list_routines(self, actor: dict) -> list[dict]:
         with self.db.tx() as c:
             rows = c.execute("""SELECT r.id, r.name, r.category, r.created_at, v.id AS version_id, v.version, v.kind,
                                        v.template_id, v.template_version, v.platform, v.inputs, v.config,
-                                       v.procedure -> 'params' AS params
+                                       v.procedure -> 'params' AS params, a.display AS assignee_name
                                 FROM routines r JOIN LATERAL (SELECT * FROM routine_versions WHERE routine_id = r.id
                                                               ORDER BY version DESC LIMIT 1) v ON true
+                                LEFT JOIN users a ON a.id = (v.config ->> 'assignee_id')::bigint
                                 WHERE NOT r.archived ORDER BY r.id""").fetchall()
         return [_jsonable(r) for r in rows]
 
@@ -533,9 +701,15 @@ class Core:
     def archive_routine(self, actor: dict, routine_id: int) -> None:
         self.require_admin(actor)
         with self.db.tx() as c:
-            self._refuse_ready_made(c, routine_id)
-            if not c.execute("UPDATE routines SET archived = true WHERE id = %s RETURNING id", (routine_id,)).fetchone():
+            if not c.execute("SELECT 1 FROM routines WHERE id = %s AND NOT archived FOR UPDATE", (routine_id,)).fetchone():
                 raise err(404, "NOT-FOUND", what_missing="routine")
+            self._refuse_ready_made(c, routine_id)
+            # The row lock orders this with a process linking the routine (_items): a process never loses a step.
+            linked = c.execute("""SELECT p.name FROM process_items i JOIN processes p ON p.id = i.process_id
+                                  WHERE i.routine_id = %s AND NOT p.archived ORDER BY p.id LIMIT 1""", (routine_id,)).fetchone()
+            if linked:
+                raise err(409, "ROUTINE-IN-USE", process=linked["name"])
+            c.execute("UPDATE routines SET archived = true WHERE id = %s", (routine_id,))
 
     # ------------------------------------------------------------ jobs
     def create_job(self, actor: dict, request_id: str, version_id: int, station_id: int, inputs: dict,
@@ -545,6 +719,81 @@ class Core:
         except psycopg.errors.UniqueViolation:
             # Concurrent identical request: the other one created it; answer with that job.
             return self._create_job(actor, request_id, version_id, station_id, inputs, correlation_id)
+
+    def _assistant_job(self, actor: dict, request_id, version: dict, station: dict, inputs: dict, cid: str, mode: str) -> dict:
+        reason = compat_reason(version["category"], version["platform"], station)
+        if not reason and _version_tuple(station.get("runner_version")) < ASSISTANT_RUNNER:
+            reason = "update the RedRise of this station"
+        if reason:
+            raise err(409, "STATION-INCOMPATIBLE", cid, reason=reason)
+        with self.db.tx() as c:
+            j = c.execute("""INSERT INTO jobs (request_id, routine_version_id, station_id, inputs, requested_by, state, correlation_id, mode)
+                             VALUES (%s, %s, %s, %s, %s, 'queued', %s, %s) ON CONFLICT (request_id) DO NOTHING RETURNING *""",
+                          (request_id, version["id"], station["id"], Jsonb(inputs), actor["id"], cid, mode)).fetchone()
+            if not j:  # concurrent identical request: answer with that job
+                return {**self._job_view(c, c.execute("SELECT * FROM jobs WHERE request_id = %s", (request_id,)).fetchone()), "duplicate": True}
+            self._event(c, j["id"], "queued", {"by": actor["username"], "mode": mode})
+            return self._job_view(c, j)
+
+    def _latest_prepared(self, c, routine_id: int, cid: str) -> dict:
+        v = c.execute("""SELECT v.*, r.category FROM routines r JOIN LATERAL (SELECT * FROM routine_versions WHERE routine_id = r.id
+                         ORDER BY version DESC LIMIT 1) v ON true WHERE r.id = %s AND NOT r.archived""", (routine_id,)).fetchone()
+        if not v:
+            raise err(404, "NOT-FOUND", cid, what_missing="routine")
+        if v["kind"] not in PREPARED_KINDS:
+            raise err(400, "VALIDATION", cid, reason="this routine is not prepared by the assistant")
+        return v
+
+    def prepare_routine(self, actor: dict, routine_id: int, request_id, station_id, cid: str) -> dict:
+        """Asks the station to resolve the destination and dependencies. Nothing is opened."""
+        self.require_admin(actor)
+        if not isinstance(request_id, str) or not 8 <= len(request_id) <= 80:
+            raise err(400, "VALIDATION", cid, reason="request_id missing")
+        with self.db.tx() as c:
+            prior = c.execute("SELECT * FROM jobs WHERE request_id = %s", (request_id,)).fetchone()
+            if prior:
+                return {**self._job_view(c, prior), "duplicate": True}
+            v = self._latest_prepared(c, routine_id, cid)
+            s = c.execute("SELECT * FROM stations WHERE id = %s", (station_id,)).fetchone() if isinstance(station_id, int) else None
+            if not s or s["revoked_at"]:
+                raise err(404, "NOT-FOUND", cid, what_missing="station")
+        return self._assistant_job(actor, request_id, v, s, {}, cid, "prepare")
+
+    def test_routine(self, actor: dict, routine_id: int, request_id, prepare_job_id, cid: str) -> dict:
+        """Opens the destination of the version whose preparation was verified, on the same station; the
+        Runner resolves that same config again. Only for the routine that starts a process; never an
+        execution of that process."""
+        self.require_admin(actor)
+        if not isinstance(request_id, str) or not 8 <= len(request_id) <= 80:
+            raise err(400, "VALIDATION", cid, reason="request_id missing")
+        with self.db.tx() as c:
+            prior = c.execute("SELECT * FROM jobs WHERE request_id = %s", (request_id,)).fetchone()
+            if prior:
+                return {**self._job_view(c, prior), "duplicate": True}
+            v = self._latest_prepared(c, routine_id, cid)
+            if not c.execute("""SELECT 1 FROM process_items i JOIN processes p ON p.id = i.process_id
+                                WHERE i.routine_id = %s AND i.position = 1 AND NOT p.archived LIMIT 1""", (routine_id,)).fetchone():
+                raise err(400, "VALIDATION", cid, reason="only the routine that starts a process is tested here")
+            prep = c.execute("SELECT * FROM jobs WHERE id = %s AND mode = 'prepare'", (_uuid(prepare_job_id),)).fetchone()
+            resolved = (((prep or {}).get("result") or {}).get("details") or {}).get("context", {}).get("resolved")
+            if not prep or prep["state"] != "verified" or prep["routine_version_id"] != v["id"] or not resolved:
+                raise err(409, "PREPARE-REQUIRED", cid, routine=str(routine_id))
+            s = c.execute("SELECT * FROM stations WHERE id = %s AND revoked_at IS NULL", (prep["station_id"],)).fetchone()
+            if not s:
+                raise err(404, "NOT-FOUND", cid, what_missing="station")
+        return self._assistant_job(actor, request_id, v, s, {}, cid, "test")
+
+    def job_progress(self, station: dict, job_id: str, lease_id: str, check) -> dict:
+        """One operation of the job, as the Runner performs it. Only recorded; decides nothing."""
+        job_id, lease_id = _uuid(job_id), _uuid(lease_id, "lease")
+        if not isinstance(check, dict) or check.get("state") not in ("running", "ok", "failed") or not isinstance(check.get("id"), str):
+            raise ApiError(400, dg.contract_violation("RR-RUNNER", "RR-CORE", "job check", "invalid check", reported_by="RR-CORE"))
+        with self.db.tx() as c:
+            j = self._leased(c, station, job_id, lease_id)
+            detail = check.get("detail")
+            self._event(c, j["id"], "check", dg.sanitize({"id": check["id"][:40], "state": check["state"],
+                                                          "detail": str(detail)[:300] if detail is not None else None}))
+        return {"ok": True}
 
     def _create_job(self, actor: dict, request_id: str, version_id: int, station_id: int, inputs: dict,
                     correlation_id: str) -> dict:
@@ -564,6 +813,10 @@ class Core:
                 raise err(404, "NOT-FOUND", correlation_id, what_missing="routine version")
             if v["kind"] in PROCESS_KINDS:
                 raise err(400, "VALIDATION", correlation_id, reason="these routines run through executions")
+            linked = c.execute("""SELECT p.name FROM process_items i JOIN processes p ON p.id = i.process_id
+                                  WHERE i.routine_id = %s AND NOT p.archived ORDER BY p.id LIMIT 1""", (v["routine_id"],)).fetchone()
+            if linked:  # a routine stored with versions of mixed kinds still runs only through its process
+                raise err(409, "ROUTINE-LINKED", correlation_id, process=linked["name"])
             s = c.execute("SELECT * FROM stations WHERE id = %s", (station_id,)).fetchone()
             if not s or s["revoked_at"]:
                 raise err(404, "NOT-FOUND", correlation_id, what_missing="station")
@@ -609,10 +862,12 @@ class Core:
             c.execute("""UPDATE jobs SET state = 'claimed', lease_id = %s, lease_expires_at = now() + %s, claimed_at = now(),
                                 attempt = attempt + 1, waiting_reason = NULL WHERE id = %s""", (lease, LEASE, j["id"]))
             self._event(c, j["id"], "claimed", {"station": station["name"], "lease_id": str(lease)})
-        return {"schema": JOB_SCHEMA, "job_id": str(j["id"]), "lease_id": str(lease), "correlation_id": j["correlation_id"],
+            # A follow-up acts on what the execution did so far, as it stands now.
+            extra = {"execution": self._execution_view(c, {"id": j["execution_id"]})} if j["kind"] == "followup" and j["execution_id"] else {}
+        return {**extra, "schema": JOB_SCHEMA, "job_id": str(j["id"]), "lease_id": str(lease), "correlation_id": j["correlation_id"],
                 "kind": j["kind"], "category": j["category"], "platform": j["platform"], "template_id": j["template_id"],
                 "template_version": j["template_version"], "procedure": j["procedure"], "inputs": j["inputs"],
-                "config": j["config"], "execution_id": str(j["execution_id"]) if j["execution_id"] else None,
+                "config": j["config"], "mode": j["mode"], "execution_id": str(j["execution_id"]) if j["execution_id"] else None,
                 "position": j["position"], "context": j["execution_context"] or {}}
 
     def start_job(self, station: dict, job_id: str, lease_id: str) -> dict:
@@ -692,20 +947,29 @@ class Core:
 
     # ------------------------------------------------------------ processes (update Browser)
     def _items(self, c, items) -> list[dict]:
-        if not isinstance(items, list) or not 1 <= len(items) <= MAX_PROCESS_ITEMS:
-            raise err(400, "VALIDATION", reason=f"a process links 1 to {MAX_PROCESS_ITEMS} routines")
+        """A process may start empty: its first routine comes from the assistant or from an integration."""
+        if not isinstance(items, list) or len(items) > MAX_PROCESS_ITEMS:
+            raise err(400, "VALIDATION", reason=f"a process links up to {MAX_PROCESS_ITEMS} routines")
         out = []
         for it in items:
             if not isinstance(it, dict) or not isinstance(it.get("routine_id"), int) or not isinstance(it.get("continue_next"), bool):
                 raise err(400, "VALIDATION", reason="each link needs routine_id and continue_next")
             v = c.execute("""SELECT v.kind FROM routines r JOIN LATERAL (SELECT kind FROM routine_versions WHERE routine_id = r.id
-                             ORDER BY version DESC LIMIT 1) v ON true WHERE r.id = %s AND NOT r.archived""", (it["routine_id"],)).fetchone()
+                             ORDER BY version DESC LIMIT 1) v ON true WHERE r.id = %s AND NOT r.archived FOR SHARE OF r""", (it["routine_id"],)).fetchone()
             if not v:
                 raise err(404, "NOT-FOUND", what_missing="routine")
             if v["kind"] not in PROCESS_KINDS:
-                raise err(400, "VALIDATION", reason="only browser routines can be linked to a process in this version")
+                raise err(400, "VALIDATION", reason="this kind of routine cannot be linked to a process in this version")
             out.append({"routine_id": it["routine_id"], "continue_next": it["continue_next"]})
         return out
+
+    @staticmethod
+    def _first_step_starts(c, links: list[dict]) -> None:
+        """A follow-up needs a previous step."""
+        if links and c.execute("""SELECT 1 FROM routine_versions WHERE routine_id = %s AND kind = 'followup'
+                                  AND version = (SELECT max(version) FROM routine_versions WHERE routine_id = %s)""",
+                               (links[0]["routine_id"], links[0]["routine_id"])).fetchone():
+            raise err(400, "VALIDATION", reason="a follow-up cannot be the first step of a process")
 
     def _process_name(self, name) -> str:
         if not isinstance(name, str) or not 1 <= len(name.strip()) <= 120:
@@ -718,6 +982,7 @@ class Core:
         name = self._process_name(name)
         with self.db.tx() as c:
             links = self._items(c, items)
+            self._first_step_starts(c, links)
             p = c.execute("INSERT INTO processes (name, created_by) VALUES (%s, %s) RETURNING id", (name, actor["id"])).fetchone()
             for i, it in enumerate(links, 1):
                 c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, %s, %s, %s)",
@@ -735,11 +1000,38 @@ class Core:
             if row["system_key"]:
                 raise err(400, "VALIDATION", reason="the ready-made process cannot be changed")
             links = self._items(c, items)
+            self._first_step_starts(c, links)
+            first = c.execute("SELECT routine_id FROM process_items WHERE process_id = %s AND position = 1", (process_id,)).fetchone()
+            if first and (not links or links[0]["routine_id"] != first["routine_id"]):
+                raise err(409, "STEP1-NEEDS-APPROVAL")
             c.execute("UPDATE processes SET name = %s, updated_at = now() WHERE id = %s", (name, process_id))
             c.execute("DELETE FROM process_items WHERE process_id = %s", (process_id,))
             for i, it in enumerate(links, 1):
                 c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, %s, %s, %s)",
                           (process_id, i, it["routine_id"], it["continue_next"]))
+        return self.get_process(actor, process_id)
+
+    def integrate_routine(self, actor: dict, process_id: int, routine_id) -> dict:
+        """A standalone routine becomes the next step of a process (the first, when it is empty).
+        The step before it now continues to it, or it would never run. Running executions keep their snapshot."""
+        self.require_admin(actor)
+        with self.db.tx() as c:
+            p = self._changeable_process(c, process_id)
+            if not isinstance(routine_id, int) or not self._items(c, [{"routine_id": routine_id, "continue_next": True}]):
+                raise err(400, "VALIDATION", reason="routine_id expected")
+            linked = c.execute("""SELECT p.name FROM process_items i JOIN processes p ON p.id = i.process_id
+                                  WHERE i.routine_id = %s AND NOT p.archived ORDER BY p.id LIMIT 1""", (routine_id,)).fetchone()
+            if linked:
+                raise err(409, "CONFLICT", reason=f"routine already linked to {linked['name']}")
+            n = c.execute("SELECT coalesce(max(position), 0) AS n FROM process_items WHERE process_id = %s", (p["id"],)).fetchone()["n"]
+            if n >= MAX_PROCESS_ITEMS:
+                raise err(400, "VALIDATION", reason=f"a process links up to {MAX_PROCESS_ITEMS} routines")
+            if n == 0:
+                self._first_step_starts(c, [{"routine_id": routine_id}])
+            c.execute("UPDATE process_items SET continue_next = true WHERE process_id = %s AND position = %s", (p["id"], n))
+            c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, %s, %s, true)",
+                      (p["id"], n + 1, routine_id))
+            c.execute("UPDATE processes SET updated_at = now() WHERE id = %s", (p["id"],))
         return self.get_process(actor, process_id)
 
     def list_processes(self, actor: dict, process_id: int | None = None) -> list[dict]:
@@ -755,10 +1047,11 @@ class Core:
             last = {r["process_id"]: r for r in c.execute(
                 """SELECT DISTINCT ON (process_id) process_id, id, state, outcome, end_reason, created_at FROM executions
                    WHERE process_id IS NOT NULL ORDER BY process_id, created_at DESC""").fetchall()}
+            changes = {r["process_id"]: str(r["id"]) for r in c.execute("SELECT process_id, id FROM step_change_requests WHERE status = 'pending'").fetchall()}
         out = []
         for p in procs:
             le = last.get(p["id"])
-            out.append({**_jsonable(p), "items": [_jsonable({k: v for k, v in i.items() if k != "process_id"})
+            out.append({**_jsonable(p), "pending_change": changes.get(p["id"]), "items": [_jsonable({k: v for k, v in i.items() if k != "process_id"})
                                                    for i in items if i["process_id"] == p["id"]],
                         "last_execution": _jsonable({k: v for k, v in le.items() if k != "process_id"}) if le else None})
         return out
@@ -800,7 +1093,7 @@ class Core:
                 if not rows or rows[0]["archived"]:
                     raise err(404, "NOT-FOUND", cid, what_missing="routine")
                 if rows[0]["kind"] not in PROCESS_KINDS:
-                    raise err(400, "VALIDATION", cid, reason="only browser routines run as executions in this version")
+                    raise err(400, "VALIDATION", cid, reason="this kind of routine does not run as an execution in this version")
                 # A linked routine, even as the only step, runs through its process.
                 linked = c.execute("""SELECT p.name FROM process_items i JOIN processes p ON p.id = i.process_id
                                       WHERE i.routine_id = %s AND NOT p.archived ORDER BY p.id LIMIT 1""", (routine_id,)).fetchone()
@@ -810,7 +1103,8 @@ class Core:
                     # G25: enforced here, not only by a disabled button.
                     raise err(409, "ROUTINE-NOT-ISOLATED", cid, routine=rows[0]["name"])
             else:
-                if not c.execute("SELECT id FROM processes WHERE id = %s AND NOT archived", (process_id,)).fetchone():
+                # FOR SHARE: a replacement of step 1 waits for this start, or this start sees the new step.
+                if not c.execute("SELECT id FROM processes WHERE id = %s AND NOT archived FOR SHARE", (process_id,)).fetchone():
                     raise err(404, "NOT-FOUND", cid, what_missing="process")
                 rows = c.execute("""SELECT i.position, r.id AS routine_id, v.id AS routine_version_id, r.name, i.continue_next,
                                            v.kind, v.config, v.platform, r.category, r.archived
@@ -822,7 +1116,9 @@ class Core:
                     raise err(400, "VALIDATION", cid, reason="the process has no linked routine")
                 if any(r["archived"] or r["kind"] not in PROCESS_KINDS for r in rows):
                     raise err(400, "VALIDATION", cid, reason="the process links a routine that cannot run")
-            for r in rows:  # every step must be able to run on the chosen station
+            for r in rows:  # every step must be able to run on the chosen station; a review runs on none
+                if _is_review(r):
+                    continue
                 reason = compat_reason(r["category"], r["platform"], s)
                 if reason:
                     raise err(409, "STATION-INCOMPATIBLE", cid, reason=reason)
@@ -836,7 +1132,24 @@ class Core:
             self._queue_step(c, e, snapshot[0])  # G22: always the first linked routine
             return self._execution_view(c, e)
 
+    def _open_review(self, c, execution: dict, item: dict) -> None:
+        """Pauses the execution. The responsible is the current one of the step, not the one when it started."""
+        # FOR SHARE: a new responsible either commits before this read, or waits and then moves this request.
+        c.execute("SELECT 1 FROM routines WHERE id = %s FOR SHARE", (item["routine_id"],))
+        cur = c.execute("""SELECT config FROM routine_versions WHERE routine_id = %s ORDER BY version DESC LIMIT 1""",
+                        (item["routine_id"],)).fetchone()
+        assignee = ((cur or {}).get("config") or item.get("config") or {}).get("assignee_id")
+        r = c.execute("""INSERT INTO review_requests (execution_id, position, routine_id, assignee_id) VALUES (%s, %s, %s, %s)
+                         ON CONFLICT (execution_id, position) DO NOTHING RETURNING id""",
+                      (execution["id"], item["position"], item["routine_id"], assignee)).fetchone()
+        if r:
+            c.execute("INSERT INTO notifications (user_id, kind, review_id) VALUES (%s, 'review_request', %s)", (assignee, r["id"]))
+        c.execute("UPDATE executions SET state = 'waiting_review' WHERE id = %s", (execution["id"],))
+
     def _queue_step(self, c, execution: dict, item: dict) -> None:
+        if _is_review(item):
+            self._open_review(c, execution, item)
+            return
         j = c.execute("""INSERT INTO jobs (request_id, routine_version_id, station_id, inputs, requested_by, state, correlation_id,
                                            execution_id, position)
                          VALUES (%s, %s, %s, '{}', %s, 'queued', %s, %s, %s)
@@ -880,14 +1193,28 @@ class Core:
         row = c.execute(f"{self._EXEC_SELECT} WHERE e.id = %s", (e["id"],)).fetchone()
         return self._shape(row, c.execute("""SELECT id, position, state, verified, diagnostic, diagnostic ->> 'error_code' AS error_code,
                                                     started_at, finished_at FROM jobs WHERE execution_id = %s""",
-                                          (e["id"],)).fetchall())
+                                          (e["id"],)).fetchall(), self._reviews_of(c, [e["id"]]))
 
     @staticmethod
-    def _shape(e: dict, jobs: list[dict]) -> dict:
+    def _reviews_of(c, execution_ids: list) -> list[dict]:
+        return c.execute(f"{_REVIEW_SELECT} WHERE q.execution_id = ANY(%s)", (execution_ids,)).fetchall() if execution_ids else []
+
+    @staticmethod
+    def _shape(e: dict, jobs: list[dict], reviews: list[dict] | None = None) -> dict:
         by_pos = {j["position"]: j for j in jobs}
+        review_at = {q["position"]: q for q in reviews or [] if q["execution_id"] == e["id"]}
         steps = []
         for it in e["snapshot"]:
             j = by_pos.get(it["position"])
+            q = review_at.get(it["position"])
+            if q:
+                approved = q["status"] == "approved"
+                steps.append({"position": it["position"], "routine_id": it["routine_id"], "routine_version_id": it["routine_version_id"],
+                              "name": it["name"], "continue_next": it["continue_next"], "job_id": None,
+                              "state": "verified" if approved else "awaiting_review", "verified": approved, "error_code": None, "diagnostic": None,
+                              "started_at": q["requested_at"].isoformat(), "finished_at": q["decided_at"].isoformat() if q["decided_at"] else None,
+                              "review": _review_view(q)})
+                continue
             steps.append({"position": it["position"], "routine_id": it["routine_id"], "routine_version_id": it["routine_version_id"],
                           "name": it["name"], "continue_next": it["continue_next"], "job_id": str(j["id"]) if j else None,
                           "state": j["state"] if j else None, "verified": bool(j and j["verified"]),
@@ -906,7 +1233,181 @@ class Core:
             ids = [r["id"] for r in rows]
             jobs = c.execute("""SELECT id, execution_id, position, state, verified, diagnostic, diagnostic ->> 'error_code' AS error_code,
                                        started_at, finished_at FROM jobs WHERE execution_id = ANY(%s)""", (ids,)).fetchall() if ids else []
-        return [self._shape(r, [j for j in jobs if j["execution_id"] == r["id"]]) for r in rows]
+            reviews = self._reviews_of(c, ids)
+        return [self._shape(r, [j for j in jobs if j["execution_id"] == r["id"]], reviews) for r in rows]
+
+    # ------------------------------------------------------------ review requests and notifications
+    def list_reviews(self, actor: dict) -> list[dict]:
+        """Marcado para mim: requests whose current responsible is this person, pending first, then decided."""
+        with self.db.tx() as c:
+            rows = c.execute(f"""{_REVIEW_SELECT} WHERE q.assignee_id = %s
+                                 ORDER BY q.status = 'pending' DESC, coalesce(q.decided_at, q.requested_at) DESC LIMIT 200""",
+                             (actor["id"],)).fetchall()
+        return [_review_view(q) for q in rows]
+
+    def approve_review(self, actor: dict, review_id: str, cid: str | None = None) -> dict:
+        """Only the current responsible, once. The row lock serializes this with a reassignment and with a
+        repeated click: there is one decision, and the same execution resumes once, at the next step."""
+        review_id = _uuid(review_id)
+        with self.db.tx() as c:
+            q = c.execute("SELECT * FROM review_requests WHERE id = %s FOR UPDATE", (review_id,)).fetchone()
+            if not q:
+                raise err(404, "NOT-FOUND", cid, what_missing="review request")
+            if q["status"] != "pending":
+                raise err(409, "REVIEW-ALREADY-DECIDED", cid)
+            if q["assignee_id"] != actor["id"]:
+                raise err(403, "REVIEW-NOT-ASSIGNEE", cid)
+            e = c.execute("SELECT * FROM executions WHERE id = %s FOR UPDATE", (q["execution_id"],)).fetchone()
+            c.execute("""UPDATE review_requests SET status = 'approved', decided_by = %s, decided_at = now() WHERE id = %s""",
+                      (actor["id"], review_id))
+            c.execute("UPDATE notifications SET seen_at = coalesce(seen_at, now()) WHERE review_id = %s", (review_id,))
+            self._resume(c, e, q["position"])
+            row = c.execute(f"{_REVIEW_SELECT} WHERE q.id = %s", (review_id,)).fetchone()
+        return _review_view(row)
+
+    def _resume(self, c, e: dict, position: int) -> None:
+        snapshot = e["snapshot"]
+        item = snapshot[position - 1]
+        if item["continue_next"] and position < len(snapshot):
+            next_item = snapshot[position]
+            if not _is_review(next_item) and c.execute("SELECT 1 FROM stations WHERE id = %s AND revoked_at IS NOT NULL", (e["station_id"],)).fetchone():
+                # The station left the team during the pause: nothing would ever claim the next step.
+                c.execute("UPDATE executions SET state = 'finished', outcome = 'refused', end_reason = 'not_verified', finished_at = now() WHERE id = %s", (e["id"],))
+                return
+            c.execute("UPDATE executions SET state = 'running' WHERE id = %s", (e["id"],))
+            self._queue_step(c, e, next_item)
+            return
+        end = "continuation_off" if position < len(snapshot) else "sequence_end"
+        c.execute("UPDATE executions SET state = 'finished', outcome = 'verified', end_reason = %s, finished_at = now() WHERE id = %s", (end, e["id"]))
+
+    # ------------------------------------------------------------ replacing step 1, with approval
+    @staticmethod
+    def _eligible(c, process_id: int, requested_by: int) -> list[int]:
+        """Who can approve now: active members linked to the process (who created it, responsibles of its
+        review steps) and active administrators. Not the requester, unless nobody else is eligible: a team of
+        one is not locked out, and the authorship stays recorded. Detailed roles come in a later step."""
+        rows = c.execute("""SELECT u.id FROM users u WHERE u.active AND (u.role = 'admin'
+                              OR u.id = (SELECT created_by FROM processes WHERE id = %(p)s)
+                              OR u.id IN (SELECT (v.config ->> 'assignee_id')::bigint FROM process_items i
+                                          JOIN LATERAL (SELECT config FROM routine_versions WHERE routine_id = i.routine_id ORDER BY version DESC LIMIT 1) v ON true
+                                          WHERE i.process_id = %(p)s AND v.config ? 'assignee_id'))
+                            ORDER BY u.id""", {"p": process_id}).fetchall()
+        ids = [r["id"] for r in rows]
+        others = [i for i in ids if i != requested_by]
+        return others or ids
+
+    @staticmethod
+    def _running_execution(c, process_id: int) -> bool:
+        return bool(c.execute("SELECT 1 FROM executions WHERE process_id = %s AND state <> 'finished' LIMIT 1", (process_id,)).fetchone())
+
+    def _standalone_routine(self, c, routine_id) -> None:
+        v = c.execute("""SELECT v.kind FROM routines r JOIN LATERAL (SELECT kind FROM routine_versions WHERE routine_id = r.id
+                         ORDER BY version DESC LIMIT 1) v ON true WHERE r.id = %s AND NOT r.archived FOR SHARE OF r""",
+                      (routine_id,)).fetchone() if isinstance(routine_id, int) else None
+        if not v:
+            raise err(404, "NOT-FOUND", what_missing="routine")
+        if v["kind"] not in PREPARED_KINDS:
+            raise err(400, "VALIDATION", reason="this kind of routine cannot start a process")
+        linked = c.execute("""SELECT p.name FROM process_items i JOIN processes p ON p.id = i.process_id
+                              WHERE i.routine_id = %s AND NOT p.archived ORDER BY p.id LIMIT 1""", (routine_id,)).fetchone()
+        if linked:
+            raise err(409, "CONFLICT", reason=f"routine already linked to {linked['name']}")
+
+    def request_step_change(self, actor: dict, process_id: int, routine_id) -> dict:
+        """Asks to replace step 1 with a standalone routine. Nothing changes until someone eligible approves."""
+        self.require_admin(actor)
+        with self.db.tx() as c:
+            p = self._changeable_process(c, process_id)
+            first = c.execute("SELECT routine_id FROM process_items WHERE process_id = %s AND position = 1", (p["id"],)).fetchone()
+            if not first:
+                raise err(400, "VALIDATION", reason="the process has no step 1 yet: integrate the routine instead")
+            self._standalone_routine(c, routine_id)
+            if self._running_execution(c, p["id"]):
+                raise err(409, "PROCESS-RUNNING", process=p["name"])
+            if c.execute("SELECT 1 FROM step_change_requests WHERE process_id = %s AND status = 'pending'", (p["id"],)).fetchone():
+                raise err(409, "CHANGE-PENDING-EXISTS", process=p["name"])
+            q = c.execute("""INSERT INTO step_change_requests (process_id, old_routine_id, new_routine_id, requested_by)
+                             VALUES (%s, %s, %s, %s) RETURNING id""", (p["id"], first["routine_id"], routine_id, actor["id"])).fetchone()
+            for uid in self._eligible(c, p["id"], actor["id"]):
+                c.execute("INSERT INTO notifications (user_id, kind, change_id) VALUES (%s, 'step_change', %s)", (uid, q["id"]))
+            return self._change_view(c, actor, q["id"])
+
+    def approve_step_change(self, actor: dict, change_id: str) -> dict:
+        """Eligibility and the rules are checked now, under the process lock; approving applies it, once."""
+        change_id = _uuid(change_id)
+        with self.db.tx() as c:
+            ref = c.execute("SELECT process_id FROM step_change_requests WHERE id = %s", (change_id,)).fetchone()
+            if not ref:
+                raise err(404, "NOT-FOUND", what_missing="change request")
+            p = c.execute("SELECT id, name FROM processes WHERE id = %s AND NOT archived FOR UPDATE", (ref["process_id"],)).fetchone()
+            q = c.execute("SELECT * FROM step_change_requests WHERE id = %s FOR UPDATE", (change_id,)).fetchone()
+            if not p or q["status"] != "pending":
+                raise err(409, "CHANGE-ALREADY-DECIDED")
+            if actor["id"] not in self._eligible(c, p["id"], q["requested_by"]):
+                raise err(403, "CHANGE-NOT-ELIGIBLE")
+            if self._running_execution(c, p["id"]):
+                raise err(409, "PROCESS-RUNNING", process=p["name"])
+            self._standalone_routine(c, q["new_routine_id"])
+            if not c.execute("UPDATE process_items SET routine_id = %s WHERE process_id = %s AND position = 1 AND routine_id = %s RETURNING 1",
+                             (q["new_routine_id"], p["id"], q["old_routine_id"])).fetchone():
+                raise err(409, "CONFLICT", reason="step 1 changed after the request")
+            c.execute("UPDATE processes SET updated_at = now() WHERE id = %s", (p["id"],))
+            c.execute("UPDATE step_change_requests SET status = 'approved', decided_by = %s, decided_at = now() WHERE id = %s", (actor["id"], change_id))
+            c.execute("UPDATE notifications SET seen_at = coalesce(seen_at, now()) WHERE change_id = %s", (change_id,))
+            return self._change_view(c, actor, change_id)
+
+    def cancel_step_change(self, actor: dict, change_id: str) -> dict:
+        change_id = _uuid(change_id)
+        with self.db.tx() as c:
+            q = c.execute("SELECT * FROM step_change_requests WHERE id = %s FOR UPDATE", (change_id,)).fetchone()
+            if not q:
+                raise err(404, "NOT-FOUND", what_missing="change request")
+            if q["status"] != "pending":
+                raise err(409, "CHANGE-ALREADY-DECIDED")
+            if q["requested_by"] != actor["id"] and actor["role"] != "admin":
+                raise err(403, "AUTH-FORBIDDEN", required_role="administrator or requester")
+            c.execute("UPDATE step_change_requests SET status = 'cancelled', decided_by = %s, decided_at = now() WHERE id = %s", (actor["id"], change_id))
+            c.execute("DELETE FROM notifications WHERE change_id = %s", (change_id,))
+            return self._change_view(c, actor, change_id)
+
+    def _change_view(self, c, actor: dict, change_id) -> dict:
+        row = c.execute(f"{_CHANGE_SELECT} WHERE q.id = %s", (change_id,)).fetchone()
+        return {**_jsonable(row), "can_approve": row["status"] == "pending" and actor["id"] in self._eligible(c, row["process_id"], row["requested_by"])}
+
+    def list_step_changes(self, actor: dict) -> list[dict]:
+        """Marcado para mim: pending ones this person can approve now, and what they asked for or approved."""
+        with self.db.tx() as c:
+            rows = c.execute(f"""{_CHANGE_SELECT} WHERE q.status = 'pending' OR q.requested_by = %(me)s OR q.decided_by = %(me)s
+                                 ORDER BY q.status = 'pending' DESC, coalesce(q.decided_at, q.requested_at) DESC LIMIT 100""", {"me": actor["id"]}).fetchall()
+            out = []
+            for row in rows:
+                can = row["status"] == "pending" and actor["id"] in self._eligible(c, row["process_id"], row["requested_by"])
+                if can or row["status"] != "pending" or row["requested_by"] == actor["id"]:
+                    out.append({**_jsonable(row), "can_approve": can})
+        return out
+
+    def list_notifications(self, actor: dict) -> dict:
+        with self.db.tx() as c:
+            rows = c.execute("""SELECT n.id, n.kind, n.review_id, n.change_id, n.created_at, n.seen_at,
+                                       coalesce(r.name, nr.name) AS step_name, q.position,
+                                       coalesce(p.name, cp.name, r.name) AS process_name
+                                FROM notifications n LEFT JOIN review_requests q ON q.id = n.review_id
+                                LEFT JOIN routines r ON r.id = q.routine_id LEFT JOIN executions e ON e.id = q.execution_id
+                                LEFT JOIN processes p ON p.id = e.process_id
+                                LEFT JOIN step_change_requests sc ON sc.id = n.change_id LEFT JOIN routines nr ON nr.id = sc.new_routine_id
+                                LEFT JOIN processes cp ON cp.id = sc.process_id
+                                WHERE n.user_id = %s ORDER BY n.created_at DESC LIMIT 50""", (actor["id"],)).fetchall()
+            unseen = c.execute("SELECT count(*) AS n FROM notifications WHERE user_id = %s AND seen_at IS NULL", (actor["id"],)).fetchone()["n"]
+        return {"unseen": int(unseen), "items": [_jsonable(r) for r in rows]}
+
+    def notification_seen(self, actor: dict, notification_id: int) -> dict:
+        """Seen is only seen: it decides nothing about the request."""
+        with self.db.tx() as c:
+            r = c.execute("""UPDATE notifications SET seen_at = coalesce(seen_at, now()) WHERE id = %s AND user_id = %s
+                             RETURNING id""", (notification_id, actor["id"])).fetchone()
+        if not r:
+            raise err(404, "NOT-FOUND", what_missing="notification")
+        return {"ok": True}
 
     def get_execution(self, actor: dict, execution_id: str) -> dict:
         execution_id = _uuid(execution_id)
@@ -966,13 +1467,37 @@ class Core:
         return _jsonable(row)
 
 
-_JOB_SELECT = """SELECT j.id, j.request_id, j.state, j.verified, j.inputs, j.waiting_reason, j.cancel_requested, j.attempt,
+_CHANGE_SELECT = """SELECT q.id, q.process_id, q.status, q.requested_at, q.decided_at, q.requested_by, p.name AS process_name,
+                           o.name AS old_routine_name, n.name AS new_routine_name, u.display AS requested_by_name, d.display AS decided_by_name
+                    FROM step_change_requests q JOIN processes p ON p.id = q.process_id JOIN routines o ON o.id = q.old_routine_id
+                    JOIN routines n ON n.id = q.new_routine_id JOIN users u ON u.id = q.requested_by LEFT JOIN users d ON d.id = q.decided_by"""
+_REVIEW_SELECT = """SELECT q.*, r.name AS step_name, p.name AS process_name, e.context, e.state AS execution_state,
+                           a.display AS assignee_name, d.display AS decided_by_name, u.display AS requested_by_name
+                    FROM review_requests q JOIN routines r ON r.id = q.routine_id JOIN executions e ON e.id = q.execution_id
+                    LEFT JOIN processes p ON p.id = e.process_id JOIN users a ON a.id = q.assignee_id
+                    LEFT JOIN users d ON d.id = q.decided_by JOIN users u ON u.id = e.requested_by"""
+
+
+def _review_view(q: dict) -> dict:
+    return _jsonable({k: q.get(k) for k in ("id", "execution_id", "position", "status", "assignee_id", "assignee_name", "requested_at",
+                                            "decided_at", "decided_by_name", "step_name", "process_name", "requested_by_name",
+                                            "execution_state", "context")})
+
+
+_JOB_SELECT = """SELECT j.id, j.request_id, j.mode, j.state, j.verified, j.inputs, j.waiting_reason, j.cancel_requested, j.attempt,
                         j.diagnostic, j.result, j.correlation_id, j.created_at, j.started_at, j.finished_at,
                         r.id AS routine_id, r.name AS routine_name, r.category, v.id AS version_id, v.version,
                         v.template_id, v.template_version, v.procedure_sha256,
                         s.id AS station_id, s.name AS station_name, u.username AS requested_by
                  FROM jobs j JOIN routine_versions v ON v.id = j.routine_version_id JOIN routines r ON r.id = v.routine_id
                  JOIN stations s ON s.id = j.station_id JOIN users u ON u.id = j.requested_by"""
+
+
+def _version_tuple(v) -> tuple[int, ...]:
+    try:
+        return tuple(int(x) for x in str(v).split("."))
+    except ValueError:
+        return (0,)
 
 
 def compat_reason(category: str, platform: str | None, station: dict) -> str | None:

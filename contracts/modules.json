@@ -331,6 +331,65 @@
         "ACCOUNT-EXISTS"
       ]
     },
+    "RR-APP-OPEN": {
+      "responsibility": "Listar o que a estação inicia, resolver destino sem abrir e abrir com confirmação de janela",
+      "symbols": [
+        "redrise_runner.app_open.discover",
+        "redrise_runner.app_open.resolve_target",
+        "redrise_runner.app_open.prepare_app",
+        "redrise_runner.app_open.prepare_browser",
+        "redrise_runner.app_open.open_target"
+      ],
+      "contracts": [
+        "app_open config (core/redrise_core/service.py app_config)"
+      ],
+      "paths": [
+        "runner/redrise_runner/app_open.py"
+      ],
+      "conditions": [
+        "APP-TARGET-NOT-FOUND",
+        "APP-NO-ASSOCIATION",
+        "APP-OPEN-FAILED",
+        "APP-OPEN-UNCONFIRMED"
+      ]
+    },
+    "RR-REPORT": {
+      "responsibility": "Gerar o relatório em PDF da execução, salvar sem sobrescrever e conferir o arquivo",
+      "symbols": [
+        "redrise_runner.report_pdf.build",
+        "redrise_runner.report_pdf.run",
+        "redrise_runner.report_pdf.well_formed"
+      ],
+      "contracts": [
+        "followup report config (core/redrise_core/service.py followup_config)"
+      ],
+      "paths": [
+        "runner/redrise_runner/report_pdf.py"
+      ],
+      "conditions": [
+        "REPORT-WRITE-FAILED",
+        "REPORT-NOT-VERIFIED",
+        "REPORT-NOT-HERE"
+      ]
+    },
+    "RR-NOTIFY": {
+      "responsibility": "Preparar rascunho em aplicativo de e-mail ou webmail para a pessoa revisar e enviar; nunca enviar",
+      "symbols": [
+        "redrise_runner.notify_draft.mail_clients",
+        "redrise_runner.notify_draft.draft",
+        "redrise_runner.notify_draft.run"
+      ],
+      "contracts": [
+        "followup notify config (core/redrise_core/service.py followup_config)"
+      ],
+      "paths": [
+        "runner/redrise_runner/notify_draft.py"
+      ],
+      "conditions": [
+        "NOTIFY-UNCONFIRMED",
+        "NOTIFY-LOGIN-REQUIRED"
+      ]
+    },
     "RR-NOTEPAD": {
       "responsibility": "Processo Boas-vindas: identificar janela e guias do Bloco de Notas, digitar, salvar e fechar pela interface",
       "symbols": [

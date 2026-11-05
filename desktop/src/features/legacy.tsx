@@ -191,7 +191,7 @@ export function LegacyRunPage({ id }: { id?: number }) {
 }
 
 export function JobsSection() {
-  const { src } = useStore();
+  const { src, changeTick } = useStore();
   const [jobs, setJobs] = useState<any[] | null>(null);
   const [detail, setDetail] = useState<any>(null);
   const [error, setError] = useState<unknown>(null);
@@ -212,7 +212,7 @@ export function JobsSection() {
     void load();
     document.addEventListener("visibilitychange", load);
     return () => { alive = false; window.clearTimeout(t); document.removeEventListener("visibilitychange", load); };
-  }, [src]);
+  }, [src, changeTick]);
   if (src.mode !== "real") return null;
   const openJob = async (id: string) => { setError(null); try { setDetail(await api("GET", `/api/v1/jobs/${id}`)); } catch (e) { setError(e); } };
   return (

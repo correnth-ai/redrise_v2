@@ -149,6 +149,49 @@ fn storage_local(app: State<App>) -> Res {
     Ok(json!({"data_bytes": total.saturating_sub(logs + pg), "logs_bytes": logs}))
 }
 
+/// "Outro…" in Nova Rotina: the Windows file picker, owned by the app window. Cancel returns null.
+#[tauri::command(async)]
+fn pick_file(handle: tauri::AppHandle) -> Res {
+    use windows_sys::Win32::UI::Controls::Dialogs::{GetOpenFileNameW, OFN_EXPLORER, OFN_FILEMUSTEXIST, OFN_NOCHANGEDIR, OFN_PATHMUSTEXIST, OPENFILENAMEW};
+    let owner = handle.get_webview_window("main").and_then(|w| w.hwnd().ok()).map_or(std::ptr::null_mut(), |h| h.0 as _);
+    let mut file = vec![0u16; 32768];
+    let mut ofn: OPENFILENAMEW = unsafe { std::mem::zeroed() };
+    ofn.lStructSize = std::mem::size_of::<OPENFILENAMEW>() as u32;
+    ofn.hwndOwner = owner;
+    ofn.lpstrFile = file.as_mut_ptr();
+    ofn.nMaxFile = file.len() as u32;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+    if unsafe { GetOpenFileNameW(&mut ofn) } == 0 {
+        return Ok(Value::Null); // cancelled, or the dialog could not open: nothing was chosen
+    }
+    let end = file.iter().position(|c| *c == 0).unwrap_or(file.len());
+    Ok(Value::String(String::from_utf16_lossy(&file[..end])))
+}
+
+/// "Veja aqui!": the folder of a report of this computer in the Explorer, the file selected. The name comes
+/// from a result, so it is checked: a bare .pdf name, in the one folder reports are saved to, and existing.
+#[tauri::command]
+fn open_report_folder(name: String) -> Res {
+    use std::os::windows::process::CommandExt;
+    if name.is_empty() || name.contains(['/', '\\', ':']) || name.contains("..") || !name.to_lowercase().ends_with(".pdf") {
+        return Err(diag_err("VALIDATION", "The name of the report is not valid.", "bare .pdf name expected"));
+    }
+    let file = paths::documents().join("RedRise").join("Relatorios").join(&name);
+    if !file.is_file() {
+        return Err(json!({"diagnostic": {
+            "schema": "redrise.diagnostic/1", "error_code": "REPORT-NOT-HERE", "category": "precondition",
+            "what_happened": format!("The report {name} is not on this computer."), "completed": "Nothing was opened.",
+            "pending": "The report stays where it was saved.", "effect_state": "none",
+            "next_action": "Open the Documents folder of the station that ran it, under RedRise, Relatorios.",
+            "retry": "not_useful", "details_summary": "Reports are saved on the station that runs the step.", "reported_by": "RR-UI",
+            "module_hints": ["RR-REPORT"], "diagnosis_status": "unconfirmed", "boundary": null, "correlation_id": local::short_id(),
+            "version": {"desktop": env!("CARGO_PKG_VERSION")}, "technical_details": {}, "cause": null, "params": {"name": name}}}));
+    }
+    std::process::Command::new("explorer.exe").raw_arg(format!("/select,\"{}\"", file.display())).spawn()
+        .map_err(|e| diag_err("REPORT-NOT-HERE", "The Explorer could not be opened.", &e.to_string()))?;
+    Ok(json!({"opened": name}))
+}
+
 #[tauri::command]
 fn browser_open(app: State<App>, url: String) -> Res {
     local::open_browser(&app.paths, &url)
@@ -218,7 +261,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             app_info, host_create, host_start, station_join, agent_start, api, runner_local, record_start, record_stop,
-            record_compile, update_check, update_apply, browser_open, storage_local
+            record_compile, update_check, update_apply, browser_open, storage_local, pick_file, open_report_folder
         ])
         .build(tauri::generate_context!())
         .expect("tauri app");

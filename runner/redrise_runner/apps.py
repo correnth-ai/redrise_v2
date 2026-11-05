@@ -127,7 +127,13 @@ def close_windows(hwnds: list[int], timeout_s: float = 10.0) -> list[int]:
     return left
 
 
-def process_image(pid: int) -> str:
+def window_title(hwnd: int) -> str:
+    buf = ctypes.create_unicode_buffer(512)
+    ctypes.windll.user32.GetWindowTextW(hwnd, buf, 512)
+    return buf.value
+
+
+def process_path(pid: int) -> str:
     k32 = ctypes.windll.kernel32
     h = k32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
     if not h:
@@ -137,9 +143,22 @@ def process_image(pid: int) -> str:
         n = ctypes.c_uint32(1024)
         if not k32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(n)):
             return ""
-        return Path(buf.value).name.lower()
+        return buf.value
     finally:
         k32.CloseHandle(h)
+
+
+def process_image(pid: int) -> str:
+    path = process_path(pid)
+    return Path(path).name.lower() if path else ""
+
+
+def running_pids() -> set[int]:
+    ids = (ctypes.c_uint32 * 4096)()
+    got = ctypes.c_uint32()
+    if not ctypes.windll.psapi.EnumProcesses(ids, ctypes.sizeof(ids), ctypes.byref(got)):
+        raise OSError("EnumProcesses failed")
+    return {pid for pid in ids[: got.value // 4] if pid}
 
 
 if sys.platform != "win32":  # pragma: no cover

@@ -6,7 +6,7 @@ import type { Execution, ExecutionStep, JobState } from "./types";
 export const JOB_STATE: Record<string, string> = {
   queued: "Aguardando", claimed: "Preparando", running: "Em andamento", completed_unverified: "Concluída, não verificada",
   verified: "Verificada", failed: "Falhou", uncertain: "Incerta — conferir", refused: "Recusada", cancelled: "Cancelada",
-  error: "Erro",
+  error: "Erro", awaiting_review: "Aguardando revisão",
 };
 
 export const END_REASON: Record<string, string> = {
@@ -22,7 +22,7 @@ export function tone(state: string | null | undefined): Tone {
     case "verified": return "ok";
     case "completed_unverified": case "uncertain": return "warn";
     case "failed": case "error": case "refused": return "bad";
-    case "running": case "claimed": case "queued": return "info";
+    case "running": case "claimed": case "queued": case "awaiting_review": return "info";
     default: return "muted";
   }
 }
@@ -42,7 +42,7 @@ export const COLUMN_LABEL: Record<Column, string> = {
 };
 export function column(e: Execution, s: ExecutionStep): Column {
   if (s.state === null) return e.state === "finished" ? "not_run" : "waiting";
-  if (s.state === "queued") return "waiting";
+  if (s.state === "queued" || s.state === "awaiting_review") return "waiting";
   if (s.state === "claimed" || s.state === "running") return "running";
   if (s.state === "verified") return "verified";
   return "attention";
@@ -50,10 +50,11 @@ export function column(e: Execution, s: ExecutionStep): Column {
 
 export function executionLabel(e: Execution): string {
   if (e.state === "running") return "Em andamento";
+  if (e.state === "waiting_review") return "Aguardando revisão";
   return JOB_STATE[e.outcome ?? ""] ?? "Encerrada";
 }
 export function executionTone(e: Execution): Tone {
-  return e.state === "running" ? "info" : tone(e.outcome);
+  return e.state === "finished" ? tone(e.outcome) : "info";
 }
 
 export function needsAttention(e: Execution): boolean {
@@ -65,5 +66,5 @@ export function title(e: Execution): string {
 }
 
 export function finishedState(s: JobState | null): boolean {
-  return s !== null && !["queued", "claimed", "running"].includes(s);
+  return s !== null && !["queued", "claimed", "running", "awaiting_review"].includes(s);
 }

@@ -11,31 +11,50 @@ export interface BrowserConfig {
   isolated: boolean;      // "Esta rotina pode ser executada isoladamente"
 }
 
+export interface AppTarget { kind: "app" | "file"; app_id?: string; path?: string; name: string }
+export type MailChannel = { kind: "app"; mail_id: string; name: string } | { kind: "webmail"; provider: string; browser: string; name: string };
+export type RoutineConfig = BrowserConfig & { target?: AppTarget; action?: string; assignee_id?: number; to?: string; channel?: MailChannel };
+export type RoutineVersionInput = { kind: "browser_open"; config: BrowserConfig } | { kind: "app_open"; config: { target: AppTarget; isolated: boolean } }
+  | { kind: "followup"; config: { action: "review"; assignee_id: number } | { action: "report"; labels: Record<string, string> }
+    | { action: "notify"; to: string; channel: MailChannel; labels: Record<string, string> } };
+export type RoutineLink = { process_id: number; after_position?: number };
+export interface Member { id: number; display: string; username: string; active: boolean }
+export interface Review { id: string; execution_id: string; position: number; status: "pending" | "approved"; assignee_id: number; assignee_name: string;
+  requested_at: string; decided_at: string | null; decided_by_name: string | null; step_name: string; process_name: string | null; requested_by_name: string;
+  execution_state: string; context: Record<string, unknown> }
+export interface StepChange { id: string; process_id: number; process_name: string; status: "pending" | "approved" | "cancelled"; old_routine_name: string; new_routine_name: string;
+  requested_at: string; decided_at: string | null; requested_by: number; requested_by_name: string; decided_by_name: string | null; can_approve: boolean }
+export interface NotificationItem { id: number; kind: string; review_id: string | null; change_id: string | null; created_at: string; seen_at: string | null; step_name: string; position: number | null; process_name: string }
+export interface Notifications { unseen: number; items: NotificationItem[] }
+export interface StationApp { id: string; name: string; browser_id?: string; mail_id?: string }
+export interface Job { id: string; mode?: string; state: string; diagnostic?: import("@/lib/api").Diagnostic | null; waiting_reason?: string | null;
+  events?: { at: string; state: string; detail: any }[] }
+
 export interface Routine {
   id: number; name: string; category: string; created_at: string;
-  version_id: number; version: number; kind: "template" | "procedure" | "browser_open" | "notepad_step";
+  version_id: number; version: number; kind: "template" | "procedure" | "browser_open" | "notepad_step" | "app_open" | "followup"; assignee_name?: string | null;
   template_id: string | null; template_version: string | null; platform: string | null;
   inputs: Record<string, string>; params: { name: string; role: string }[] | null;
-  config: BrowserConfig | null;
+  config: RoutineConfig | null;
 }
 
 export interface ProcessItem { position: number; routine_id: number; routine_name: string; continue_next: boolean;
-  kind: string; config: BrowserConfig | null }
-export interface Process { id: number; name: string; system_key?: string | null; created_at: string; updated_at: string; items: ProcessItem[];
+  kind: string; config: RoutineConfig | null }
+export interface Process { id: number; name: string; system_key?: string | null; pending_change?: string | null; created_at: string; updated_at: string; items: ProcessItem[];
   last_execution: { id: string; state: string; outcome: string | null; end_reason: string | null; created_at: string } | null }
 
-export type JobState = "queued" | "claimed" | "running" | "completed_unverified" | "verified" | "failed" | "uncertain" |
+export type JobState = "awaiting_review" | "queued" | "claimed" | "running" | "completed_unverified" | "verified" | "failed" | "uncertain" |
   "refused" | "cancelled" | "error";
 
 export interface ExecutionStep {
   diagnostic?: import("@/lib/api").Diagnostic | null;
   position: number; routine_id: number; routine_version_id: number; name: string; continue_next: boolean;
   job_id: string | null; state: JobState | null; verified: boolean; error_code: string | null;
-  started_at: string | null; finished_at: string | null;
+  started_at: string | null; finished_at: string | null; review?: Review;
 }
 export interface Execution {
   id: string; request_id: string; process_id: number | null; process_name: string | null; station_id: number;
-  station_name: string; requested_by: string; state: "running" | "finished"; outcome: JobState | null;
+  station_name: string; requested_by: string; state: "running" | "waiting_review" | "finished"; outcome: JobState | null;
   end_reason: string | null; context: Record<string, unknown>; correlation_id: string; created_at: string;
   finished_at: string | null; steps: ExecutionStep[];
 }

@@ -21,6 +21,14 @@ class BrowserProcessTest(unittest.TestCase):
     client, expect, admin, station = CoreTest.client, CoreTest.expect, classmethod(CoreTest.admin.__func__), CoreTest.station
 
     # ---------------------------------------------------------------- helpers
+    def other_admin(self):
+        """Second administrator: whoever asks for a replacement of step 1 does not approve it alone."""
+        cls = type(self)
+        if not hasattr(cls, "_other"):
+            self.admin().call("POST", "/api/v1/users", {"username": "admin2", "display": "Admin 2", "password": test_core.PW, "role": "admin"})
+            cls._other = self.client().call("POST", "/api/v1/login", {"username": "admin2", "password": test_core.PW})["token"]
+        return cls._other
+
     def browser_routine(self, config=SITE, name=None):
         out = self.admin().call("POST", "/api/v1/routines", {"name": name or f"b-{uuid.uuid4().hex[:6]}", "category": "browser",
                                                              "version": {"kind": "browser_open", "config": config}})
@@ -64,6 +72,21 @@ class BrowserProcessTest(unittest.TestCase):
         self.assertEqual(v2["version"], 2)
         row = next(r for r in a.call("GET", "/api/v1/routines") if r["id"] == rid)
         self.assertEqual((row["name"], row["config"]["url"], row["version"]), ("Abrir portal novo", "https://novo.exemplo.test/", 2))
+
+    def test_01b_deleting_a_routine(self):
+        a = self.admin()
+        rid, _ = self.browser_routine(SITE, "Livre")
+        linked, _ = self.browser_routine(SITE, "Em uso")
+        proc = self.process([(linked, False)], "Processo em uso")
+        e = self.expect("ROUTINE-IN-USE", lambda: a.call("DELETE", f"/api/v1/routines/{linked}"), 409)
+        self.assertEqual(e.diagnostic.params["process"], "Processo em uso")
+        self.assertIn(linked, [r["id"] for r in a.call("GET", "/api/v1/routines")])
+        change = a.call("POST", f"/api/v1/processes/{proc['id']}/step1", {"routine_id": rid})
+        self.client(self.other_admin()).call("POST", f"/api/v1/step-changes/{change['id']}/approve")
+        a.call("DELETE", f"/api/v1/routines/{linked}")  # out of the process: it can go
+        self.assertNotIn(linked, [r["id"] for r in a.call("GET", "/api/v1/routines")])
+        self.expect("NOT-FOUND", lambda: a.call("DELETE", f"/api/v1/routines/{linked}"), 404)  # never twice
+        self.expect("NOT-FOUND", lambda: a.call("POST", "/api/v1/processes", {"name": "Com excluida", "items": [{"routine_id": linked, "continue_next": False}]}), 404)
 
     def test_02_isolated_flag_enforced_by_api(self):
         sid, _, _ = self.station("iso-st", categories=("browser",))
@@ -184,7 +207,7 @@ class BrowserProcessTest(unittest.TestCase):
         a = self.admin()
         rid, _ = self.browser_routine()
         tpl = a.call("POST", "/api/v1/routines", {"name": "m", "category": "windows", "version": {"kind": "template", "template_id": "boas-vindas"}})
-        self.expect("VALIDATION", lambda: self.process([]), 400)
+        self.assertEqual(self.process([])["items"], [])  # a process may start empty; its step 1 comes from Nova Rotina
         self.expect("VALIDATION", lambda: self.process([(tpl["routine"]["id"], True)]), 400)
         self.expect("NOT-FOUND", lambda: self.process([(999999, True)]), 404)
         a.call("POST", "/api/v1/users", {"username": "oper-bp", "display": "Op", "password": test_core.PW, "role": "operator"})

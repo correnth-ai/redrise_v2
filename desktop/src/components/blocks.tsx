@@ -2,14 +2,16 @@
 // (storage), grid-list-02 (process grid), onboarding-05 (activity),
 // onboarding-06 (timeline), onboarding-07 (execution log). They only read
 // the shared execution state; none of them triggers or verifies anything.
-import { CheckCircle2, Loader2, CircleAlert, CircleDashed, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, Loader2, CircleAlert, CircleDashed, ChevronRight, Hourglass } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { DiagnosticBox } from "@/components/diagnostic";
+import { DiagnosticBox, ErrorView } from "@/components/diagnostic";
 import { JOB_STATE, TONE_CLASS, executionLabel, executionTone, finishedState, title, tone } from "@/data/status";
 import type { Execution, ExecutionStep } from "@/data/types";
+import { tv } from "@/lib/locale";
 import { bytes, cn, when } from "@/lib/utils";
 
 export function StateBadge({ state, label }: { state: string | null; label?: string }) {
@@ -18,6 +20,28 @@ export function StateBadge({ state, label }: { state: string | null; label?: str
 
 export function ExecutionBadge({ e }: { e: Execution }) {
   return <Badge variant="outline" className={cn("font-medium", TONE_CLASS[executionTone(e)])}>{executionLabel(e)}</Badge>;
+}
+
+// ---------------------------------------------------------------- reports of an execution
+/** Each report this execution saved, with Veja aqui!: the folder in the Explorer, on the computer that has it. */
+export function ExecutionReports({ e, open }: { e: Execution; open: (name: string) => Promise<void> }) {
+  const [error, setError] = useState<unknown>(null);
+  const steps = (e.context as any)?.steps ?? {};
+  const files: string[] = Object.values<any>(steps).map((s) => s?.report?.file).filter((f) => typeof f === "string");
+  const messages: any[] = Object.values<any>(steps).map((s) => s?.message).filter((m) => m?.status === "prepared");
+  if (!files.length && !messages.length) return null;
+  return (
+    <div className="space-y-1">
+      {messages.map((m, i) => (
+        <p key={i}><b>Mensagem preparada</b> para <span className="break-all">{m.to}</span>{m.channel ? ` em ${tv(m.channel)}` : ""}. Nada foi enviado: revise e envie.</p>
+      ))}
+      {files.map((f) => (
+        <p key={f}>Relatório salvo: <span className="break-all font-medium">{f}</span>{" "}
+          <button type="button" className="font-medium underline" onClick={() => { setError(null); open(f).catch(setError); }}>Veja aqui!</button></p>
+      ))}
+      <ErrorView error={error} />
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------- stats-02
@@ -144,7 +168,7 @@ export function activityOf(executions: Execution[], open: (e: Execution) => void
   const out: Activity[] = [];
   for (const e of executions) {
     for (const s of e.steps) {
-      if (!s.job_id) continue;
+      if (!s.job_id && !s.review) continue;
       const at = s.finished_at ?? s.started_at ?? e.created_at;
       out.push({ id: `${e.id}-${s.position}`, who: s.name, state: s.state,
         text: `${JOB_STATE[s.state ?? ""] ?? "registrada"} em “${title(e)}”`, at, onOpen: () => open(e) });
@@ -157,6 +181,7 @@ export function activityOf(executions: Execution[], open: (e: Execution) => void
 function StepIcon({ s }: { s: ExecutionStep }) {
   if (s.state === "verified") return <CheckCircle2 aria-hidden className="size-5 text-ok" />;
   if (s.state === "running" || s.state === "claimed") return <Loader2 aria-hidden className="size-4 animate-spin text-info" />;
+  if (s.state === "awaiting_review") return <Hourglass aria-hidden className="size-4 text-info" />;
   if (finishedState(s.state)) return <CircleAlert aria-hidden className={cn("size-5", tone(s.state) === "warn" ? "text-warn" : "text-destructive")} />;
   return <CircleDashed aria-hidden className="size-4 text-muted-foreground" />;
 }
@@ -214,7 +239,8 @@ export function ExecutionLog({ e }: { e: Execution }) {
                 <li key={s.position} className="text-sm">
                   <p className="font-medium">{s.position}. {s.name} <StateBadge state={s.state} /></p>
                   <p className="text-muted-foreground">
-                    {s.started_at ? `Início ${when(s.started_at)} · duração ${duration(s.started_at, s.finished_at)}` : "Não iniciada"}
+                    {s.review ? (s.review.status === "approved" ? `Aprovado por ${s.review.decided_by_name} em ${when(s.review.decided_at)}` : `Com ${s.review.assignee_name} desde ${when(s.review.requested_at)}`)
+                      : s.started_at ? `Início ${when(s.started_at)} · duração ${duration(s.started_at, s.finished_at)}` : "Não iniciada"}
                     {s.error_code ? ` · código ${s.error_code}` : ""}
                   </p>
                   {s.diagnostic && <DiagnosticBox d={s.diagnostic} />}

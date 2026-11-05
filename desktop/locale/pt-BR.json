@@ -560,6 +560,125 @@
       "next": "Execute o processo {process}, que contém esta rotina.",
       "details": "Rotinas vinculadas executam na ordem do processo, com o contexto dele."
     },
+    "ROUTINE-IN-USE": {
+      "what": "Esta rotina faz parte de um processo e não pode ser excluída.",
+      "completed": "O pedido foi recusado; a rotina não foi alterada.",
+      "pending": "A rotina continua na lista.",
+      "next": "Retire-a antes do processo {process}.",
+      "details": "Um processo não pode perder uma rotina que executa."
+    },
+    "APP-TARGET-NOT-FOUND": {
+      "what": "O destino não foi encontrado nesta estação: {target}.",
+      "completed": "A verificação terminou. Nada foi aberto.",
+      "pending": "A rotina não consegue abrir este destino aqui.",
+      "next": "Escolha outro destino ou instale-o nesta estação e verifique de novo.",
+      "details": "A lista do menu Iniciar e o caminho do arquivo são lidos na estação que executa."
+    },
+    "APP-NO-ASSOCIATION": {
+      "what": "O Windows não tem programa para abrir este arquivo: {target}.",
+      "completed": "A verificação terminou. Nada foi aberto.",
+      "pending": "A rotina não consegue abrir este arquivo aqui.",
+      "next": "Escolha outro arquivo ou defina um programa para este tipo no Windows e verifique de novo.",
+      "details": "O RedRise nunca altera as associações de arquivos."
+    },
+    "APP-OPEN-FAILED": {
+      "what": "O Windows recusou abrir o destino: {target}.",
+      "completed": "O pedido de abertura foi recusado.",
+      "pending": "O destino não está aberto.",
+      "next": "Confira se ele abre manualmente nesta estação e tente de novo.",
+      "details": "O shell do Windows retornou erro."
+    },
+    "APP-OPEN-UNCONFIRMED": {
+      "what": "A abertura foi pedida, mas nenhuma janela dela foi confirmada: {target}.",
+      "completed": "O Windows aceitou o pedido de abertura.",
+      "pending": "Ele ainda pode abrir, ou estar atrás de outras janelas.",
+      "next": "Olhe a tela antes de tentar de novo.",
+      "details": "Nenhuma janela nova ou troca da janela em primeiro plano foi vista dentro do limite."
+    },
+    "PREPARE-REQUIRED": {
+      "what": "Esta rotina precisa antes de uma preparação bem-sucedida da versão atual.",
+      "completed": "O pedido foi recusado antes de abrir qualquer coisa.",
+      "pending": "Nada foi aberto.",
+      "next": "Verifique o destino de novo no assistente.",
+      "details": "O teste só abre o que uma preparação verificada resolveu."
+    },
+    "PROCESS-HAS-START": {
+      "what": "O processo {process} já tem etapa 1.",
+      "completed": "O pedido foi recusado. A rotina não foi criada.",
+      "pending": "Nada mudou no processo.",
+      "next": "Escolha um processo sem etapa 1 ou crie uma rotina avulsa.",
+      "details": "Um processo tem no máximo uma rotina inicial."
+    },
+    "REVIEW-NOT-ASSIGNEE": {
+      "what": "Somente o responsável atual pode aprovar este pedido.",
+      "completed": "O pedido foi recusado. Nada foi aprovado.",
+      "pending": "A execução continua aguardando revisão.",
+      "next": "Fale com o responsável indicado no pedido ou troque o responsável na etapa da rotina.",
+      "details": "O responsável pode ter mudado depois que o pedido foi aberto."
+    },
+    "REVIEW-ALREADY-DECIDED": {
+      "what": "Este pedido já foi aprovado.",
+      "completed": "O pedido foi recusado. A decisão anterior continua valendo.",
+      "pending": "Não há mais nada a fazer neste pedido.",
+      "next": "Atualize a tela para ver quem aprovou e quando.",
+      "details": "Um pedido tem uma decisão e retoma a execução uma vez."
+    },
+    "STEP1-NEEDS-APPROVAL": {
+      "what": "A etapa 1 de um processo só é substituída com aprovação.",
+      "completed": "O pedido foi recusado. O processo não foi alterado.",
+      "pending": "A etapa 1 continua como está.",
+      "next": "Use Substituir etapa 1 em Processo › Ação.",
+      "details": "As demais etapas continuam podendo mudar na composição."
+    },
+    "PROCESS-RUNNING": {
+      "what": "O processo {process} tem uma execução em andamento.",
+      "completed": "O pedido foi recusado. O processo não foi alterado.",
+      "pending": "A etapa 1 continua como está.",
+      "next": "Aguarde a execução terminar e tente de novo.",
+      "details": "A etapa 1 só muda com o processo fora de execução."
+    },
+    "CHANGE-PENDING-EXISTS": {
+      "what": "O processo {process} já tem uma substituição da etapa 1 pendente.",
+      "completed": "O pedido foi recusado. Nenhum outro pedido foi aberto.",
+      "pending": "O pedido anterior continua aguardando aprovação.",
+      "next": "Aguarde a aprovação dele ou cancele-o.",
+      "details": "Um processo tem uma substituição pendente por vez."
+    },
+    "CHANGE-NOT-ELIGIBLE": {
+      "what": "Somente um membro elegível pode aprovar esta substituição.",
+      "completed": "O pedido foi recusado. Nada foi alterado.",
+      "pending": "A substituição continua aguardando aprovação.",
+      "next": "Peça a um membro vinculado ao processo ou a um administrador.",
+      "details": "Quem pediu só aprova quando não há outra pessoa elegível."
+    },
+    "CHANGE-ALREADY-DECIDED": {
+      "what": "Esta substituição já foi decidida.",
+      "completed": "O pedido foi recusado. A decisão anterior continua valendo.",
+      "pending": "Não há mais nada a fazer neste pedido.",
+      "next": "Atualize a tela para ver quem decidiu e quando.",
+      "details": "Um pedido tem uma decisão."
+    },
+    "REPORT-WRITE-FAILED": {
+      "what": "O relatório não pôde ser salvo: {target}.",
+      "completed": "Nada ficou na pasta de relatórios.",
+      "pending": "A execução parou aqui; as próximas etapas não executaram.",
+      "next": "Confira se a pasta Documentos da estação pode receber arquivos e execute o processo de novo.",
+      "details": "Os relatórios ficam em Documentos, RedRise, Relatorios."
+    },
+    "REPORT-NOT-VERIFIED": {
+      "what": "O relatório salvo não pôde ser confirmado: {target}.",
+      "completed": "Pode haver um arquivo na pasta de relatórios.",
+      "pending": "A execução parou aqui; as próximas etapas não executaram.",
+      "next": "Abra o arquivo antes de executar de novo.",
+      "details": "O que foi lido é diferente do que foi escrito, e o arquivo não pôde ser removido."
+    },
+    "REPORT-NOT-HERE": {
+      "what": "O relatório {name} não está neste computador.",
+      "completed": "Nada foi aberto.",
+      "pending": "O relatório continua onde foi salvo.",
+      "next": "Abra a pasta Documentos da estação que executou, em RedRise, Relatorios.",
+      "details": "Os relatórios ficam na estação que executa a etapa."
+    },
     "NOTEPAD-CONTEXT-MISSING": {
       "what": "Esta etapa não recebeu a janela e a guia da execução.",
       "completed": "Esta etapa não digitou, salvou nem fechou nada.",
@@ -622,6 +741,20 @@
       "pending": "O estado final da janela é desconhecido.",
       "next": "Confira o Bloco de Notas antes de executar novamente.",
       "details": "Fechamento não confirmado ({reason}). Sem repetição automática."
+    },
+    "NOTIFY-UNCONFIRMED": {
+      "what": "O rascunho foi pedido, mas não foi confirmado: {target}.",
+      "completed": "Uma guia ou janela pode ter sido aberta.",
+      "pending": "A execução parou aqui; as próximas etapas não executaram. Nada foi enviado.",
+      "next": "Olhe a tela antes de executar de novo.",
+      "details": "A guia do webmail não apareceu no endereço esperado dentro do limite."
+    },
+    "NOTIFY-LOGIN-REQUIRED": {
+      "what": "O webmail {target} pede para entrar na conta neste navegador; o rascunho ainda não existe.",
+      "completed": "Uma guia do webmail está aberta. Nada foi enviado.",
+      "pending": "A execução parou aqui; as próximas etapas não executaram.",
+      "next": "Entre na conta nesse navegador e execute o processo de novo.",
+      "details": "O RedRise nunca entra em contas."
     }
   },
   "values": {
@@ -698,7 +831,40 @@
     "only browser routines run as executions in this version": "nesta versão, só rotinas de navegador são executadas por este fluxo",
     "the process has no linked routine": "o processo não tem rotina vinculada",
     "the process links a routine that cannot run": "o processo vincula uma rotina que não pode ser executada",
-    "version kind must be template, procedure or browser_open": "tipo de versão deve ser modelo, gravação ou abertura de navegador"
+    "version kind must be template, procedure or browser_open": "tipo de versão deve ser modelo, gravação ou abertura de navegador",
+    "config needs a target": "escolha o destino da rotina",
+    "target needs a name": "o destino precisa de um nome",
+    "choose an application of the list": "escolha um aplicativo da lista",
+    "full path of a file expected": "informe o caminho completo do arquivo",
+    "target must be an application or a file": "o destino deve ser um aplicativo ou um arquivo",
+    "unknown follow-up action": "ação de follow-up desconhecida",
+    "choose a team member": "escolha um membro da equipe",
+    "choose an active team member": "escolha um membro ativo da equipe",
+    "follow-up routines use the windows category": "rotinas de follow-up usam a categoria Windows",
+    "a follow-up needs a process and a previous step": "um follow-up precisa de um processo e de uma etapa anterior",
+    "only routines of the assistant start a process here": "só rotinas do assistente iniciam um processo aqui",
+    "the ready-made process cannot be changed": "o processo pronto não pode ser alterado",
+    "the previous step does not exist in this process": "a etapa anterior não existe neste processo",
+    "application routines use the windows category": "rotinas de aplicativo usam a categoria Windows",
+    "a new version cannot change the kind of a routine": "uma nova versão não muda o tipo da rotina",
+    "this routine is not prepared by the assistant": "esta rotina não é preparada pelo assistente",
+    "only the routine that starts a process is tested here": "aqui só se testa a rotina que inicia um processo",
+    "this kind of routine cannot be linked to a process in this version": "este tipo de rotina não pode ser vinculado a um processo nesta versão",
+    "a follow-up cannot be the first step of a process": "um follow-up não pode ser a primeira etapa de um processo",
+    "routine_id expected": "escolha uma rotina",
+    "this kind of routine does not run as an execution in this version": "este tipo de rotina não executa assim nesta versão",
+    "this kind of routine cannot start a process": "este tipo de rotina não pode iniciar um processo",
+    "the process has no step 1 yet: integrate the routine instead": "o processo ainda não tem etapa 1: integre a rotina",
+    "step 1 changed after the request": "a etapa 1 mudou depois do pedido",
+    "update the RedRise of this station": "atualize o RedRise desta estação",
+    "this routine belongs to the ready-made process": "esta rotina pertence ao processo pronto",
+    "these routines run through executions": "estas rotinas executam pela Lista ou pelo processo",
+    "invalid report labels": "textos do relatório inválidos",
+    "a new version cannot change the action of a follow-up": "uma nova versão não muda a ação do follow-up",
+    "invalid e-mail": "e-mail inválido",
+    "choose where to prepare the message": "escolha onde preparar a mensagem",
+    "Windows mail app": "Aplicativo de e-mail do Windows",
+    "Outlook on the web": "Outlook na web"
   },
   "patterns": [
     {
@@ -760,6 +926,75 @@
     {
       "en": "no new tab showing the target within {n} s",
       "pt": "nenhuma guia nova mostrando o destino em {n} s"
+    },
+    {
+      "en": "routine already linked to {name}",
+      "pt": "rotina já vinculada a {name}"
+    },
+    {
+      "en": "a process links up to {n} routines",
+      "pt": "um processo vincula até {n} rotinas"
     }
-  ]
+  ],
+  "report": {
+    "title": "Relatório de execução",
+    "process": "Processo",
+    "standalone": "Rotina avulsa",
+    "station": "Estação",
+    "requested_by": "Pedida por",
+    "started": "Início",
+    "reference": "Referência",
+    "summary": "Resumo",
+    "summary_text": "{done} de {total} etapas verificadas até este relatório.",
+    "steps": "Etapas",
+    "col_step": "Etapa",
+    "col_state": "Situação",
+    "col_when": "Quando",
+    "result": "Resultado",
+    "result_ok": "Todas as etapas anteriores foram verificadas.",
+    "result_open": "Há etapas sem resultado verificado. Confira-as antes de usar este relatório.",
+    "pending": "Pendências",
+    "pending_none": "Nada fica pendente depois deste relatório.",
+    "files": "Arquivos desta execução",
+    "files_none": "Nenhum arquivo foi registrado.",
+    "generated": "Gerado em",
+    "page": "Página {n} de {total}",
+    "this_report": "Este relatório",
+    "not_run": "Não executada",
+    "state_verified": "Verificada",
+    "state_failed": "Falhou",
+    "state_uncertain": "Incerta",
+    "state_refused": "Recusada",
+    "state_cancelled": "Cancelada",
+    "state_error": "Erro",
+    "state_completed_unverified": "Concluída, não verificada",
+    "state_awaiting_review": "Aguardando revisão",
+    "state_running": "Em andamento",
+    "state_queued": "Aguardando",
+    "state_claimed": "Preparando",
+    "approved_by": "Aprovado por {who}",
+    "message_prepared": "Mensagem preparada, não enviada"
+  },
+  "notify": {
+    "subject": "{process}: {step}",
+    "greeting": "Esta mensagem foi preparada pelo RedRise para você revisar e enviar.",
+    "process": "Processo",
+    "station": "Estação",
+    "steps": "Etapas",
+    "files": "Arquivos",
+    "truncated": "(texto encurtado para caber)",
+    "not_run": "Não executada",
+    "this_step": "Esta mensagem",
+    "state_verified": "Verificada",
+    "state_failed": "Falhou",
+    "state_uncertain": "Incerta",
+    "state_refused": "Recusada",
+    "state_cancelled": "Cancelada",
+    "state_error": "Erro",
+    "state_completed_unverified": "Concluída, não verificada",
+    "state_awaiting_review": "Aguardando revisão",
+    "state_running": "Em andamento",
+    "state_queued": "Aguardando",
+    "state_claimed": "Preparando"
+  }
 }

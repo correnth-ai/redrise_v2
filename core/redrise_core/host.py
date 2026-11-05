@@ -106,6 +106,8 @@ class Host:
         self.database = db.Database(db.conninfo(cfg["pg_port"], db.APP_ROLE, self.vault.get("pg-app")))
         self.core = core = Core(self.database, load_templates(self.p.install_root), identity.load_verifier(self.p.install_root))
         core.ensure_welcome_process()
+        core.changes.log = self.log
+        core.changes.start()
         self.api = ApiServer(core, bind, cfg["lan_port"], self.p.host / "tls" / "host-cert.pem",
                              self.p.host / "tls" / "host-key.pem", log=self.log).start()
         info["lan_port"] = self.api.port
@@ -113,6 +115,7 @@ class Host:
 
     def stop(self) -> None:
         if self.api:
+            self.core.changes.stop()
             self.api.stop()
         if self.database:
             self.database.close()

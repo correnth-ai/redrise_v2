@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ErrorView } from "@/components/diagnostic";
+import { NotificationsBell } from "@/components/notifications-bell";
+import { PageHeader } from "@/components/page-header";
 import { TopBar } from "@/components/window-chrome";
 import { AccessPage, WelcomePage } from "@/features/auth";
 import { AppPage, StationsPage, TeamPage } from "@/features/configuracoes";
@@ -120,15 +122,16 @@ function Shell({ me, version, src, route, setRoute, flash, clearFlash, onLogout,
         <AppSidebar route={route} go={go} me={me} version={version} update={update.release?.version ?? null}
           onLogout={onLogout} onUpdate={update.show} />
         <SidebarInset className="min-h-0 overflow-hidden">
-          <TopBar>
+          <TopBar afterTheme={<NotificationsBell />}>
             <SidebarTrigger aria-label="Recolher ou expandir o menu" />
             <Separator orientation="vertical" className="mx-1 h-4" />
-            <h1 className="truncate text-sm font-semibold">{PAGE_TITLE[key] ?? PAGE_TITLE["empresa/painel"]}</h1>
+            <span className="truncate text-sm text-muted-foreground">{PAGE_TITLE[key] ?? PAGE_TITLE["empresa/painel"]}</span>
             {src.mode === "demo" && <DemoBadge />}
             {src.mode === "demo" && <Button size="sm" variant="ghost" onClick={onIdentityDemo}>Ver acesso e cadastro</Button>}
           </TopBar>
           <main className="min-h-0 flex-1 overflow-auto p-4 md:p-6">
             {flash && <div role="status" className="mb-4 rounded-md border-l-4 border-ok bg-ok-soft px-4 py-3 text-sm">{flash}</div>}
+            <PageHeader route={route} go={go} />
             <Page route={route} />
           </main>
         </SidebarInset>
@@ -149,7 +152,7 @@ function Page({ route }: { route: Route }) {
     case "rotina/modelos": return <TemplatesPage />;
     case "rotina/gravacao": return <RecordingPage />;
     case "rotina/executar-legada": return <LegacyRunPage id={route.id} />;
-    case "processo/acao": return <ProcessesPage />;
+    case "processo/acao": return <ProcessesPage key={`${route.id ?? ""}-${route.nonce ?? ""}`} focus={route.id} />;
     case "processo/historico": return <HistoryPage key={String(route.id ?? "")} focus={route.id} />;
     case "processo/kanban": return <KanbanPage key={String(route.process ?? "")} process={route.process} />;
     case "configuracao/equipe": return <TeamPage />;

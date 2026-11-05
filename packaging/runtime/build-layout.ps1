@@ -121,6 +121,10 @@ Copy-Item -LiteralPath $Engine -Destination (Join-Path $Out 'engine\redrise-engi
 Copy-Item -LiteralPath (Join-Path $repo 'runner\redrise_runner') -Destination (Join-Path $Out 'runner') -Recurse
 Get-ChildItem -LiteralPath (Join-Path $Out 'runner') -Recurse -Directory -Filter '__pycache__' | Remove-Item -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $repo 'templates') -Destination (Join-Path $Out 'templates') -Recurse
+Copy-Item -LiteralPath (Join-Path $repo 'desktop\licenses\playfair-display-OFL.txt') -Destination (Join-Path $Out 'licenses\playfair-display-OFL.txt')  # the font bundled in the UI
+# The authorized mark, byte for byte, for what the Runner generates (report PDF).
+New-Item -ItemType Directory -Force -Path (Join-Path $Out 'assets') | Out-Null
+Copy-Item -LiteralPath (Join-Path $repo 'assets\brand\redrise\redrise-icon-128x128.png') -Destination (Join-Path $Out 'assets\redrise-icon-128x128.png')
 # Shared contracts: error catalog, module registry, schemas, redrise_contracts (stdlib only)
 New-Item -ItemType Directory -Force -Path (Join-Path $Out 'contracts') | Out-Null
 foreach ($c in 'errors.json', 'modules.json', 'schemas', 'python') { Copy-Item -LiteralPath (Join-Path $repo "contracts\$c") -Destination (Join-Path $Out 'contracts') -Recurse }

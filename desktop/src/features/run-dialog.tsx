@@ -9,10 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ErrorView } from "@/components/diagnostic";
 import { useStore, type RunTarget } from "@/state";
-import type { BrowserConfig } from "@/data/types";
+import type { RoutineConfig } from "@/data/types";
 
-export function describeConfig(c: BrowserConfig | null, browserName?: (id: string) => string): string {
+export function describeConfig(c: RoutineConfig | null, browserName?: (id: string) => string): string {
   if (!c) return "Rotina legada (modelo/gravação)";
+  if (c.action === "review") return "Solicitar revisão: a execução aguarda o responsável";
+  if (c.action === "report") return "Gerar relatório em PDF desta execução";
+  if (c.action === "notify") return `Preparar mensagem para ${c.to}; a pessoa revisa e envia`;
+  if (c.target) return c.target.kind === "app" ? `Aplicativo ${c.target.name}` : `Arquivo ${c.target.path}`;
   if ("step" in c) return "Bloco de Notas, pela interface";
   return c.origin === "site" ? `Site ${c.url} · ${browserName ? browserName(c.browser ?? "") : c.browser}` : `HTML local ${c.path}`;
 }
@@ -29,13 +33,15 @@ export function RunDialog({ open, target, onClose }: { open: boolean; target: Ru
 
   const eligible = useMemo(() => [
     ...(processes ?? []).filter((p) => p.items.length).map((p) => ({ key: `process:${p.id}`, label: `Processo · ${p.name}` })),
-    ...(routines ?? []).filter((r) => r.kind === "browser_open" && r.config?.isolated && !(processes ?? []).some((p) => p.items.some((i) => i.routine_id === r.id))).map((r) => ({ key: `routine:${r.id}`, label: `Rotina avulsa · ${r.name}` })),
+    ...(routines ?? []).filter((r) => (r.kind === "browser_open" || r.kind === "app_open") && r.config?.isolated && !(processes ?? []).some((p) => p.items.some((i) => i.routine_id === r.id))).map((r) => ({ key: `routine:${r.id}`, label: `Rotina avulsa · ${r.name}` })),
   ], [processes, routines]);
   const [kind, idStr] = pick.split(":");
   const id = Number(idStr);
   const proc = kind === "process" ? processes?.find((p) => p.id === id) : undefined;
   const routine = kind === "routine" ? routines?.find((r) => r.id === id) : undefined;
-  const categories = proc?.items.some((i) => i.kind === "notepad_step") ? ["windows"] : ["browser"];
+  const kinds = (proc ? proc.items.map((i) => i.kind) : routine ? [routine.kind] : []); // a review runs on no station: its Windows category only counts for a report
+  const reviewOnly = (i: number) => proc?.items[i]?.kind === "followup" && proc.items[i].config?.action === "review";
+  const categories = [...new Set(kinds.filter((_, i) => !reviewOnly(i)).map((k) => (k === "browser_open" ? "browser" : "windows")))];
   const compatible = (stations ?? []).filter((s) => !s.revoked && categories.every((c) => s.categories.includes(c)));
   useEffect(() => { if (!station && compatible.length) setStation(String(compatible[0].id)); }, [compatible, station]);
   const browserName = (bid: string) => compatible.flatMap((s) => s.browsers ?? []).find((b) => b.id === bid)?.name ?? bid;

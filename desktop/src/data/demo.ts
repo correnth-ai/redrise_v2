@@ -94,11 +94,38 @@ export const demoSource: DataSource = {
   storage: async () => ({ db_bytes: 48_300_000, counts: { routines: routines.length, processes: processes.length,
     executions: executions.length, jobs: executions.reduce((n, e) => n + e.steps.filter((s) => s.job_id).length, 0) },
     local: { data_bytes: 12_600_000, logs_bytes: 2_100_000 } }),
-  async createBrowserRoutine(name, config) {
-    routines = [...routines, r(Math.max(0, ...routines.map((x) => x.id)) + 1, name, config)];
+  apps: async () => ({ apps: [{ id: "demo!calc", name: "Calculadora" }, { id: "demo!bloco", name: "Bloco de Notas" }, { id: "browser:msedge", name: "Microsoft Edge", browser_id: "msedge" }] }),
+  pickFile: async () => "C:\\Exemplos\\planilha.xlsx",
+  async createRoutine(name, _category, version, link) {
+    const id = Math.max(0, ...routines.map((x) => x.id)) + 1;
+    routines = [...routines, { ...r(id, name, version.config as any), kind: version.kind }];
+    if (link) processes = processes.map((x) => (x.id === link.process_id ? p(x.id, x.name, [...x.items.map((i) => [i.routine_id, true] as [number, boolean]), [id, true]]) : x));
+    return id;
   },
-  async updateBrowserRoutine(id, name, config) {
-    routines = routines.map((x) => (x.id === id ? { ...x, name, config, version: x.version + 1 } : x));
+  async addRoutineVersion(id, name, version) {
+    routines = routines.map((x) => (x.id === id ? { ...x, name, config: version.config as any, version: x.version + 1 } : x));
+  },
+  prepareRoutine: async () => ({ id: "demo-prep", mode: "prepare", state: "verified", events: ["session", "target", "launch"].map((c) => ({ at: now(), state: "check", detail: { id: c, state: "ok" } })) }),
+  testRoutine: async () => ({ id: "demo-test", mode: "test", state: "verified" }),
+  job: async (id) => ({ id, state: "verified" }),
+  cancelJob: async () => undefined,
+  members: async () => [{ id: 1, display: "Pessoa de demonstração", username: "demo", active: true }],
+  execution: async (id) => clone(executions.find((e) => e.id === id) ?? executions[0]),
+  reviews: async () => [],
+  approveReview: async () => undefined,
+  notifications: async () => ({ unseen: 0, items: [] }),
+  markNotificationSeen: async () => undefined,
+  openReportFolder: async () => undefined,
+  changes: () => new Promise(() => undefined), // the demonstration has its own simulation
+  stepChanges: async () => [],
+  requestStepChange: async () => undefined,
+  approveStepChange: async () => undefined,
+  cancelStepChange: async () => undefined,
+  async integrateRoutine(processId, routineId) {
+    processes = processes.map((x) => (x.id === processId ? p(x.id, x.name, [...x.items.map((i) => [i.routine_id, true] as [number, boolean]), [routineId, true]]) : x));
+  },
+  async archiveRoutine(id) {
+    routines = routines.filter((x) => x.id !== id);
   },
   async saveProcess(id, name, items) {
     const pid = id ?? Math.max(0, ...processes.map((x) => x.id)) + 1;

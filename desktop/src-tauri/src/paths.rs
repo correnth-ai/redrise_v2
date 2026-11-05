@@ -9,6 +9,26 @@ pub struct Paths {
     pub data_root: PathBuf,
 }
 
+/// The real Documents folder of this user, as the Runner resolves it (OneDrive included).
+pub fn documents() -> PathBuf {
+    use windows_sys::Win32::System::Com::CoTaskMemFree;
+    use windows_sys::Win32::UI::Shell::{FOLDERID_Documents, SHGetKnownFolderPath};
+    unsafe {
+        let mut p: *mut u16 = std::ptr::null_mut();
+        let hr = SHGetKnownFolderPath(&FOLDERID_Documents, 0, std::ptr::null_mut(), &mut p);
+        if hr != 0 || p.is_null() {
+            return PathBuf::from(std::env::var_os("USERPROFILE").unwrap_or_default()).join("Documents");
+        }
+        let mut n = 0;
+        while *p.add(n) != 0 {
+            n += 1;
+        }
+        let s = String::from_utf16_lossy(std::slice::from_raw_parts(p, n));
+        CoTaskMemFree(p as _);
+        PathBuf::from(s)
+    }
+}
+
 fn local_app_data() -> PathBuf {
     use windows_sys::Win32::System::Com::CoTaskMemFree;
     use windows_sys::Win32::UI::Shell::{FOLDERID_LocalAppData, SHGetKnownFolderPath};

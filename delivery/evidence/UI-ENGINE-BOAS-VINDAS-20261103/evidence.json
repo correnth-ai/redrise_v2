@@ -103,14 +103,433 @@
     "Installed app reopened on the real team: migration 005 applied with a pre-migration backup; its Boas-vindas process was not run there."
   ],
   "not_done": [
-    "Interface: main and submenu titles in Playfair Display, common navigation cards, reusable table component.",
-    "Nova Rotina: rename, Testes and Por gravacao disabled, three-step assistant, app selector, progress checks, Deu tudo certo link.",
-    "Integrating a standalone routine into a process, and replacing step 1 with approval.",
-    "Follow-up actions: notify, PDF report, review with Aprovado, reassignment.",
-    "Abas Visao Geral and Marcado para mim, notification bell.",
-    "Live table updates and their inventory."
+    "A real draft in a mail application or webmail: the user declined it for now on 2026-11-05."
   ],
   "published": false,
   "homologation": "not declared",
-  "next_action": "User decides the next part of the work order; suggested: fix the old template's closing, then the Nova Rotina assistant."
+  "next_action": "Real install on 0.1.0-beta.25. The user checks the screens with the real team. Still open: whether editing step 1 needs approval, and a real draft when the user wants it.",
+  "increments": {
+    "1-base-and-table": {
+      "status": "tests_and_screens_passed; not in an installed candidate",
+      "delivered": [
+        "Playfair Display bundled (OFL, latin and latin-ext), main and page titles",
+        "Common navigation cards on Empresa, Processo, Rotina, Configuracao",
+        "Reusable table: tabs, search, filter menu, row selection, sort by column menu, move and hide columns, pagination, layout kept per person",
+        "Rotina > Lista and Processo > Historico use it; delete with confirmation",
+        "Core refuses deleting a routine still in a process (ROUTINE-IN-USE)"
+      ],
+      "checks": [
+        {
+          "kind": "component_check",
+          "command": "npx vitest run (C:/.../build/ui-dev)",
+          "result": "table-state, data-table, page-header passed"
+        },
+        {
+          "kind": "contract_check",
+          "command": "tests/contracts test_diagnostics; tests/core test_browser_processes, test_core",
+          "result": "17, 31, 14 passed; real Core and PostgreSQL"
+        },
+        {
+          "kind": "screen_inspection",
+          "command": "proofs/ui-inspect/serve.py in the built-in browser",
+          "result": "synthetic persisted data; simulated Runner; no desktop input",
+          "screens": [
+            "inc1-rotina-lista.jpg",
+            "inc1-processo-historico.jpg",
+            "inc1-processo-acao-claro.jpg"
+          ]
+        }
+      ]
+    },
+    "2-nova-rotina": {
+      "status": "tests and screens passed; real opening through the app and the Windows file picker wait for the installed candidate",
+      "delivered": [
+        "Nova Rotina assistant: link, destination, preparation",
+        "Testes and Por gravacao disabled (em breve); Fazer follow-up disabled until increment 3",
+        "Searchable list of what the station can start (Get-StartApps plus detected browsers); Outro... opens the Windows file picker",
+        "Preparation job reports each check and opens nothing; Quer testar? opens what was resolved",
+        "Migration 006: app_open routines, station apps, job mode",
+        "Process may start empty, at most one starting routine, enforced in the Core",
+        "Integrate a standalone routine from Processo > Acao"
+      ],
+      "checks": [
+        {
+          "kind": "component_check",
+          "command": "npx vitest run routine-wizard",
+          "result": "passed"
+        },
+        {
+          "kind": "component_check",
+          "command": "tests/runtime test_app_open",
+          "result": "13 passed; simulated Start menu, windows and launcher"
+        },
+        {
+          "kind": "contract_check",
+          "command": "tests/core test_nova_rotina",
+          "result": "12 new tests passed, including concurrent starts; simulated Runner"
+        },
+        {
+          "kind": "native_read_only",
+          "command": "app_open.discover and has_association on this station",
+          "result": "127 entries from the real Start menu; found a defect: unknown file types answered OpenWith.exe and counted as associated. Fixed"
+        },
+        {
+          "kind": "build_check",
+          "command": "cargo check (pick_file)",
+          "result": "compiled; dialog not exercised yet"
+        },
+        {
+          "kind": "screen_inspection",
+          "command": "proofs/ui-inspect/serve.py in the built-in browser",
+          "result": "start, search, checks, Deu tudo certo, Quer testar, link in Lista; simulated Runner",
+          "screens": [
+            "inc2-nova-rotina-destino.jpg",
+            "inc2-nova-rotina-preparacao.jpg"
+          ]
+        }
+      ],
+      "not_proved": [
+        "Opening a real application through the installed app",
+        "Windows file picker",
+        "Migration 006 on an installed team"
+      ],
+      "decisions": [
+        "A local .html chosen in Outro... keeps the Browser rules (B03); a browser in the list asks for the address (B02).",
+        "A Modelo and Por gravacao buttons were replaced by the disabled entries; routines already registered keep running."
+      ]
+    },
+    "3-review-tabs-bell": {
+      "status": "tests and screens passed; not in an installed candidate",
+      "delivered": [
+        "Fazer follow-up in the assistant: previous step found by process or routine name, with its number; Solicitar revisao with a team member",
+        "Execution pauses in Aguardando revisao; only the current responsible sees and can use Aprovado!; author and time recorded; the same execution resumes once at the next step",
+        "Editing the responsible moves pending requests and notifications; decided requests keep author and time",
+        "Abas Visao Geral (default) and Marcado para mim, with context and results for checking",
+        "Bell right after the theme toggle, red badge hidden at zero; opening marks as seen and goes to the request",
+        "Migration 007"
+      ],
+      "checks": [
+        {
+          "kind": "contract_check",
+          "command": "tests/core test_review",
+          "result": "10 passed; includes concurrent approvals, concurrent reassignment and approval, late reassignment, revoked station; simulated Runner"
+        },
+        {
+          "kind": "component_check",
+          "command": "npx vitest run reviews, routine-wizard",
+          "result": "passed"
+        },
+        {
+          "kind": "screen_inspection",
+          "command": "proofs/ui-inspect/serve.py in the built-in browser",
+          "result": "bell, request opened from it, seen count, Aprovado!, resumption; simulated Runner",
+          "screens": [
+            "inc3-acao-visao-geral.jpg",
+            "inc3-sino.jpg",
+            "inc3-marcado-para-mim-pedido.jpg",
+            "inc3-aprovado.jpg"
+          ]
+        }
+      ],
+      "limits": [
+        "An administrator is not a reviewer by role: only the current responsible approves.",
+        "Gerar relatorio and Notificar alguem stay disabled in the assistant until increments 5 and 6."
+      ]
+    },
+    "4-replace-step-1": {
+      "status": "tests and screens passed; not in an installed candidate",
+      "delivered": [
+        "Substituir etapa 1 in Processo > Acao asks for approval and changes nothing until then",
+        "Only with the process out of execution, checked at the request and at the approval; a paused execution counts as running; start and approval are serialized by the process lock",
+        "Composition cannot change step 1 any more (STEP1-NEEDS-APPROVAL), in the Core and in the screen",
+        "Requests in Marcado para mim, on their own button, apart from the review; author and time recorded; cancel",
+        "Migration 008"
+      ],
+      "decision_for_the_user": "Eligible for now: who created the process, responsibles of its review steps, active administrators. The requester approves only when nobody else is eligible, so a team of one is not locked out. The work order leaves the detailed matrix for later.",
+      "checks": [
+        {
+          "kind": "contract_check",
+          "command": "tests/core test_step_change",
+          "result": "9 passed; includes concurrent approvals with an execution start; simulated Runner"
+        },
+        {
+          "kind": "contract_check",
+          "command": "tests/core test_browser_processes, test_core, test_agent, test_identity, test_nova_rotina, test_review, each in its own process",
+          "result": "17, 14, 6, 37, 12 and 10 passed"
+        },
+        {
+          "kind": "component_check",
+          "command": "npx vitest run",
+          "result": "38 passed in 6 files"
+        },
+        {
+          "kind": "screen_inspection",
+          "command": "proofs/ui-inspect/serve.py in the built-in browser",
+          "result": "pending badge and request card; simulated Runner",
+          "screens": [
+            "inc4-marcado-para-mim-substituicao.jpg"
+          ]
+        }
+      ],
+      "changed_tests": [
+        "test_browser_processes: creating an empty process is now valid, and replacing step 1 goes through approval, as the work order decides."
+      ]
+    },
+    "5-report": {
+      "status": "tests and screens passed; candidate built, not installed",
+      "delivered": [
+        "Follow-up Gerar relatorio: PDF with the RedRise look from the real execution: summary, steps, result, pending, files",
+        "Standard library only; first free name, never overwriting; read back through its cross-reference table",
+        "Saved under Documents, RedRise, Relatorios; Veja aqui! opens that folder in the Explorer, the file selected"
+      ],
+      "checks": [
+        {
+          "kind": "component_check",
+          "command": "tests/runtime test_report_pdf",
+          "result": "passed, including pdftotext as an outside reader"
+        },
+        {
+          "kind": "contract_check",
+          "command": "tests/core test_report_followup",
+          "result": "4 passed; simulated Runner"
+        },
+        {
+          "kind": "visual_check",
+          "command": "sample rendered with pdf.js in the built-in browser",
+          "result": "mark, accents and sections as expected",
+          "screens": [
+            "inc5-relatorio-pdf-exemplo.jpg"
+          ]
+        }
+      ],
+      "not_proved": [
+        "A real run on the installed build",
+        "Veja aqui! opening the real Explorer"
+      ]
+    },
+    "6-notify": {
+      "status": "tests and screens passed; candidate built, not installed; never exercised on a real mail application",
+      "delivered": [
+        "Follow-up Notificar alguem: recipient, then classic Outlook, Thunderbird, the Windows mail app, or a browser with Gmail or Outlook on the web",
+        "Draft from the real execution; a file goes along only where the application takes one from outside, otherwise the text names it",
+        "Nothing sends: no command, button or key. Mensagem preparada is recorded only after confirmation"
+      ],
+      "confirmation": "Mail application: a window of it showing the subject in its title; its main window is not a draft. Webmail: the document stays on the provider for 3 s; sign-in, error page, closed tab or another site are not prepared.",
+      "checks": [
+        {
+          "kind": "component_check",
+          "command": "tests/runtime test_notify_draft",
+          "result": "23 passed; simulated launchers and browser"
+        },
+        {
+          "kind": "contract_check",
+          "command": "tests/core test_notify_followup",
+          "result": "4 passed; simulated Runner"
+        },
+        {
+          "kind": "screen_inspection",
+          "command": "proofs/ui-inspect/serve.py",
+          "result": "assistant and Mensagem preparada; simulated Runner",
+          "screens": [
+            "inc5-6-execucao-relatorio-mensagem.jpg"
+          ]
+        }
+      ],
+      "not_proved": [
+        "Any real mail application or webmail: a draft may autosave into the real account, which needs the user's explicit authorization.",
+        "Whether Outlook shows an accented subject in its title; if not, the step ends unconfirmed, never falsely prepared."
+      ],
+      "limits": [
+        "Webmail is confirmed at the provider's page, not at its compose form.",
+        "Addresses with an apostrophe are refused."
+      ]
+    },
+    "7-live-tables": {
+      "status": "tests and screens passed; candidate built, not installed",
+      "inventory": "docs/ui/LIVE-TABLES.md",
+      "delivered": [
+        "Migration 009: PostgreSQL announces committed changes by domain; heartbeats without news stay silent",
+        "POST /api/v1/changes waits up to 20 s and names domains, never data; screens read again through the usual endpoints",
+        "The periodic read stays as the safety net"
+      ],
+      "checks": [
+        {
+          "kind": "contract_check",
+          "command": "tests/core test_changes",
+          "result": "7 passed: domains, silence, rollback, wake, epoch"
+        },
+        {
+          "kind": "component_check",
+          "command": "npx vitest run live",
+          "result": "passed"
+        },
+        {
+          "kind": "screen_inspection",
+          "command": "proofs/ui-inspect/serve.py",
+          "result": "a routine created elsewhere reached the open table in 495 ms"
+        }
+      ]
+    }
+  },
+  "candidate_increments_1_to_4": {
+    "status": "accepted_on_candidate",
+    "versions": {
+      "desktop": "0.1.0-beta.24",
+      "core": "0.3.4",
+      "runner": "0.3.10",
+      "engine_sha256": "b4f13d237db2b75d7107c046e8868738400f483e11bb0a76493a891237fd7ca9",
+      "installer_sha256": "d681d6c9e510e6b90bd8e9e92920bc1f490e1d0e5eb4c24f1fc5e1c389efa8ed"
+    },
+    "environment": {
+      "os": "Windows 11 Pro 25H2 x64, build 26200",
+      "calculator": "11.2607.0.0",
+      "language": "pt-BR",
+      "session": "interactive session of the station user, computer idle",
+      "team": "isolated synthetic team created by an earlier version, with its own data folder and vault namespace; installed in the lab folder, the real install and its team were not touched"
+    },
+    "gate": {
+      "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.24",
+      "passed": true
+    },
+    "acceptance": {
+      "report": "delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/accept-inc-20261104-212035.json",
+      "report_sha256": "9bfeb1fb37a560812d7f9b745fad27ec72446ed6816e0bb6f3b419852030873d",
+      "passed": true,
+      "kind": "practical_e2e",
+      "command": "proofs/nova-rotina/accept_increments.py on the installed candidate",
+      "scenarios": {
+        "migration": "A team of an earlier version reopened: migrations 006 to 008 applied, pre-migration backup taken, ready-made process and executions kept.",
+        "list": "Titles, cards, table and disabled entries on the installed screen.",
+        "start": "Real Start menu list; preparation opened nothing; Quer testar? opened the Calculator and the check confirmed its window; the proof closed only that window.",
+        "picker": "The real Windows file picker: cancel kept nothing, choosing brought the file, and a standalone routine was saved and prepared.",
+        "run": "A standalone app routine ended verified through the real Runner.",
+        "review": "A real run paused at the review; bell count went up; opening the request lowered it and approved nothing; Aprovado! ended the execution verified, author recorded.",
+        "step1": "Nothing changed at the request; approval on the screen applied it."
+      },
+      "first_attempt": "accept-inc-20261104-211512.json in the lab failed on the proof driver only: it decoded accents wrongly and invoked controls that open on the pointer. The driver was fixed; no app code changed between the attempts."
+    },
+    "regression": {
+      "report": "delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/accept-20261104-212753.json",
+      "report_sha256": "1c3ca76a46f21be2c8daad52ea33be84e62e2f1176b65a525388cfef8de7c1f5",
+      "command": "proofs/boas-vindas/accept_boas_vindas.py --only s1,s2,s5",
+      "result": "All checks of s1, s2 and s5 passed on beta.24. The report says passed false because a partial run never counts as a full acceptance; s3, s4, s4b and s6 were not repeated.",
+      "closed_open_point": "With the Desktop empty, s1 saved Boas_Vindas.txt itself, the base case that only component tests covered.",
+      "unexplained": "The run before it stopped at sign-in, before any scenario (accept-20261104-212237.json). The repeat worked with no change. The script ignores a window that is not in front at that step; the cause was not confirmed."
+    },
+    "screens": [
+      "inst-processo-acao.png",
+      "inst-nova-rotina-preparada.png",
+      "inst-nova-rotina-testada.png",
+      "inst-sino-aberto.png",
+      "inst-pedido.png",
+      "inst-aprovado.png",
+      "inst-substituicao.png"
+    ],
+    "review": {
+      "by": "independent read-only reviewer (subagent), two passes on the source; it did not write code",
+      "first_pass_blocking": [
+        "A new version could change the kind of a routine, skipping the rules of its link",
+        "A job could run a linked routine outside its process",
+        "A coincidental window could confirm an opening",
+        "A test launched from a sanitized path",
+        "A review could stay with the previous responsible during a change"
+      ],
+      "fixed_before_the_candidate": "All five, plus an older Runner getting assistant jobs, a double click on the test, and missing pt-BR reasons.",
+      "fixed_after_the_candidate": "Second pass: Office style ids now name their program and a program nobody can name must come to the front; a refused preparation no longer spins; a job refused at claim shows as failed; job creation refuses a linked routine. With pinned row actions (the proof showed them cut in a narrow window), these wait for the next candidate; component and contract tests only.",
+      "accepted_limits": [
+        "With a Store app already running, another Store app coming to the front within the wait confirms; narrow, and it needs someone switching windows during a run.",
+        "A program nobody can name, launched and failing while another program starts and comes to the front within 30 s, confirms.",
+        "Step change notifications are fixed at request; the list in Marcado para mim is what is checked live."
+      ]
+    },
+    "owner_decisions": [
+      "Editar on a step 1 routine changes its destination with no approval, as R03 allows for any routine; the work order speaks of replacing the step. Kept as is until the owner decides."
+    ],
+    "not_touched": [
+      "The real install and its team: still on the earlier version.",
+      "No signature in the channel, no publication."
+    ]
+  },
+  "candidate_increments_5_to_7": {
+    "status": "accepted_on_candidate, except a real draft in a mail application or webmail",
+    "versions": {
+      "desktop": "0.1.0-beta.25",
+      "core": "0.3.5",
+      "runner": "0.3.11",
+      "engine_sha256": "b4f13d237db2b75d7107c046e8868738400f483e11bb0a76493a891237fd7ca9",
+      "installer_sha256": "3a4a967baa2ed945d6f56ac569863377df3925a9ca5f5b1a139cbc901ad6b715"
+    },
+    "review": {
+      "by": "independent read-only reviewer (subagent), two passes",
+      "first_pass_blocking": [
+        "Webmail marked prepared before a redirect to sign-in, or on an error page",
+        "A mail application's main window counted as a draft"
+      ],
+      "fixed": "Both and all the non-blocking ones; the second pass found a loop that could hang on names in other scripts, also fixed.",
+      "accepted_limits": [
+        "An older Runner on a report or notify step ends uncertain; it does not misbehave.",
+        "Step change notifications stay fixed at request."
+      ]
+    },
+    "next": "Gate and proof with the computer free; a real draft only with the user's authorization.",
+    "environment": {
+      "os": "Windows 11 Pro 25H2 x64, build 26200",
+      "language": "pt-BR",
+      "session": "interactive session of the station user, computer idle",
+      "team": "the same isolated synthetic team; installed in the lab folder, the real install and its team were not touched"
+    },
+    "gate": {
+      "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.25",
+      "passed": true
+    },
+    "acceptance": {
+      "report": "delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/accept-inc-20261105-015927.json",
+      "report_sha256": "21f615d37d7f3eb253f901c7746ae8a9e4d6b25d0527eff15ac7feae3717cac9",
+      "passed": true,
+      "kind": "practical_e2e",
+      "command": "proofs/nova-rotina/accept_increments.py on the installed candidate, all scenarios in one run",
+      "scenarios": {
+        "repeated": "migration, list, start, picker, run, review, step1: as on beta.24; the bell now moved within seconds, without the periodic read.",
+        "report": "A real run saved the PDF under Documents, RedRise, Relatorios: mark, accents and process name in the file. Veja aqui! opened that folder in the Explorer; the proof closed only that window and moved the file to the lab.",
+        "live": "A routine created by the API reached the open table: 2.2 s including the time the proof takes to read the screen."
+      },
+      "earlier_attempts": "Five earlier attempts on beta.25 did not pass. All on the proof, no app code changed between them: a click on the wrong element, a screen read after the change it wanted to measure, closing the Explorer while it opened, a wrong needle, reading back a password field, and clicks or keys lost right after the window came to the front."
+    },
+    "regression": {
+      "report": "delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/accept-20261105-021110.json",
+      "report_sha256": "c40ffbf19b5cf6c4d9c6c51e2e568480262aac40cb70bdfd61ec440dc4cdbc95",
+      "command": "proofs/boas-vindas/accept_boas_vindas.py",
+      "result": "Full acceptance passed on beta.25: s1, s2, s3, s4, s4b, s5, s6, with the base name Boas_Vindas.txt and no original touched."
+    },
+    "screens": [
+      "inst-relatorio-historico.png"
+    ],
+    "open_points": [
+      "A real draft was not exercised: it may autosave into a real account, and the user declined the test for now on 2026-11-05. Notify is proved with simulated launchers and browser only.",
+      "Clicks and keys from the proof were lost a few times right after the window came to the front, including three clicks in a row on the same label. The last run lost none, so the cause was not reached; it is not known whether a person could hit it. The proof now confirms what each input did and records clicks_lost.",
+      "The radios of the assistant have no accessible name in the Windows tree; the proof clicks their labels. Not fixed.",
+      "The Playfair Display license (OFL) is not in the licenses folder of beta.25. Fixed in the source for the next candidate; must be there before any publication.",
+      "The lab tool proofs/ui-inspect/serve.py leaves its PostgreSQL running when killed; each stop needs pg_ctl on its temporary folder."
+    ]
+  },
+  "real_install": {
+    "status": "updated_by_user_order",
+    "at": "2026-11-05",
+    "from": "0.1.0-beta.22",
+    "to": "0.1.0-beta.25",
+    "installer_sha256": "3a4a967baa2ed945d6f56ac569863377df3925a9ca5f5b1a139cbc901ad6b715",
+    "how": "RedRise-Setup-0.1.0-beta.25.exe --quiet --relaunch, started through Explorer so the install runs outside the virtualized view of the session; no input on the desktop.",
+    "observed": [
+      "Install record: installed 0.1.0-beta.25, 3752 files, previous version kept, data folder untouched.",
+      "Manifest and the uninstall key read outside the session: 0.1.0-beta.25. The previous folder holds 0.1.0-beta.22.",
+      "The Core made a backup before migrating: pre-migration-20261105-044430.dump, 55409 bytes.",
+      "The status endpoint answered 200 with core 0.3.5 and an initialized team; Runner heartbeat and claim answered 200; no error in the Core or PostgreSQL logs since the update."
+    ],
+    "not_checked": [
+      "Migrations 006 to 009 were not read from the database: that needs team credentials. They are inferred from the backup, taken only when migrations are pending, and from the Core starting afterwards.",
+      "Nobody signed in, and no process ran on the real team after the update. The screens with the real data were not seen.",
+      "The Playfair Display license is not in this install; it comes with the next candidate."
+    ],
+    "rollback": "uninstall.exe --rollback restores the program only; the data stay migrated, and the backup holds them as they were before. Going back to 0.1.0-beta.22 on migrated data was not tested."
+  }
 }

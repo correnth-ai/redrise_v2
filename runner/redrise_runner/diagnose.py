@@ -51,6 +51,18 @@ _BROWSER: dict[str, tuple[str, str]] = {
     "browser_page_not_ready": ("BROWSER-PAGE-NOT-READY", "RR-BROWSER-OPEN"),
     "browser_uia_unavailable": ("BROWSER-IDENTIFY-UNAVAILABLE", "RR-BROWSER-OPEN"),
 }
+# Opening a registered destination (app_open.py).
+_APP_OPEN: dict[str, str] = {
+    "app_target_not_found": "APP-TARGET-NOT-FOUND",
+    "app_no_association": "APP-NO-ASSOCIATION",
+    "app_open_failed": "APP-OPEN-FAILED",
+    "app_open_unconfirmed": "APP-OPEN-UNCONFIRMED",
+}
+_NOTIFY: dict[str, str] = {"notify_unconfirmed": "NOTIFY-UNCONFIRMED", "notify_login_required": "NOTIFY-LOGIN-REQUIRED"}
+_REPORT: dict[str, str] = {
+    "report_write_failed": "REPORT-WRITE-FAILED",
+    "report_not_verified": "REPORT-NOT-VERIFIED",
+}
 # Boas-vindas process (notepad_steps.py): a lost target or an unconfirmed effect keeps its own message.
 _NOTEPAD: dict[str, str] = {
     "notepad_window_not_found": "APP-WINDOW-NOT-FOUND",
@@ -75,12 +87,18 @@ def for_result(res: dict, correlation_id: str | None = None) -> dg.Diagnostic | 
     detail = res.get("detail")
     params = {"reason": detail if isinstance(detail, str) else (code or state), "path": detail, "app": code,
               "prior_state": detail, "failed_step": _step(res), "engine_code": code or "-",
-              "failed_checks": detail or code, "verifier_code": code, "original_code": code or state}
+              "failed_checks": detail or code, "verifier_code": code, "original_code": code or state, "target": detail or "-"}
     tech = {"state": state, "code": code, "detail": detail, "job": res.get("job"), "template": res.get("template")}
     version = {"runner": __version__}
     if code in _BROWSER:
         ecode, by = _BROWSER[code]
         params["browser"] = detail if isinstance(detail, str) else "-"
+    elif code in _APP_OPEN:
+        ecode, by = _APP_OPEN[code], "RR-APP-OPEN"
+    elif code in _REPORT:
+        ecode, by = _REPORT[code], "RR-REPORT"
+    elif code in _NOTIFY:
+        ecode, by = _NOTIFY[code], "RR-NOTIFY"
     elif code in _NOTEPAD:
         ecode, by = _NOTEPAD[code], "RR-NOTEPAD"
         params["app"] = "notepad"

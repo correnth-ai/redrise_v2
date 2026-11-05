@@ -2,15 +2,17 @@
 // timeline, log, feed, table) derives from the same execution records; the
 // Kanban is read-only (no drag-and-drop, no manual verification).
 import { useMemo, useState } from "react";
+import { CheckCircle2, CircleAlert, Hourglass, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DataColumn } from "@/components/data-table";
 import { ErrorView } from "@/components/diagnostic";
-import { ActivityFeed, activityOf, ExecutionBadge, ExecutionLog, StateBadge, Timeline } from "@/components/blocks";
+import { ActivityFeed, activityOf, ExecutionBadge, ExecutionLog, ExecutionReports, StateBadge, Timeline } from "@/components/blocks";
 import { JobsSection } from "@/features/legacy";
-import { COLUMN_LABEL, column, END_REASON, needsAttention, title, type Column } from "@/data/status";
+import { COLUMN_LABEL, column, END_REASON, executionLabel, needsAttention, title, type Column } from "@/data/status";
 import type { Execution } from "@/data/types";
 import { useStore } from "@/state";
 import { when } from "@/lib/utils";
@@ -86,42 +88,29 @@ export function KanbanPage({ process }: { process?: number }) {
   );
 }
 
+export const HISTORY_COLUMNS: DataColumn<Execution>[] = [
+  { id: "when", header: "Quando", cell: (e) => when(e.created_at), sortValue: (e) => e.created_at },
+  { id: "what", header: "Processo ou rotina", cell: (e) => <span className="font-medium">{title(e)}</span>, sortValue: title, searchText: title },
+  { id: "station", header: "Estação", cell: (e) => e.station_name, sortValue: (e) => e.station_name, searchText: (e) => e.station_name },
+  { id: "state", header: "Situação", cell: (e) => <ExecutionBadge e={e} />, sortValue: executionLabel, searchText: executionLabel },
+  { id: "end", header: "Término", className: "text-muted-foreground", cell: (e) => (e.end_reason ? END_REASON[e.end_reason] ?? e.end_reason : "—"), sortValue: (e) => e.end_reason },
+  { id: "by", header: "Por", cell: (e) => e.requested_by, sortValue: (e) => e.requested_by, searchText: (e) => e.requested_by },
+];
+
+const HISTORY_TABS = ["running", "waiting", "attention", "verified"];
+
 export function HistoryPage({ focus }: { focus?: string }) {
-  const { executions, processes } = useStore();
-  const [proc, setProc] = useState("all");
-  const [status, setStatus] = useState(focus === "attention" ? "attention" : "all");
-  const [open, setOpen] = useState<string | null>(focus && focus !== "attention" ? focus : null);
+  const { executions, processes, src } = useStore();
+  const [open, setOpen] = useState<string | null>(focus && !HISTORY_TABS.includes(focus) ? focus : null);
   const sel = executions?.find((e) => e.id === open) ?? null;
-  if (!executions) return <p className="text-sm text-muted-foreground">Carregando execuções…</p>;
-  const shown = executions.filter((e) => (proc === "all" || String(e.process_id) === proc) &&
-    (status === "all" || (status === "running" ? e.state === "running" : status === "attention" ? needsAttention(e) : e.outcome === "verified")));
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-end gap-2" role="group" aria-label="Filtros">
-        <div className="space-y-1"><Label htmlFor="h-proc" className="text-xs">Processo</Label>
-          <Select value={proc} onValueChange={setProc}><SelectTrigger id="h-proc" size="sm" className="w-56"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Todos</SelectItem>{(processes ?? []).map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-        <div className="space-y-1"><Label htmlFor="h-status" className="text-xs">Situação</Label>
-          <Select value={status} onValueChange={setStatus}><SelectTrigger id="h-status" size="sm" className="w-56"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Todas</SelectItem><SelectItem value="running">Em andamento</SelectItem>
-              <SelectItem value="attention">Precisam de atenção</SelectItem><SelectItem value="verified">Verificadas</SelectItem></SelectContent></Select></div>
-      </div>
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader><TableRow><TableHead>Quando</TableHead><TableHead>Processo ou rotina</TableHead><TableHead>Estação</TableHead>
-            <TableHead>Situação</TableHead><TableHead>Término</TableHead><TableHead>Por</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {!shown.length && <TableRow><TableCell colSpan={6} className="text-muted-foreground">Nenhuma execução.</TableCell></TableRow>}
-            {shown.map((e) => (
-              <TableRow key={e.id} className="cursor-pointer" onClick={() => setOpen(e.id)} tabIndex={0} onKeyDown={(k) => { if (k.key === "Enter" || k.key === " ") { k.preventDefault(); setOpen(e.id); } }}>
-                <TableCell>{when(e.created_at)}</TableCell><TableCell className="font-medium">{title(e)}</TableCell>
-                <TableCell>{e.station_name}</TableCell><TableCell><ExecutionBadge e={e} /></TableCell>
-                <TableCell className="text-muted-foreground">{e.end_reason ? END_REASON[e.end_reason] ?? e.end_reason : "—"}</TableCell><TableCell>{e.requested_by}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable label="Execuções" storageKey="processo-historico" rows={executions} columns={HISTORY_COLUMNS} rowKey={(e) => e.id} rowLabel={title}
+        empty="Nenhuma execução." searchPlaceholder="Buscar processo, estação ou pessoa…" onRowOpen={(e) => setOpen(e.id)} initialTab={HISTORY_TABS.includes(focus ?? "") ? focus : "all"}
+        tabs={[{ id: "all", label: "Todas", match: () => true }, { id: "running", label: "Em andamento", icon: Loader2, match: (e) => e.state === "running" },
+          { id: "waiting", label: "Aguardando revisão", icon: Hourglass, match: (e) => e.state === "waiting_review" },
+          { id: "attention", label: "Precisam de atenção", icon: CircleAlert, match: needsAttention }, { id: "verified", label: "Verificadas", icon: CheckCircle2, match: (e) => e.outcome === "verified" }]}
+        filters={[{ id: "process", label: "Processo", options: (processes ?? []).map((p) => ({ value: String(p.id), label: p.name, match: (e: Execution) => e.process_id === p.id })) }]} />
       <Sheet open={sel !== null} onOpenChange={(o) => { if (!o) setOpen(null); }}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           {sel && <>
@@ -132,6 +121,7 @@ export function HistoryPage({ focus }: { focus?: string }) {
               {sel.state === "finished" && sel.steps.some((s) => s.state === null) && (
                 <p className="text-muted-foreground">Não executadas: {sel.steps.filter((s) => s.state === null).map((s) => s.name).join(", ")}.</p>
               )}
+              <ExecutionReports e={sel} open={src.openReportFolder} />
               {typeof (sel.context as any)?.last?.output_path === "string" && <p>Arquivo salvo: <span className="break-all font-medium">{(sel.context as any).last.output_path}</span></p>}
               <ExecutionLog e={sel} />
               <div><p className="mb-2 font-medium">Linha do tempo</p><Timeline e={sel} /></div>

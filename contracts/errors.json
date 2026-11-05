@@ -928,6 +928,253 @@
       "next": "Run the process {process}, which contains this routine.",
       "details": "Linked routines run in the order of their process, with its context."
     },
+    "ROUTINE-IN-USE": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "This routine is part of a process and cannot be deleted.",
+      "completed": "The request was refused; the routine was not changed.",
+      "pending": "The routine stays in the list.",
+      "next": "Remove it from the process {process} first.",
+      "details": "A process cannot lose a routine it runs."
+    },
+    "APP-TARGET-NOT-FOUND": {
+      "category": "precondition",
+      "modules": [
+        "RR-APP-OPEN"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The destination was not found on this station: {target}.",
+      "completed": "The check ended. Nothing was opened.",
+      "pending": "The routine cannot open this destination here.",
+      "next": "Choose another destination or install it on this station, then check again.",
+      "details": "The Start menu list and the file path are read on the station that runs."
+    },
+    "APP-NO-ASSOCIATION": {
+      "category": "precondition",
+      "modules": [
+        "RR-APP-OPEN"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Windows has no program to open this file: {target}.",
+      "completed": "The check ended. Nothing was opened.",
+      "pending": "The routine cannot open this file here.",
+      "next": "Choose another file or set a program for this file type in Windows, then check again.",
+      "details": "RedRise never changes file associations."
+    },
+    "APP-OPEN-FAILED": {
+      "category": "environment",
+      "modules": [
+        "RR-APP-OPEN"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Windows refused to open the destination: {target}.",
+      "completed": "The request to open was refused.",
+      "pending": "The destination is not open.",
+      "next": "Check that it opens by hand on this station, then try again.",
+      "details": "The Windows shell returned an error."
+    },
+    "APP-OPEN-UNCONFIRMED": {
+      "category": "unknown",
+      "modules": [
+        "RR-APP-OPEN"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "Opening was requested, but no window of it was confirmed: {target}.",
+      "completed": "The request to open was accepted by Windows.",
+      "pending": "It may still open, or be hidden behind other windows.",
+      "next": "Look at the screen before trying again.",
+      "details": "No new window or change of the foreground window was seen within the limit."
+    },
+    "PREPARE-REQUIRED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "This routine needs a successful preparation of its current version first.",
+      "completed": "The request was refused before anything was opened.",
+      "pending": "Nothing was opened.",
+      "next": "Check the destination again in the assistant.",
+      "details": "A test opens only what a verified preparation resolved."
+    },
+    "PROCESS-HAS-START": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The process {process} already has a first step.",
+      "completed": "The request was refused. The routine was not created.",
+      "pending": "Nothing was changed in the process.",
+      "next": "Choose a process without a first step, or create a standalone routine.",
+      "details": "A process has at most one starting routine."
+    },
+    "REVIEW-NOT-ASSIGNEE": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "Only the current responsible can approve this request.",
+      "completed": "The request was refused. Nothing was approved.",
+      "pending": "The execution stays waiting for review.",
+      "next": "Ask the responsible shown in the request, or change the responsible in the step of the routine.",
+      "details": "The responsible may have changed after the request was opened."
+    },
+    "REVIEW-ALREADY-DECIDED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This request was already approved.",
+      "completed": "The request was refused. The earlier decision stays.",
+      "pending": "Nothing else to do on this request.",
+      "next": "Refresh the screen to see who approved it and when.",
+      "details": "A request has one decision and resumes the execution once."
+    },
+    "STEP1-NEEDS-APPROVAL": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Step 1 of a process is replaced only with approval.",
+      "completed": "The request was refused. The process was not changed.",
+      "pending": "Step 1 stays as it is.",
+      "next": "Use Replace step 1 in Processo > Acao.",
+      "details": "Other steps can still be changed in the composition."
+    },
+    "PROCESS-RUNNING": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The process {process} has an execution in progress.",
+      "completed": "The request was refused. The process was not changed.",
+      "pending": "Step 1 stays as it is.",
+      "next": "Wait for the execution to end and try again.",
+      "details": "Step 1 changes only while the process is not running."
+    },
+    "CHANGE-PENDING-EXISTS": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The process {process} already has a pending replacement of step 1.",
+      "completed": "The request was refused. No other request was opened.",
+      "pending": "The earlier request is still waiting for approval.",
+      "next": "Wait for its approval or cancel it.",
+      "details": "A process has one pending replacement at a time."
+    },
+    "CHANGE-NOT-ELIGIBLE": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Only an eligible member can approve this replacement.",
+      "completed": "The request was refused. Nothing was changed.",
+      "pending": "The replacement is still waiting for approval.",
+      "next": "Ask a member linked to the process or an administrator.",
+      "details": "Who requested it approves only when nobody else is eligible."
+    },
+    "CHANGE-ALREADY-DECIDED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "This replacement was already decided.",
+      "completed": "The request was refused. The earlier decision stays.",
+      "pending": "Nothing else to do on this request.",
+      "next": "Refresh the screen to see who decided it and when.",
+      "details": "A request has one decision."
+    },
+    "REPORT-WRITE-FAILED": {
+      "category": "environment",
+      "modules": [
+        "RR-REPORT"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The report could not be saved: {target}.",
+      "completed": "Nothing was left in the folder of reports.",
+      "pending": "The execution stopped here; the next steps did not run.",
+      "next": "Check that the Documents folder of the station can be written, then run the process again.",
+      "details": "Reports are saved under Documents, RedRise, Relatorios."
+    },
+    "REPORT-NOT-VERIFIED": {
+      "category": "unknown",
+      "modules": [
+        "RR-REPORT"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The saved report could not be confirmed: {target}.",
+      "completed": "A file may be in the folder of reports.",
+      "pending": "The execution stopped here; the next steps did not run.",
+      "next": "Open the file before running again.",
+      "details": "What was read back differs from what was written, and the file could not be removed."
+    },
+    "REPORT-NOT-HERE": {
+      "category": "precondition",
+      "modules": [
+        "RR-REPORT"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "The report {name} is not on this computer.",
+      "completed": "Nothing was opened.",
+      "pending": "The report stays where it was saved.",
+      "next": "Open the Documents folder of the station that ran it, under RedRise, Relatorios.",
+      "details": "Reports are saved on the station that runs the step."
+    },
+    "NOTIFY-LOGIN-REQUIRED": {
+      "category": "precondition",
+      "modules": [
+        "RR-NOTIFY"
+      ],
+      "effect_state": "partial",
+      "retry": "check_first",
+      "what": "The webmail {target} asks for sign-in in this browser, so the draft does not exist yet.",
+      "completed": "A tab of the webmail is open. Nothing was sent.",
+      "pending": "The execution stopped here; the next steps did not run.",
+      "next": "Sign in to the account in that browser, then run the process again.",
+      "details": "RedRise never signs in to accounts."
+    },
+    "NOTIFY-UNCONFIRMED": {
+      "category": "unknown",
+      "modules": [
+        "RR-NOTIFY"
+      ],
+      "effect_state": "unknown",
+      "retry": "check_first",
+      "what": "The draft was requested but not confirmed: {target}.",
+      "completed": "A tab or window may have opened.",
+      "pending": "The execution stopped here; the next steps did not run. Nothing was sent.",
+      "next": "Look at the screen before running again.",
+      "details": "The webmail tab did not show the expected address within the limit."
+    },
     "NOTEPAD-CONTEXT-MISSING": {
       "category": "contract",
       "modules": [

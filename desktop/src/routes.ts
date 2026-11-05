@@ -1,14 +1,22 @@
 export type Menu = "empresa" | "rotina" | "processo" | "configuracao";
-export interface Route { menu: Menu; page: string; id?: any; process?: number }
+export interface Route { menu: Menu; page: string; id?: any; process?: number; /** Opens the same target again. */ nonce?: number }
 
 export const HOME: Route = { menu: "empresa", page: "painel" };
 
 export const PAGE_TITLE: Record<string, string> = {
   "empresa/painel": "Empresa",
-  "rotina/lista": "Rotina › Lista", "rotina/atividade": "Rotina › Atividade", "rotina/nova": "Nova rotina Browser", "rotina/editar": "Editar rotina Browser",
+  "rotina/lista": "Rotina › Lista", "rotina/atividade": "Rotina › Atividade", "rotina/nova": "Nova Rotina", "rotina/editar": "Editar rotina",
   "rotina/gravacao": "Nova rotina por gravação", "rotina/modelos": "Nova rotina a partir de modelo", "rotina/executar-legada": "Executar rotina",
   "processo/acao": "Processo › Ação", "processo/historico": "Processo › Histórico", "processo/kanban": "Processo › Kanban",
   "configuracao/equipe": "Configuração › Equipe", "configuracao/estacao": "Configuração › Estação", "configuracao/aplicativo": "Configuração › Aplicativo",
+};
+
+/** Smaller title with the page name, under the main title of the menu. */
+export const SUB_TITLE: Record<string, string> = {
+  "rotina/lista": "Lista", "rotina/atividade": "Atividade", "rotina/nova": "Nova Rotina", "rotina/editar": "Editar rotina",
+  "rotina/gravacao": "Nova rotina por gravação", "rotina/modelos": "Nova rotina a partir de modelo", "rotina/executar-legada": "Executar rotina",
+  "processo/acao": "Ação", "processo/historico": "Histórico", "processo/kanban": "Kanban",
+  "configuracao/equipe": "Equipe", "configuracao/estacao": "Estação", "configuracao/aplicativo": "Aplicativo",
 };
 
 // Internal links of earlier versions keep working; ids of routines, processes and results do not change.

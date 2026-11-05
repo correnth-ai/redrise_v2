@@ -22,7 +22,7 @@ from pathlib import Path
 from redrise_contracts import diagnostics as dg
 from redrise_contracts.client import CoreClient, CoreError
 
-from . import __version__, browser_open, browsers, diagnose, notepad_steps, templates
+from . import __version__, app_open, browser_open, browsers, diagnose, notepad_steps, notify_draft, report_pdf, templates
 from .engine import EngineClient, EngineError
 from .jobs import RUNNER_CATEGORIES, RUNNER_PLATFORM, JobSpec, SessionBusy, _write_atomic, run_job, session_lock
 from .paths import Layout
@@ -66,6 +66,8 @@ class Agent:
         self.status_file = layout.data_root / "agent" / "status.json"
         self._worker: threading.Thread | None = None
         self._browsers: tuple[float, list | None] = (0.0, None)  # (monotonic time, last discovery)
+        self._apps: tuple[float, list | None] = (0.0, None)
+        self._apps_sent: list | None = None
         self._flush_lock = threading.Lock()  # tick and the job worker both flush
 
     # ------------------------------------------------------------ session
@@ -92,13 +94,28 @@ class Agent:
             self._browsers = (time.monotonic(), found)
         return found
 
-    def info(self) -> dict:
+    def detected_apps(self) -> list | None:
+        """What this station can launch, re-discovered at most every 5 minutes (Start menu, no disk scan)."""
+        at, found = self._apps
+        if found is None or time.monotonic() - at > 300:
+            try:
+                found = app_open.discover() + notify_draft.mail_clients()
+            except Exception:  # noqa: BLE001 - not reported this time; the Core keeps the previous list
+                found = None
+            self._apps = (time.monotonic(), found)
+        return found
+
+    def info(self, with_apps: bool = False) -> dict:
         out = {"platform": RUNNER_PLATFORM, "categories": list(RUNNER_CATEGORIES), "runner_version": __version__,
                "session_state": self.state.session_state, "session_reason": self.state.session_reason,
                "job_id": self.state.job_id, "lease_id": self.state.lease_id}
         found = self.detected_browsers()
         if found is not None:
             out["browsers"] = found
+        if with_apps:
+            apps = self.detected_apps()
+            if apps is not None and apps != self._apps_sent:  # the list is long: only when it changed
+                out["apps"] = apps
         return out
 
     def _browser_open(self, job: dict) -> dict:
@@ -115,6 +132,79 @@ class Agent:
         try:
             with session_lock(self.layout.locks_dir):
                 return browser_open.run(config)
+        except SessionBusy as e:
+            return {"state": "refused", "code": "session_busy", "detail": str(e)}
+
+    def _report_check(self, job: dict):
+        """One operation of the job as it happens; a lost report never changes the result."""
+        def report(check: str, state: str, detail: str | None = None) -> None:
+            try:
+                self.client.call("POST", f"/api/v1/runner/jobs/{job['job_id']}/progress",
+                                 {"lease_id": job["lease_id"], "check": {"id": check, "state": state, "detail": detail}})
+            except CoreError:
+                pass
+        return report
+
+    def _prepare(self, job: dict) -> dict:
+        """The assistant's preparation: resolves destination and dependencies, opens nothing."""
+        config = job.get("config")
+        if not isinstance(config, dict):
+            return {"state": "refused", "code": "invalid_job", "detail": "prepare job without config"}
+        report = self._report_check(job)
+        report("session", "running")
+        try:
+            ready = self.engine.readiness(probe_hooks=False)
+        except EngineError as e:
+            report("session", "failed", e.code)
+            return {"state": "error", "code": e.code, "detail": e.detail}
+        if not ready.get("ready"):
+            report("session", "failed")
+            return {"state": "refused", "code": "session_unavailable", "detail": (ready.get("readiness") or {}).get("detail")}
+        report("session", "ok")
+        if job["kind"] == "app_open":
+            return app_open.prepare_app(config, report)
+        return app_open.prepare_browser(config, report)
+
+    def _app_open(self, job: dict) -> dict:
+        """Same order as other jobs. Resolved from the raw config of this version, here and now: what the
+        Core stores of a preparation is sanitized for display and is never used to launch."""
+        config = job.get("config")
+        if not isinstance(config, dict):
+            return {"state": "refused", "code": "invalid_job", "detail": "app_open job without config"}
+        try:
+            ready = self.engine.readiness(probe_hooks=False)
+        except EngineError as e:
+            return {"state": "error", "code": e.code, "detail": e.detail}
+        if not ready.get("ready"):
+            return {"state": "refused", "code": "session_unavailable", "detail": (ready.get("readiness") or {}).get("detail")}
+        resolved = app_open.resolve_target(config.get("target") or {})
+        if "code" in resolved:
+            return {"state": "failed", "code": resolved["code"], "detail": resolved["detail"]}
+        try:
+            with session_lock(self.layout.locks_dir):
+                return app_open.open_target(resolved)
+        except SessionBusy as e:
+            return {"state": "refused", "code": "session_busy", "detail": str(e)}
+
+    def _follow_up(self, job: dict) -> dict:
+        """A report touches nothing on screen, so it needs neither the session nor its lock."""
+        if (job.get("config") or {}).get("action") == "report":
+            return report_pdf.run(job, logo_path=self.layout.install_root / "assets" / "redrise-icon-128x128.png")
+        if (job.get("config") or {}).get("action") == "notify":
+            return self._notify(job)
+        return {"state": "refused", "code": "invalid_job", "detail": "unknown follow-up"}
+
+    def _notify(self, job: dict) -> dict:
+        """Opens a compose window for a person, so it follows the order of anything that touches the screen."""
+        try:
+            ready = self.engine.readiness(probe_hooks=False)
+        except EngineError as e:
+            return {"state": "error", "code": e.code, "detail": e.detail}
+        if not ready.get("ready"):
+            return {"state": "refused", "code": "session_unavailable", "detail": (ready.get("readiness") or {}).get("detail")}
+        try:
+            with session_lock(self.layout.locks_dir):
+                return notify_draft.run(job)
         except SessionBusy as e:
             return {"state": "refused", "code": "session_busy", "detail": str(e)}
 
@@ -155,7 +245,10 @@ class Agent:
         self.state.session_state, self.state.session_reason = self.readiness()
         try:
             self.flush_outbox()
-            hb = self.client.call("POST", "/api/v1/runner/heartbeat", self.info())
+            beat = self.info(with_apps=True)
+            hb = self.client.call("POST", "/api/v1/runner/heartbeat", beat)
+            if "apps" in beat:
+                self._apps_sent = beat["apps"]
             self.state.core_reachable, self.state.last_error = True, None
             if self.state.job_id and self.state.job_id in hb.get("cancel", []):
                 self.state.cancel.set()
@@ -211,7 +304,13 @@ class Agent:
     def _execute(self, job: dict) -> None:
         jid, lease, cid = job["job_id"], job["lease_id"], job.get("correlation_id")
         try:
-            if job["kind"] == "browser_open":
+            if job.get("mode") == "prepare":
+                local = self._prepare(job)
+            elif job["kind"] == "followup":
+                local = self._follow_up(job)
+            elif job["kind"] == "app_open":
+                local = self._app_open(job)
+            elif job["kind"] == "browser_open":
                 local = self._browser_open(job)
             elif job["kind"] == "notepad_step":
                 local = self._notepad_step(job)

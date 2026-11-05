@@ -1,0 +1,54 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "scenarios": {
+    "migration": {
+      "passed": true,
+      "backups": [
+        "pre-migration-20261103-221112.dump",
+        "pre-migration-20261104-210823.dump"
+      ],
+      "welcome_steps": 3,
+      "executions_kept": 29
+    },
+    "list": {
+      "passed": true
+    },
+    "start": {
+      "passed": true,
+      "windows_after_preparing": 0,
+      "windows_after_test": 1,
+      "not_closed": 0
+    },
+    "picker": {
+      "passed": true,
+      "cancel_kept_nothing": true,
+      "kind": "app_open"
+    },
+    "run": {
+      "passed": true,
+      "outcome": "verified",
+      "opened": "applicationframehost.exe"
+    },
+    "review": {
+      "passed": true,
+      "unseen": [
+        1,
+        2,
+        1
+      ],
+      "paused_until_click": "waiting_review",
+      "outcome": "verified",
+      "decided_by": "Admin de Teste"
+    },
+    "step1": {
+      "passed": true,
+      "request": "pending",
+      "unchanged_before_approval": true,
+      "applied": true
+    }
+  },
+  "install": "install-beta24",
+  "seconds": 275,
+  "passed": true
+}

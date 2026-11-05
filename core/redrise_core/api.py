@@ -40,6 +40,7 @@ ROUTES = [
     ("PATCH", r"/api/v1/users/(\d+)", "user_update", "user"),
     ("GET", r"/api/v1/stations", "stations", "user"),
     ("POST", r"/api/v1/stations", "station_create", "user"),
+    ("GET", r"/api/v1/stations/(\d+)/apps", "station_apps", "user"),
     ("DELETE", r"/api/v1/stations/(\d+)", "station_revoke", "user"),
     ("GET", r"/api/v1/templates", "templates", "user"),
     ("GET", r"/api/v1/routines", "routines", "user"),
@@ -47,6 +48,8 @@ ROUTES = [
     ("GET", r"/api/v1/routines/(\d+)/versions", "routine_versions", "user"),
     ("POST", r"/api/v1/routines/(\d+)/versions", "routine_add_version", "user"),
     ("DELETE", r"/api/v1/routines/(\d+)", "routine_archive", "user"),
+    ("POST", r"/api/v1/routines/(\d+)/prepare", "routine_prepare", "user"),
+    ("POST", r"/api/v1/routines/(\d+)/test", "routine_test", "user"),
     ("GET", r"/api/v1/jobs", "jobs", "user"),
     ("POST", r"/api/v1/jobs", "job_create", "user"),
     ("GET", r"/api/v1/jobs/([0-9a-f-]{36})", "job_get", "user"),
@@ -55,14 +58,25 @@ ROUTES = [
     ("POST", r"/api/v1/processes", "process_create", "user"),
     ("GET", r"/api/v1/processes/(\d+)", "process_get", "user"),
     ("PUT", r"/api/v1/processes/(\d+)", "process_update", "user"),
+    ("POST", r"/api/v1/processes/(\d+)/items", "process_integrate", "user"),
+    ("POST", r"/api/v1/processes/(\d+)/step1", "process_step_change", "user"),
+    ("GET", r"/api/v1/step-changes", "step_changes", "user"),
+    ("POST", r"/api/v1/step-changes/([0-9a-f-]{36})/approve", "step_change_approve", "user"),
+    ("POST", r"/api/v1/step-changes/([0-9a-f-]{36})/cancel", "step_change_cancel", "user"),
     ("GET", r"/api/v1/executions", "executions", "user"),
     ("POST", r"/api/v1/executions", "execution_create", "user"),
     ("GET", r"/api/v1/executions/([0-9a-f-]{36})", "execution_get", "user"),
+    ("GET", r"/api/v1/reviews", "reviews", "user"),
+    ("POST", r"/api/v1/reviews/([0-9a-f-]{36})/approve", "review_approve", "user"),
+    ("GET", r"/api/v1/notifications", "notifications", "user"),
+    ("POST", r"/api/v1/notifications/(\d+)/seen", "notification_seen", "user"),
+    ("POST", r"/api/v1/changes", "changes", "user"),
     ("GET", r"/api/v1/storage", "storage", "user"),
     ("POST", r"/api/v1/runner/heartbeat", "rn_heartbeat", "runner"),
     ("POST", r"/api/v1/runner/claim", "rn_claim", "runner"),
     ("POST", r"/api/v1/runner/jobs/([0-9a-f-]{36})/start", "rn_start", "runner"),
     ("POST", r"/api/v1/runner/jobs/([0-9a-f-]{36})/result", "rn_result", "runner"),
+    ("POST", r"/api/v1/runner/jobs/([0-9a-f-]{36})/progress", "rn_progress", "runner"),
 ]
 _COMPILED = [(m, re.compile(p + r"$"), h, a) for m, p, h, a in ROUTES]
 
@@ -120,6 +134,9 @@ class Handlers:
     def station_create(self, b, who, cid):
         return self.core.register_station(who, b.get("name"), bool(b.get("is_host")))
 
+    def station_apps(self, b, who, cid, sid):
+        return self.core.station_apps(who, int(sid))
+
     def station_revoke(self, b, who, cid, sid):
         self.core.revoke_station(who, int(sid))
         return {"ok": True}
@@ -132,7 +149,7 @@ class Handlers:
         return self.core.list_routines(who)
 
     def routine_create(self, b, who, cid):
-        return self.core.create_routine(who, b.get("name"), b.get("category"), b.get("version") or {})
+        return self.core.create_routine(who, b.get("name"), b.get("category"), b.get("version") or {}, b.get("link"))
 
     def routine_versions(self, b, who, cid, rid):
         return self.core.routine_versions(who, int(rid))
@@ -143,6 +160,12 @@ class Handlers:
     def routine_archive(self, b, who, cid, rid):
         self.core.archive_routine(who, int(rid))
         return {"ok": True}
+
+    def routine_prepare(self, b, who, cid, rid):
+        return self.core.prepare_routine(who, int(rid), b.get("request_id"), b.get("station_id"), cid)
+
+    def routine_test(self, b, who, cid, rid):
+        return self.core.test_routine(who, int(rid), b.get("request_id"), b.get("prepare_job_id"), cid)
 
     def jobs(self, b, who, cid):
         return self.core.list_jobs(who)
@@ -169,6 +192,21 @@ class Handlers:
     def process_update(self, b, who, cid, pid):
         return self.core.update_process(who, int(pid), b.get("name"), b.get("items"))
 
+    def process_integrate(self, b, who, cid, pid):
+        return self.core.integrate_routine(who, int(pid), b.get("routine_id"))
+
+    def process_step_change(self, b, who, cid, pid):
+        return self.core.request_step_change(who, int(pid), b.get("routine_id"))
+
+    def step_changes(self, b, who, cid):
+        return self.core.list_step_changes(who)
+
+    def step_change_approve(self, b, who, cid, cid_):
+        return self.core.approve_step_change(who, cid_)
+
+    def step_change_cancel(self, b, who, cid, cid_):
+        return self.core.cancel_step_change(who, cid_)
+
     def executions(self, b, who, cid):
         return self.core.list_executions(who)
 
@@ -178,6 +216,21 @@ class Handlers:
 
     def execution_get(self, b, who, cid, eid):
         return self.core.get_execution(who, eid)
+
+    def reviews(self, b, who, cid):
+        return self.core.list_reviews(who)
+
+    def review_approve(self, b, who, cid, rid):
+        return self.core.approve_review(who, rid, cid)
+
+    def notifications(self, b, who, cid):
+        return self.core.list_notifications(who)
+
+    def notification_seen(self, b, who, cid, nid):
+        return self.core.notification_seen(who, int(nid))
+
+    def changes(self, b, who, cid):
+        return self.core.changes.since(b.get("seq"), b.get("epoch"), b.get("wait_s", 0.0))
 
     def storage(self, b, who, cid):
         return self.core.storage(who)
@@ -190,6 +243,9 @@ class Handlers:
 
     def rn_start(self, b, who, cid, jid):
         return self.core.start_job(who, jid, str(b.get("lease_id")))
+
+    def rn_progress(self, b, who, cid, jid):
+        return self.core.job_progress(who, jid, str(b.get("lease_id")), b.get("check"))
 
     def rn_result(self, b, who, cid, jid):
         return self.core.report_result(who, jid, str(b.get("lease_id")), b.get("result"))

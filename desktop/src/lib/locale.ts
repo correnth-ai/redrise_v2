@@ -11,9 +11,15 @@ interface Locale {
   errors: Record<string, Record<string, string>>;
   values: Record<string, string>;
   patterns: { en: string; pt: string }[];
+  report: Record<string, string>;
+  notify: Record<string, string>;
 }
 
-const L: Locale = { labels: {}, errors: {}, values: {}, patterns: [], ...(ptBR as Partial<Locale>) };
+const L: Locale = { labels: {}, errors: {}, values: {}, patterns: [], report: {}, notify: {}, ...(ptBR as Partial<Locale>) };
+
+/** The fixed words of the report PDF; stored with the routine, since the Runner speaks English. */
+export const reportLabels = (): Record<string, string> => L.report;
+export const notifyLabels = (): Record<string, string> => L.notify;
 
 /** Kept for the entry point; the mask is already loaded. */
 export async function loadLocale(): Promise<void> {}

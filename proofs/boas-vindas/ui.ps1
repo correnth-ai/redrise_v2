@@ -97,6 +97,7 @@ switch ($Do) {
     "set $Name"
   }
   'focus' { Front; (Find $Name).SetFocus(); "focused $Name" }
+  'rect' { $r = (Find $Name).Current.BoundingRectangle; "{0} {1} {2} {3}" -f [int]$r.X, [int]$r.Y, [int]$r.Width, [int]$r.Height }
   'click' {
     Front
     $r = (Find $Name).Current.BoundingRectangle

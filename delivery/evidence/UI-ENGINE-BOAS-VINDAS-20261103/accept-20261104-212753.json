@@ -1,0 +1,238 @@
+{
+  "at": "2026-11-04 21:22",
+  "install": "0.1.0-beta.24",
+  "desktop_files_before": [],
+  "scenarios": {
+    "s1": {
+      "outcome": "verified",
+      "end_reason": "sequence_end",
+      "steps": [
+        [
+          1,
+          "Abrir e identificar",
+          "verified",
+          true,
+          null
+        ],
+        [
+          2,
+          "Digitar e salvar",
+          "verified",
+          true,
+          null
+        ],
+        [
+          3,
+          "Fechar e verificar",
+          "verified",
+          true,
+          null
+        ]
+      ],
+      "mode": "clean",
+      "window_of_run": true,
+      "tabs_before": 0,
+      "output_name": "Boas_Vindas.txt",
+      "name_conflicts": [],
+      "verification": {
+        "bytes": 38,
+        "encoding": "utf-8",
+        "verified": true
+      },
+      "final": {
+        "tabs_closed": 1,
+        "window_closed": true,
+        "extra_tabs_closed": 0
+      },
+      "checks": [
+        {
+          "check": "saved as Boas_Vindas.txt",
+          "ok": true
+        },
+        {
+          "check": "the file holds exactly the text",
+          "ok": true
+        },
+        {
+          "check": "three steps verified, in order",
+          "ok": true
+        },
+        {
+          "check": "the only empty untitled tab was reused",
+          "ok": true
+        },
+        {
+          "check": "the window of the run closed",
+          "ok": true
+        },
+        {
+          "check": "no Notepad window left",
+          "ok": true
+        },
+        {
+          "check": "no session left to restore",
+          "ok": true
+        }
+      ]
+    },
+    "s2": {
+      "outcome": "verified",
+      "end_reason": "sequence_end",
+      "steps": [
+        [
+          1,
+          "Abrir e identificar",
+          "verified",
+          true,
+          null
+        ],
+        [
+          2,
+          "Digitar e salvar",
+          "verified",
+          true,
+          null
+        ],
+        [
+          3,
+          "Fechar e verificar",
+          "verified",
+          true,
+          null
+        ]
+      ],
+      "mode": "already_open",
+      "window_of_run": false,
+      "tabs_before": 1,
+      "output_name": "Boas_Vindas[2].txt",
+      "name_conflicts": [],
+      "verification": {
+        "bytes": 38,
+        "encoding": "utf-8",
+        "verified": true
+      },
+      "final": {
+        "tabs_kept": 1,
+        "tabs_closed": 1,
+        "window_closed": false,
+        "earlier_tabs_kept": 1,
+        "extra_tabs_closed": 0
+      },
+      "checks": [
+        {
+          "check": "saved as Boas_Vindas[2].txt",
+          "ok": true
+        },
+        {
+          "check": "the file holds exactly the text",
+          "ok": true
+        },
+        {
+          "check": "three steps verified, in order",
+          "ok": true
+        },
+        {
+          "check": "a dedicated tab was created",
+          "ok": true
+        },
+        {
+          "check": "the window stayed open",
+          "ok": true
+        },
+        {
+          "check": "only the tab of the run closed",
+          "ok": true
+        },
+        {
+          "check": "the unsaved tab kept its text",
+          "ok": true
+        }
+      ]
+    },
+    "s5": {
+      "outcome": "verified",
+      "end_reason": "sequence_end",
+      "steps": [
+        [
+          1,
+          "Abrir e identificar",
+          "verified",
+          true,
+          null
+        ],
+        [
+          2,
+          "Digitar e salvar",
+          "verified",
+          true,
+          null
+        ],
+        [
+          3,
+          "Fechar e verificar",
+          "verified",
+          true,
+          null
+        ]
+      ],
+      "mode": "clean",
+      "window_of_run": true,
+      "tabs_before": 0,
+      "output_name": "Boas_Vindas[4].txt",
+      "name_conflicts": [
+        "Boas_Vindas[3].txt"
+      ],
+      "verification": {
+        "bytes": 38,
+        "encoding": "utf-8",
+        "verified": true
+      },
+      "final": {
+        "tabs_closed": 1,
+        "window_closed": true,
+        "extra_tabs_closed": 0
+      },
+      "checks": [
+        {
+          "check": "saved as Boas_Vindas[4].txt",
+          "ok": true
+        },
+        {
+          "check": "the file holds exactly the text",
+          "ok": true
+        },
+        {
+          "check": "a file appeared under the chosen name while Save As was open",
+          "ok": true
+        },
+        {
+          "check": "three steps verified, in order",
+          "ok": true
+        },
+        {
+          "check": "the overwrite question was refused",
+          "ok": true
+        },
+        {
+          "check": "the other file was preserved",
+          "ok": true
+        },
+        {
+          "check": "saved under the next free name",
+          "ok": true
+        }
+      ]
+    }
+  },
+  "originals_unchanged": true,
+  "outputs": {
+    "Boas_Vindas.txt": "ac91592ef22917ca87cf7ac039b15bee4391c1cb85a3a44323d73933bf1fca09",
+    "Boas_Vindas[2].txt": "ac91592ef22917ca87cf7ac039b15bee4391c1cb85a3a44323d73933bf1fca09",
+    "Boas_Vindas[3].txt": "1a3929b0db3eb8cacd8fec30e7542b31686a26df56fc59c54f1a786c19d3042b",
+    "Boas_Vindas[4].txt": "ac91592ef22917ca87cf7ac039b15bee4391c1cb85a3a44323d73933bf1fca09"
+  },
+  "outputs_moved_to": "lab-test/outputs",
+  "originals_checked": 0,
+  "partial": true,
+  "passed": false
+}

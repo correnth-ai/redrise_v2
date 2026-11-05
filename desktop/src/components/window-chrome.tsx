@@ -66,11 +66,12 @@ export function WindowControls() {
 }
 
 /** Top strip: drag region (double click maximizes, native behavior), title slot, theme and window controls. */
-export function TopBar({ children, overlay }: { children?: React.ReactNode; overlay?: boolean }) {
+export function TopBar({ children, overlay, afterTheme }: { children?: React.ReactNode; overlay?: boolean; afterTheme?: React.ReactNode }) {
   return (
     <header data-tauri-drag-region className={cn("flex h-12 shrink-0 select-none items-center gap-2 px-3", overlay ? "absolute inset-x-0 top-0 z-10" : "border-b bg-background")}>
       <div data-tauri-drag-region className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
       <ThemeToggle className={overlay ? "border border-border bg-card shadow-xs" : undefined} />
+      {afterTheme}
       <WindowControls />
     </header>
   );
