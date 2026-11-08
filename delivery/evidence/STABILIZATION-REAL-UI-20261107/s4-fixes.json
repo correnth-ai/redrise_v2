@@ -1,0 +1,255 @@
+{
+  "step": "STABILIZATION-REAL-UI-20261107/S4 review fixes",
+  "status": "accepted_on_lab_candidate",
+  "date": "2026-11-07",
+  "authorization": "User 'Fix R1-R4 + minors' and 'Free now, start' in chat, 2026-11-07",
+  "source_revision": "f78d229f4c7149bc4d3599ff794a7942353a4d29",
+  "review": "delivery/evidence/STABILIZATION-REAL-UI-20261107/review.json",
+  "candidate": {
+    "version": "0.1.0-beta.27",
+    "installer_sha256": "f9956ea325df51d2f193eaede56fb6f2fd46b54f284bd97928d8444998426510",
+    "payload_sha256": "679a29720886afc3ff645c59449d09491b63ec88253111ed28f8a8d5fd46d0dd",
+    "desktop_exe_sha256": "6460acaf373e50ed71b9d19f41d199fb8839443c25c105dc16603d44764b7056",
+    "files": 3753,
+    "file_list": "identical to beta.26 (compared)",
+    "versions": {
+      "desktop": "0.1.0-beta.27",
+      "core": "0.3.6",
+      "runner": "0.3.11"
+    },
+    "engine_and_installer_tool": "same binaries as beta.25 and beta.26",
+    "playfair_license": {
+      "path": "licenses/playfair-display-OFL.txt",
+      "sha256_package": "c052aafd2a71e90bcee6e69f475029d430a10d548c08ffcae350171f0e9668b1",
+      "sha256_source": "c052aafd2a71e90bcee6e69f475029d430a10d548c08ffcae350171f0e9668b1"
+    },
+    "channel_signed": false,
+    "published": false,
+    "homologated": false,
+    "why_new": "R1, R2, R8 and R9 changed app code after beta.26 was built"
+  },
+  "fixes": {
+    "R1": "auth.AttemptLimiter.attempt checks and counts under one lock before the password check; success() forgets it; login and register use it. Tests: test_limits unit 'parallel attempts' (32 threads -> 5 pass) and HTTP test_07 (16 parallel -> 5 x 401, 11 x 429).",
+    "R2": "Processo > Acao tiles read the Core summary (30 days) through hooks/use-summary.ts, shared with Empresa, and open Historico with the same period; 'Execucoes registradas' removed. Test in empresa.test.tsx.",
+    "R3": "accept_s4 empresa requires the attention list to show exactly summary.attention rows ('Mostrando ... de N linhas').",
+    "R4": "rollback_check.py --baseline-with records the previous install's table and API counts before the upgrade; accept_s4 migration compares them (--baseline).",
+    "R5": "docs/APP-RULES.md state text and status.json next_action corrected.",
+    "R6": "test_limits test_03: the handshake itself must fail; the vacuous block removed.",
+    "R7": "no change: the UI already says when the period list shows only the 500 most recent and points to Empresa for the total (docs/ui/LIVE-TABLES.md).",
+    "R8": "configuracoes AppPage: executor and browser have separate useAction and error state.",
+    "R9": "fluxos HistoryPage: a failed period re-read keeps the rows shown; with none, no table; Empresa and Historico read once per store read (changeTick dependency removed). Tests in empresa.test.tsx.",
+    "R10": "license hash recorded above, package equal to source.",
+    "R11": "rollback_check drains the Core's output and drops the restore database and the dump.",
+    "R12": "no change: kept 'after_fix' like the existing IDENTITY-RATE-LIMITED.",
+    "R13": "no change: documented limit (connection caps without a Runner reserve), s3.json.",
+    "R14": "accept_s4 empresa_after starts a run with Empresa open and requires the cards to move without navigation; Marcados para mim compared."
+  },
+  "line_endings": "Edit scripts had saved desktop/src/App.tsx, components/blocks.tsx and features/fluxos.tsx with CRLF, and contracts/errors.json, contracts/modules.json, docs/BETA-ACCEPTANCE.md were CRLF in the working tree. All normalized to LF, as the index stores them (core.autocrlf=true): no content change for git. Hashes in s1-s3 for those files are superseded by the artifacts below.",
+  "checks": [
+    {
+      "type": "contract_check",
+      "command": "each Core module in its own process, then one discovery, ResourceWarnings shown",
+      "observed": "13 modules, 139 tests OK alone; discovery 139 OK; 0 unclosed-resource warnings"
+    },
+    {
+      "type": "contract_check",
+      "command": "tests/contracts",
+      "observed": "17 OK"
+    },
+    {
+      "type": "component_check",
+      "command": "typecheck and vitest on C:",
+      "observed": "typecheck OK; 9 files, 58 tests passed"
+    },
+    {
+      "type": "base_check",
+      "command": "validate-base (both modes)",
+      "observed": "346 and 368 checks passed"
+    },
+    {
+      "type": "gate",
+      "command": "verify-candidate.ps1 -Version 0.1.0-beta.27",
+      "observed": "passed",
+      "record": "s4b/verification.json"
+    },
+    {
+      "type": "practical_e2e",
+      "command": "accept_s4.py --baseline s4b-baseline.json on lab install-beta27 (one run, all scenarios)",
+      "report": "s4b/accept-s4-20261107-222139.json",
+      "observed": {
+        "migration": true,
+        "empresa": true,
+        "radios": true,
+        "start": true,
+        "review": true,
+        "report": true,
+        "cancel": true,
+        "roles": true,
+        "empresa_after": true,
+        "limits": true
+      },
+      "passed": true,
+      "clicks_lost": 0,
+      "highlights": {
+        "migration": "all 7 table counts and the API counts equal the baseline recorded by beta.26 before the upgrade",
+        "empresa": "screen equal to the Core; attention card -> Historico period 49 = Core 49, attention rows 6 = summary 6",
+        "empresa_after": "with Empresa open, a new run moved the 30-day total 52 -> 53 on screen in 4 s without navigation; all cards equal to the Core after",
+        "cancel": "cancel while step 1 ran: outcome cancelled, steps [verified, null]",
+        "limits": "5 x 401, then 429 with Retry-After 60, session kept, 200 after the wait"
+      }
+    },
+    {
+      "type": "rollback_isolated_copy",
+      "command": "rollback_check.py --new install-beta27 --old install-beta25 on a copy",
+      "report": "s4b/s4b-rollback.json",
+      "observed": "beta.25 Core opened the copy with identical table counts; backup and restore equal; restore database dropped"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4b/accept-s4-20261107-222139.json",
+      "sha256": "2e8541d971c7b8d2f02b6f76767b0ff2348a7d5b43854b12abd0ce1a2b94fc46"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4b/s4b-rollback.json",
+      "sha256": "398b42f505c71df66d0d5053b9f065c810f43749dce4331c4ebb3818ea155085"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4b/s4b-baseline.json",
+      "sha256": "e203b97c91d28a0b81b018570baaa7b7aa2ced3560232d00159a46225ba2b151"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4b/verification.json",
+      "sha256": "75a73ee95e17c8e066533dd3c48644f2ae5a090deff7cf84d7916cab2a3cdd55"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4b/install-beta27.json",
+      "sha256": "b78fdda454c6f29b381bd1f6d184e3c0a602e60bcb2132383a25e8f18864db5d"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4b/inst-s4-empresa.png",
+      "sha256": "92d266092c4e446fe716f303ed9ba8cfffde48275885c3454c6b61b42ff17d63"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4b/inst-s4-historico-periodo.png",
+      "sha256": "daeed32e0ff82f0a836788a9c9f4d18c1a297ef59cdf39e84401b61c0b079134"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4b/inst-s4-empresa-depois.png",
+      "sha256": "979239658358d90eaa5402fcfc2a7613cd5047c805b63431edf4d806524ab6c6"
+    },
+    {
+      "path": "core/redrise_core/auth.py",
+      "sha256": "653b82e15b926662bcfbf3ff0fec62dde8a7740f3be86cb75fe16761ae9fa7f8"
+    },
+    {
+      "path": "core/redrise_core/service.py",
+      "sha256": "fb37fc37733075c5b2f2a53e86e675c040b0afc930bca8adc21be4aa6be24f09"
+    },
+    {
+      "path": "core/redrise_core/api.py",
+      "sha256": "94ef660a6a17da338e96895f743ac12fdf1927149eeeb50ff8bdab526100a5d1"
+    },
+    {
+      "path": "core/redrise_core/db.py",
+      "sha256": "42dadf7c684c8fefb13c261f14bd6e6451cadd943354173fff717aa08214ccf1"
+    },
+    {
+      "path": "contracts/errors.json",
+      "sha256": "78f9bbc8cc209a6eb18385a58ca9522b33c7dcbb25bf4c8ab26d5963eb2dbc37"
+    },
+    {
+      "path": "contracts/modules.json",
+      "sha256": "f207d4dbdb3e23233d13873fc4a9b338387c43d52c3242b41f9fde684249b609"
+    },
+    {
+      "path": "desktop/locale/pt-BR.json",
+      "sha256": "45c0ab9bc5fcb313bb0cbcbdec8781509866322f063e20c5556bd4c191afaa0b"
+    },
+    {
+      "path": "desktop/src/hooks/use-summary.ts",
+      "sha256": "2c0e54ddf4cecc174847c54f1c7c1145e9b02d4990c108db5cc796bc4b805505"
+    },
+    {
+      "path": "desktop/src/features/empresa.tsx",
+      "sha256": "be6cb58de114c5787a08dfbb4d78949cf6fc00920d5e27585b8ed99505d76d42"
+    },
+    {
+      "path": "desktop/src/features/processos.tsx",
+      "sha256": "4759be45c04c3d6686bceec35b74ebd76a68ea442f42aec33f042bfe35e92723"
+    },
+    {
+      "path": "desktop/src/features/fluxos.tsx",
+      "sha256": "2896873c7222f89c07872ec600ed43fa1ac23ed8855702ad1f1d46c53675aba4"
+    },
+    {
+      "path": "desktop/src/features/configuracoes.tsx",
+      "sha256": "56a696930dbe0da01b0e14f2222867efbf50429338cc472f9ef39c8c63e77a61"
+    },
+    {
+      "path": "desktop/src/components/blocks.tsx",
+      "sha256": "c8849a92ee912fed36a7e8363313e3e5a4e4ae5f68a5402b252a8437cbe4c35a"
+    },
+    {
+      "path": "desktop/src/App.tsx",
+      "sha256": "23f30f9990a90d2ad83ffe3ce24651714d09b1c69eb16dd7f2de34304d474df8"
+    },
+    {
+      "path": "desktop/tests/empresa.test.tsx",
+      "sha256": "84ab3f2a08673f2f04da11498b3ca3cee5493e1437b60f23ebafb04ced942441"
+    },
+    {
+      "path": "tests/core/test_limits.py",
+      "sha256": "b32ab45567d653dc01f2f5810ada00427d54313ef3b79574d01c69c6d88f189a"
+    },
+    {
+      "path": "proofs/stabilization/accept_s4.py",
+      "sha256": "a87e4b2519b6ab31d67a22bb9df2c73d5b1b0df504097c2cfe7bb515b0101520"
+    },
+    {
+      "path": "proofs/stabilization/rollback_check.py",
+      "sha256": "327fdcbc00f7af5175a55b1648ceda447cdec8bd5c9b72e2d2edbb1c33682d37"
+    },
+    {
+      "path": "docs/APP-RULES.md",
+      "sha256": "e91ebafc7bd82721467e72bc5b4a5c439e2b016b2f151a2fc536f52bb1fb3885"
+    },
+    {
+      "path": "docs/ui/LIVE-TABLES.md",
+      "sha256": "1e87b997120222a91123ba688f76b2282a5c21b2a3c3944f43624eee0070203f"
+    },
+    {
+      "path": "docs/BETA-ACCEPTANCE.md",
+      "sha256": "e3fa7318be12ebc919c35e92b661a056b29219e2413d76a0a99feda5c29070f1"
+    },
+    {
+      "path": "delivery/status.json",
+      "sha256": "b3d6241b1c0397e23a3a00db1a59a522c67cdfe90438d2e068042a03d28ea786"
+    }
+  ],
+  "commands": {
+    "required": [
+      "Core modules alone and discovery",
+      "tests/contracts",
+      "UI typecheck and vitest",
+      "validate-base",
+      "build-desktop.ps1",
+      "build-release.ps1 -Version 0.1.0-beta.27",
+      "verify-candidate.ps1 -Version 0.1.0-beta.27",
+      "baseline with install-beta26",
+      "lab install beta.27",
+      "accept_s4.py --baseline",
+      "rollback_check.py"
+    ],
+    "optional": [],
+    "not_applicable": [
+      "channel signing, publication, real install update: need an explicit order"
+    ]
+  },
+  "not_exercised": [
+    "Connection failure between the installed app and its Core (firewall/system change needed); covered by contract and UI tests.",
+    "A real e-mail draft (pending by the user's decision).",
+    "Real load on the limits."
+  ],
+  "next_action": "S5 (plan only) on the user's go-ahead. Signing, publication or updating the real install only on explicit order."
+}

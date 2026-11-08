@@ -201,7 +201,9 @@ export function Timeline({ e }: { e: Execution }) {
             </p>
             <p className="text-sm text-muted-foreground">
               {s.state ? JOB_STATE[s.state] : e.state === "finished" ? "Não executada" : "Aguardando a anterior"}
-              {s.error_code ? ` · ${s.error_code}` : ""}{i === e.steps.length - 1 ? " · fim da sequência" : s.continue_next ? " · continua para a próxima" : " · encerra aqui"}
+              {s.error_code ? ` · ${s.error_code}` : ""}{i === e.steps.length - 1 ? " · fim da sequência"
+                : e.state === "finished" && s.state !== null && e.steps[i + 1]?.state === null ? " · execução encerrada aqui"
+                : s.continue_next ? " · continua para a próxima" : " · encerra aqui"}
             </p>
           </div>
         </li>

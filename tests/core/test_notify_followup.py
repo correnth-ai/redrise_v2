@@ -7,7 +7,7 @@ Env: RR_PG_BIN, RR_CORE_SITE (as test_core)."""
 import unittest
 import uuid
 
-from test_core import CoreTest
+from test_core import Harness
 
 CALC = {"target": {"kind": "app", "app_id": "Calc!App", "name": "Calculadora"}, "isolated": True}
 APP = {"kind": "app", "mail_id": "outlook", "name": "Microsoft Outlook"}
@@ -19,9 +19,9 @@ def notify(to="pessoa@exemplo.test", channel=APP, **over):
 
 
 class NotifyFollowUpTest(unittest.TestCase):
-    setUpClass = classmethod(CoreTest.setUpClass.__func__)
-    tearDownClass = classmethod(CoreTest.tearDownClass.__func__)
-    client, expect, admin, station = CoreTest.client, CoreTest.expect, classmethod(CoreTest.admin.__func__), CoreTest.station
+    setUpClass = classmethod(Harness.setUpClass.__func__)
+    tearDownClass = classmethod(Harness.tearDownClass.__func__)
+    client, expect, admin, station = Harness.client, Harness.expect, classmethod(Harness.admin.__func__), Harness.station
 
     def process(self):
         a = self.admin()

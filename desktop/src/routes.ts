@@ -1,5 +1,6 @@
 export type Menu = "empresa" | "rotina" | "processo" | "configuracao";
-export interface Route { menu: Menu; page: string; id?: any; process?: number; /** Opens the same target again. */ nonce?: number }
+export interface Route { menu: Menu; page: string; id?: any; process?: number; /** Opens the same target again. */ nonce?: number;
+  /** Processo › Histórico limited to executions started in the last `days` days (the Empresa summary period). */ days?: number }
 
 export const HOME: Route = { menu: "empresa", page: "painel" };
 

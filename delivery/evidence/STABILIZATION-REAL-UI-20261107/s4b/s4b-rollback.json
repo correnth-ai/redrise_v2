@@ -1,0 +1,70 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "rollback_isolated_copy",
+  "data": "isolated copy of the lab team",
+  "new": {
+    "core": "0.3.6",
+    "processes": 29,
+    "routines": 61,
+    "executions_366d": 53,
+    "executions_listed": 53,
+    "users": 4
+  },
+  "new_tables": {
+    "processes": 29,
+    "routines": 61,
+    "routine_versions": 61,
+    "executions": 53,
+    "jobs": 134,
+    "users": 4,
+    "schema_migrations": 9
+  },
+  "old": {
+    "core": "0.3.5",
+    "processes": 29,
+    "routines": 61,
+    "executions_366d": null,
+    "executions_listed": 53,
+    "users": 4
+  },
+  "old_tables": {
+    "processes": 29,
+    "routines": 61,
+    "routine_versions": 61,
+    "executions": 53,
+    "jobs": 134,
+    "users": 4,
+    "schema_migrations": 9
+  },
+  "backup": {
+    "exit": 0,
+    "bytes": 114597
+  },
+  "restore": {
+    "exit": 0,
+    "target_db": "redrise_restore_check",
+    "error": null
+  },
+  "restored_tables": {
+    "processes": 29,
+    "routines": 61,
+    "routine_versions": 61,
+    "executions": 53,
+    "jobs": 134,
+    "users": 4,
+    "schema_migrations": 9
+  },
+  "live_tables": {
+    "processes": 29,
+    "routines": 61,
+    "routine_versions": 61,
+    "executions": 53,
+    "jobs": 134,
+    "users": 4,
+    "schema_migrations": 9
+  },
+  "cleanup": {
+    "restore_db_dropped": true
+  },
+  "passed": true
+}

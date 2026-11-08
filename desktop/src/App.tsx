@@ -153,7 +153,7 @@ function Page({ route }: { route: Route }) {
     case "rotina/gravacao": return <RecordingPage />;
     case "rotina/executar-legada": return <LegacyRunPage id={route.id} />;
     case "processo/acao": return <ProcessesPage key={`${route.id ?? ""}-${route.nonce ?? ""}`} focus={route.id} />;
-    case "processo/historico": return <HistoryPage key={String(route.id ?? "")} focus={route.id} />;
+    case "processo/historico": return <HistoryPage key={`${route.id ?? ""}-${route.days ?? ""}`} focus={route.id} days={route.days} />;
     case "processo/kanban": return <KanbanPage key={String(route.process ?? "")} process={route.process} />;
     case "configuracao/equipe": return <TeamPage />;
     case "configuracao/estacao": return <StationsPage />;

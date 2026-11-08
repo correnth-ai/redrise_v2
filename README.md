@@ -2,6 +2,8 @@
 
 Nova base independente para o produto comercial **RedRise**, estabelecida em 24/10/2026. App B2B de automações verificáveis, começando por Excel desktop real no Windows 11.
 
+**Estado em 07/11/2026:** 0.1.0-beta.25 instalada no laboratório e na instalação real, sem assinatura no canal, publicação ou homologação; identidade externa suspensa; work order ativa [STABILIZATION-REAL-UI-20261107](delivery/work-orders/STABILIZATION-REAL-UI-20261107.md).
+
 **Direção vigente (27/10/2026):** Engine própria/SOLID; preservar investigação e provas já registradas. Construir capacidades pequenas com testes localizados, conectar por contratos e validar fluxos completos no closed beta instalado, no ambiente disponível. Estado real em delivery/status.json; disponibilidade interna não equivale a Beta homologado.
 
 | Identificador | Valor |
@@ -24,7 +26,7 @@ Leia nesta ordem:
 
 Rastreabilidade: [requisitos D01–D51](docs/requirements.json), [fontes com hashes](docs/sources.lock.json) e [critérios Beta](docs/BETA-ACCEPTANCE.md). Os originais permanecem no pacote indicado pelo usuário; não foram copiados em massa.
 
-Stack mantida: Tauri, TypeScript Vanilla, npm, Vanilla UI, Rust nativo, Core/Runner Python e PostgreSQL compartilhado. A Engine própria integra o app; linguagem/integração concreta seguem a decisão E01 registrada. Windows instala por usuário em `%LOCALAPPDATA%\Programs\@redrise`, com Engine/runtime/componentes gerenciados; sem instalar plugins ou configurar portas manualmente. Dados e cofre ficam separados dos binários.
+Stack vigente: Tauri, TypeScript, React com shadcn/Radix e Tailwind (Vite, npm; substituiu TypeScript Vanilla e Vanilla UI), Rust nativo, Core/Runner Python e PostgreSQL compartilhado. A Engine própria integra o app; linguagem/integração concreta seguem a decisão E01 registrada. Windows instala por usuário em `%LOCALAPPDATA%\Programs\@redrise`, com Engine/runtime/componentes gerenciados; sem instalar plugins ou configurar portas manualmente. Dados e cofre ficam separados dos binários.
 
 O produto anterior permanece separado. Reaproveitamento não é requisito. Os [logos existentes](assets/brand/redrise/README.md) foram especificamente autorizados pelo usuário, com integridade/proveniência verificáveis.
 

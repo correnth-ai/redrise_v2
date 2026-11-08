@@ -57,8 +57,19 @@ export function executionTone(e: Execution): Tone {
   return e.state === "finished" ? tone(e.outcome) : "info";
 }
 
+/** Situation groups, the same predicates as the Core summary (service.py _GROUPS). */
+export type Group = "running" | "waiting" | "attention" | "verified";
+export function groupOf(e: Execution): Group {
+  if (e.state === "running") return "running";
+  if (e.state === "waiting_review") return "waiting";
+  return e.outcome === "verified" ? "verified" : "attention";
+}
+export const GROUP_LABEL: Record<Group, string> = {
+  running: "Em andamento", waiting: "Aguardando revisão", attention: "Precisam de atenção", verified: "Verificadas",
+};
+
 export function needsAttention(e: Execution): boolean {
-  return e.state === "finished" && e.outcome !== "verified";
+  return groupOf(e) === "attention";
 }
 
 export function title(e: Execution): string {

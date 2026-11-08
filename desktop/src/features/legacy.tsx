@@ -15,6 +15,7 @@ import { StateBadge } from "@/components/blocks";
 import { JOB_STATE } from "@/data/status";
 import { api, AppError, call, type Diagnostic } from "@/lib/api";
 import { tv } from "@/lib/locale";
+import { useAction } from "@/hooks/use-action";
 import { useStore } from "@/state";
 import { ACTIVE_POLL_MS, IDLE_POLL_MS } from "@/state";
 import { when } from "@/lib/utils";
@@ -34,6 +35,7 @@ export function TemplatesPage() {
   const [templates, setT] = useState<any[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<unknown>(null);
+  const creating = useAction(setError);
   useEffect(() => { if (src.mode === "real") api("GET", "/api/v1/templates").then(setT).catch(setError); }, [src]);
   if (src.mode === "demo") return <DemoUnavailable />;
   return (
@@ -43,11 +45,10 @@ export function TemplatesPage() {
           <CardContent className="space-y-2"><p className="text-xs text-muted-foreground">{CATEGORY[t.category]} · versão {t.version}</p>
             <Label htmlFor={`tn-${t.id}`}>Nome da rotina</Label>
             <Input id={`tn-${t.id}`} maxLength={120} value={names[t.id] ?? t.title} onChange={(e) => setNames({ ...names, [t.id]: e.target.value })} />
-            <Button onClick={async () => {
+            <Button disabled={creating.busy} onClick={() => {
               const name = (names[t.id] ?? t.title).trim();
               if (!name) return;
-              try { await api("POST", "/api/v1/routines", { name, category: t.category, version: { kind: "template", template_id: t.id } }); await reload(); go({ menu: "rotina", page: "lista" }); }
-              catch (e) { setError(e); }
+              void creating.run(async () => { await api("POST", "/api/v1/routines", { name, category: t.category, version: { kind: "template", template_id: t.id } }); await reload(); go({ menu: "rotina", page: "lista" }); });
             }}>Usar este modelo</Button></CardContent></Card>
       ))}</div></div>
   );
@@ -195,6 +196,7 @@ export function JobsSection() {
   const [jobs, setJobs] = useState<any[] | null>(null);
   const [detail, setDetail] = useState<any>(null);
   const [error, setError] = useState<unknown>(null);
+  const cancelling = useAction(setError);
   useEffect(() => {
     if (src.mode !== "real") return;
     let alive = true;
@@ -234,9 +236,9 @@ export function JobsSection() {
           <details><summary className="cursor-pointer">Linha do tempo</summary><ul className="list-disc pl-5">{detail.events.map((e: any, i: number) =>
             <li key={i}>{when(e.at)} — {JOB_STATE[e.state] ?? e.state}{e.detail?.error_code ? " · " + e.detail.error_code : ""}</li>)}</ul></details>
           {detail.result && <details><summary className="cursor-pointer">Resultado técnico</summary><pre>{JSON.stringify(detail.result, null, 2)}</pre></details>}
-          {["queued", "claimed", "running"].includes(detail.state) && <Button size="sm" variant="outline" className="mt-2" onClick={async () => {
-            try { await api("POST", `/api/v1/jobs/${detail.id}/cancel`); await openJob(detail.id); } catch (e) { setError(e); }
-          }}>Cancelar</Button>}
+          {["queued", "claimed", "running"].includes(detail.state) && <Button size="sm" variant="outline" className="mt-2" disabled={cancelling.busy || detail.cancel_requested}
+            onClick={() => cancelling.run(async () => { await api("POST", `/api/v1/jobs/${detail.id}/cancel`); await openJob(detail.id); })}>
+            {detail.cancel_requested ? "Cancelamento pedido" : "Cancelar"}</Button>}
         </div>}
       </CardContent></Card>
   );

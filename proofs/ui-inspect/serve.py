@@ -63,9 +63,11 @@ def seed(info: dict) -> None:
     proc = a.call("POST", "/api/v1/processes", {"name": "Pedidos do dia", "items": [{"routine_id": x, "continue_next": True} for x in linked]})
     other = a.call("POST", "/api/v1/processes", {"name": "Conferencia de notas", "items": [{"routine_id": linked[1], "continue_next": False}]})
 
-    def step(state="verified", code=None):
+    def step(state="verified", code=None, cancel=False):
         job = r.call("POST", "/api/v1/runner/claim", hb)["job"]
         r.call("POST", f"/api/v1/runner/jobs/{job['job_id']}/start", {"lease_id": job["lease_id"]})
+        if cancel:  # cancel accepted while the step runs; the Runner still reports what happened
+            a.call("POST", f"/api/v1/jobs/{job['job_id']}/cancel")
         result = {"schema": "redrise.job-result/1", "state": state, "verified": state == "verified", "details": {"context": {"tab": "sintetica"}}}
         if code:
             from redrise_contracts import diagnostics as dg
@@ -79,6 +81,8 @@ def seed(info: dict) -> None:
         step(), step(), step()
     execute(process_id=proc["id"])  # stops on an unverified second step
     step(), step("failed", "BROWSER-PAGE-NOT-READY")
+    execute(process_id=proc["id"])  # cancelled while step 1 ran; step 1 completed and is kept, step 2 never queued
+    step(cancel=True)
     execute(process_id=other["id"])
     step("uncertain")
     for rid in loose[:4]:

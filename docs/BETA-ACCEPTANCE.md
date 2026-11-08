@@ -52,3 +52,19 @@ Parametrização T10/T11, self-hosted remoto e releases Mac/Linux/ARM não bloqu
 P10 registra disponibilidade do closed beta instalado (build/hash, abertura e bootstrap no ambiente atual). As campanhas E2E desta matriz são executadas depois dessa disponibilidade. Uma campanha não realizada permanece pendente; não bloquear construção por falta de PC formatado, VM ou campanha completa anterior. Teste manual documentado é válido.
 
 Provas anteriores permanecem com o escopo/revisão originais, sem exigir repetição por mudança documental. Novos requisitos de erro/contrato ainda precisam ser implementados e verificados; não são atribuídos retroativamente ao código existente. Caso um aceite precise de topologia/condição ainda indisponível, declarar a cobertura faltante sem inventar sucesso.
+
+## Reconciliação com decisões de escopo (07/11/2026)
+
+Os critérios acima continuam com o texto original. Esta tabela registra apenas o efeito de decisões já tomadas pelo usuário; não marca nenhum critério como cumprido. Fontes: `scope_decisions` em [status.json](../delivery/status.json) (29/10/2026), revisões de 02/11 e 03/11 em [APP-RULES](APP-RULES.md) e a [work order de estabilização](../delivery/work-orders/STABILIZATION-REAL-UI-20261107.md).
+
+| ID | Situação | O que muda |
+|---|---|---|
+| B03 | Obrigatório em parte; parte adiada | Gravação humana no Excel adiada para depois do Beta (29/10). Compilação, reprodução e verificação independente continuam obrigatórias. |
+| B06 | Obrigatório | Login e cadastro no Core. Identidade externa (A01–A07) suspensa desde 02/11; não volta como critério enquanto suspensa. |
+| B07 | Obrigatório em parte; parte adiada | Segunda estação na LAN e decisão da porta 47800 adiadas (29/10). Host que também executa continua obrigatório. |
+| B08 | Superado em parte | Menus vigentes Empresa, Processo, Rotina, Configuração (02/11 e 03/11), no lugar de Rotina/Ação/Configuração. Fluxo real pela UI e histórico persistido continuam obrigatórios. |
+| B14 | Obrigatório | Cancelamento de etapa de processo coberto por teste de contrato com Runner simulado (S1); a prova instalada fica para S4. |
+| B22 | Adiado em parte | Site completo segue depois do roadmap (29/10). |
+| B23 | Adiado | Contact Sales real segue depois do roadmap (29/10). |
+| B25 | Obrigatório em parte; parte não será feita | Authenticode não será feito por custo (29/10). Integridade e assinatura do canal de atualização continuam obrigatórias. |
+| Demais | Sem mudança | Continuam como escritos. Envio automático de mensagens não é critério; só rascunho, e o rascunho real segue pendente por decisão do usuário. |

@@ -1,0 +1,210 @@
+{
+  "step": "STABILIZATION-REAL-UI-20261107/S1",
+  "roadmap_relation": "Fixes P07/P08 components and feeds P13 documentation; no roadmap step state changed",
+  "status": "done_in_code_pending_review",
+  "date": "2026-11-07",
+  "source_revision": "f78d229f4c7149bc4d3599ff794a7942353a4d29",
+  "source_tree_sha256": null,
+  "source_note": "Uncommitted working tree on main; per-file sha256 below. The checkout is shared.",
+  "versions": {
+    "core": "0.3.6 (was 0.3.5)",
+    "runner": "0.3.11 (unchanged)",
+    "desktop": "0.1.0-beta.25 (unchanged; no candidate built)"
+  },
+  "user_decisions": {
+    "at": "2026-11-07, chat",
+    "stop_points": "stop after each increment",
+    "execution_cancel_button": "not added; Core fix and contract tests only",
+    "s2_summary": "Core summary endpoint, last 30 days",
+    "s3_login_limit": "5 failures in 5 minutes -> 60 s wait, doubling up to 15 min, in Core memory"
+  },
+  "environment": {
+    "os": "Windows 11 Pro x64, build 26200",
+    "python": "%USERPROFILE%/RedRise-v2-dev/runtime/python-3.12.10/tools/python.exe",
+    "postgresql": "%USERPROFILE%/RedRise-v2-dev/downloads/p06-core/pgsql/bin (isolated temporary clusters per test class)",
+    "temp": "TMP/TEMP set to %USERPROFILE%/RedRise-v2-dev/scratch/stab-tmp",
+    "ui_build": "%USERPROFILE%/RedRise-v2-dev/build/ui-dev, synced from D: by build/sync-ui.sh; package-lock.json identical",
+    "desktop_input": "none; the screen check ran in the built-in browser pane against the lab inspection server"
+  },
+  "defect": {
+    "id": "S1-CANCEL-CONTINUES",
+    "observed_before_fix": "With a cancel accepted while step 1 runs, a verified result from the Runner queued step 2.",
+    "cause": "_finish -> _advance ignored jobs.cancel_requested; continuation only checked state, verified and continue_next.",
+    "fix": "_finish passes cancel_requested; _advance ends the execution as cancelled instead of queueing the next step. The step keeps its real state, result and context.",
+    "race": "cancel_job and report_result both lock the job row (FOR UPDATE). Cancel first: result kept, no next step. Result first: next step queued, cancel of the finished step refused with 409 CONFLICT; the queued step can be cancelled.",
+    "not_changed": "Runner: cancel already reaches the Engine through the heartbeat for Engine-driven steps (procedure, template, notepad step). app_open, browser_open, report and notify are not interrupted mid-way; no retry, no undo."
+  },
+  "checks": [
+    {
+      "type": "contract_check",
+      "simulated": "Runner calls made by the test (declared simulated Runner); real Core over HTTPS with pinning and real PostgreSQL",
+      "command": "cd tests/core && <lab python> -B -W ignore::ResourceWarning -m unittest test_cancel",
+      "input": "Synthetic process of two app_open routines, continuation on",
+      "cases": [
+        "cancel while queued",
+        "cancel after claim before start",
+        "cancel while running, Runner stops",
+        "cancel while running, step completes (result kept, step 2 not queued, retransmitted report idempotent)",
+        "result first, then cancel refused; queued step cancellable",
+        "cancel on last step does not hide completion",
+        "race cancel vs result, 8 rounds with a barrier"
+      ],
+      "expected": "Cancel accepted before step 2 is queued never lets step 2 exist",
+      "observed": "7 of 7 passed",
+      "exit_code": 0
+    },
+    {
+      "type": "contract_check",
+      "purpose": "Regression proof against the unfixed code",
+      "command": "Copy of core, contracts, runner, templates and tests/core to %USERPROFILE%/RedRise-v2-dev/scratch/stab-s1-before with service.py from f78d229; same test command",
+      "observed": "2 of 7 failed: test_04 (execution still running, step 2 queued) and test_07 (['verified', 'queued'] after an accepted cancel)",
+      "exit_code": 1
+    },
+    {
+      "type": "contract_check",
+      "command": "cd tests/core && each module in its own process: test_core, test_browser_processes, test_review, test_step_change, test_nova_rotina, test_notify_followup, test_report_followup, test_agent, test_changes, test_identity, test_cancel",
+      "observed": "all OK: test_core 14, test_browser_processes 31, test_review 25, test_step_change 23, test_nova_rotina 28, test_notify_followup 18, test_report_followup 18, test_agent 6, test_changes 21, test_identity 37, test_cancel 7",
+      "exit_code": 0,
+      "warnings": "ResourceWarning for unclosed TLS sockets suppressed in this run with -W ignore::ResourceWarning; the warnings exist and belong to S3",
+      "note": "Counts include CoreTest re-collected by modules that bind the name CoreTest (S3 item); test_cancel avoids it."
+    },
+    {
+      "type": "component_check",
+      "command": "build/ui-dev: npm run build:ui (tsc --noEmit + vite build) and npx vitest run --reporter=dot",
+      "observed": "typecheck and build passed; 7 files, 47 tests passed",
+      "exit_code": 0,
+      "note": "No UI source changed in S1; run as a sanity check of the build used for the screen check."
+    },
+    {
+      "type": "manual_screen_check",
+      "command": "preview server redrise-v2-ui-inspect: <lab python> -B proofs/ui-inspect/serve.py --port 5199 (seed adds one execution cancelled while step 1 ran)",
+      "input": "Synthetic lab team; sign-in as the seeded admin in the built-in browser pane",
+      "expected": "Processo > Histórico lists the execution as cancelled; detail shows step 1 verified and the others not run",
+      "observed": "Row 'Pedidos do dia' Situação Cancelada, Término Cancelada. Detail: 'Cancelada', 'Não executadas: Abrir notas fiscais, Abrir estoque'; 1. Abrir pedidos Verificada; 2 and 3 Não executada / Não iniciada.",
+      "observation": "The timeline line of step 1 reads 'Verificada · continua para a próxima', which describes the link setting, not what happened; candidate for S2 wording.",
+      "cleanup": "preview stopped; the inspection PostgreSQL stopped with pg_ctl and its scratch folder removed"
+    },
+    {
+      "type": "documentation_check",
+      "command": "node scripts/validate-base.mjs; node scripts/validate-base.mjs --check-sources",
+      "observed": "passed, 346 checks; passed, 368 checks, source package verified",
+      "exit_code": 0,
+      "note": "foundation-only; manifest hashes checked separately below"
+    },
+    {
+      "type": "documentation_check",
+      "command": "sha256 of every normative_refs file in products/redrise-v2/product.yaml compared with the recorded source_hash",
+      "observed_before": "ENGINE.md and ERROR-DIAGNOSTICS.md differed; the recorded values match delivery/evidence/PRACTICAL-20261027/revision.json (2026-10-27) and predate the base commit f496b5f",
+      "review": "ENGINE.md changed after f496b5f only by the 'Bloco de Notas: comportamento observado' section (commits d653a8a and 6124039, accepted Boas-vindas work); the working copy has CRLF line ends, the hash is of the working-copy bytes like the other entries. ERROR-DIAGNOSTICS.md is unchanged since f496b5f; its change before that commit cannot be reconstructed from Git.",
+      "observed_after": "all 9 refs match",
+      "historical_record_kept": "delivery/evidence/PRACTICAL-20261027/revision.json not edited"
+    }
+  ],
+  "canonical_state_reconciled": [
+    "delivery/status.json: current_candidate 0.1.0-beta.25 (installer 3a4a967b...b715), lab and real install, not channel-signed, not published, not homologated; 0.1.0-beta.14 moved to earlier_candidates; next_action prefixed",
+    "AGENTS.md: 'Current state (2026-11-07)' section; identity part of the 2026-11-02 direction marked suspended; stack and menu guardrails updated with the originals named",
+    "README.md: state line and current stack",
+    "docs/APP-RULES.md: current state, cancel rule, opening acceptance by app window",
+    "docs/BETA-ACCEPTANCE.md: reconciliation matrix B03, B06, B07, B08, B14, B22, B23, B25; criteria text unchanged",
+    "products/redrise-v2/product.yaml: source_hash of docs/ENGINE.md and docs/ERROR-DIAGNOSTICS.md"
+  ],
+  "artifacts": [
+    {
+      "path": "core/redrise_core/service.py",
+      "sha256": "5b3ba16b98dd776c51e7296dfce523a98c6106209120be80e02a657eb85476d3"
+    },
+    {
+      "path": "core/redrise_core/__init__.py",
+      "sha256": "3f34b1a8e1f752a8838cf87824de6d04a63bf0570aed43fc142dfcb29b981797"
+    },
+    {
+      "path": "tests/core/test_cancel.py",
+      "sha256": "0c96208b28d0671690d3e344ff8245951d940e28de275e08cf2d04549d6db492"
+    },
+    {
+      "path": "proofs/ui-inspect/serve.py",
+      "sha256": "58ca5314245155a3caf231b0f22296bd80d4bf9f1031a1d3a3bf41782a18a873"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "103b1006a977744ffaf6c9f7df620757cffc5d0992199aa8de2fe7e8890510a6"
+    },
+    {
+      "path": "README.md",
+      "sha256": "01d6b7100f5648834ab5edb979ea40e6b6f43105af386831c4e35081f662cb5a"
+    },
+    {
+      "path": "docs/APP-RULES.md",
+      "sha256": "e6780af4c12a49192fbce7844fed96a471133680987de43113caf8226527f6cf"
+    },
+    {
+      "path": "docs/BETA-ACCEPTANCE.md",
+      "sha256": "58d5d85dae893911a5e4d5ab1f7b00e00f0c171aa0f0f358d852e2eb61a4d2c3"
+    },
+    {
+      "path": "delivery/work-orders/STABILIZATION-REAL-UI-20261107.md",
+      "sha256": "392065887d311d23898c45f3de3112b352337b304cd22a759b2f21b14dddc27a"
+    },
+    {
+      "path": "D:/Correnth/products/redrise-v2/product.yaml",
+      "sha256": "a17e3ab977ccd09b0202bfd28891a7105ba0563bfccdb3d2d7907e063f4ce860"
+    },
+    {
+      "path": "delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/evidence.json",
+      "sha256": "b4c0906eaab57ca517270508745744b47ef097046f0b8d9748b3bdbe7fb3e354",
+      "note": "predecessor, matches the work order"
+    }
+  ],
+  "commands": {
+    "required": [
+      "test_cancel (fixed code)",
+      "test_cancel (unfixed copy)",
+      "each Core module in its own process",
+      "validate-base (both modes)",
+      "manifest hash comparison",
+      "screen check with persisted data"
+    ],
+    "optional": [
+      "UI build and vitest (no UI source changed)"
+    ],
+    "not_applicable": [
+      "Runner tests: no Runner source changed",
+      "verify-candidate.ps1: no candidate in S1 (S4)",
+      "Core aggregated discover: isolation fix belongs to S3"
+    ]
+  },
+  "skills": {
+    "router": "Harness route requires named skills; selection by catalog frontmatter, resolved with catalogs/skills/scripts/resolve-skill.mjs",
+    "applied": [
+      {
+        "name": "scope-planning",
+        "sha256": "fd7b13af53a7853d7cbd43ac9f72e801d602c7fb4e592981ac4842e4ded58bfa"
+      },
+      {
+        "name": "api-contract-testing",
+        "sha256": "1b68a02f675b2ea183690b6aa08b957aedfee578e15926017c7c0fb9690489d3"
+      },
+      {
+        "name": "documentation-decision-log",
+        "sha256": "94d7404269c6b354a8ba5e1cd0704769b7bdd648e3379f5ddc296a1696bd2d3b"
+      },
+      {
+        "name": "phase-identity-reconciliation",
+        "sha256": "6ae32e783ae16f93c1e30efed32ade0b69e0c869016e2e255af129b40c9fd143"
+      }
+    ]
+  },
+  "memory": "correnth/redrise-v2 operational memory not reachable from this session; canonical files used (degradation recorded)",
+  "graph": "not used; no registered Graphify root for redrise-v2",
+  "review": {
+    "file": "delivery/evidence/STABILIZATION-REAL-UI-20261107/review.json",
+    "date": "2026-11-07",
+    "result": "no blocking; findings fixed or kept with reasons, validated on 0.1.0-beta.27 (s4-fixes.json)"
+  },
+  "limitations": [
+    "No independent review yet; the work order asks for one before engineering acceptance.",
+    "No installed proof; cancel on the installed app belongs to S4.",
+    "Contract checks with a simulated Runner do not prove native interruption."
+  ],
+  "next_action": "User go-ahead for S2 (real Empresa indicators and controls)."
+}

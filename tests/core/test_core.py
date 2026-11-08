@@ -29,11 +29,20 @@ from redrise_core import db, host, pg  # noqa: E402
 from redrise_contracts.vault import MemoryVault  # noqa: E402
 
 PW = "senha-forte-01"
+# Tokens and accounts a test class keeps between its tests. They belong to one cluster: a class
+# that starts a new cluster (or is run again) must not reuse them against another database.
+CACHED = ("_admin", "_other", "_users")
 
 
-class CoreTest(unittest.TestCase):
+class Harness:
+    """Cluster and helpers shared by the Core test modules. Not a TestCase: importing it does not
+    make unittest collect and run another module's tests again (only CoreTest below is collected)."""
+
     @classmethod
     def setUpClass(cls):
+        for name in CACHED:
+            if name in vars(cls):
+                delattr(cls, name)
         cls.tmp = Path(tempfile.mkdtemp(prefix="rr-core-"))
         inst = cls.tmp / "install"
         shutil.copytree(ROOT / "templates", inst / "templates")
@@ -68,7 +77,7 @@ class CoreTest(unittest.TestCase):
 
     @classmethod
     def admin(cls):
-        if not hasattr(cls, "_admin"):
+        if "_admin" not in vars(cls):  # this class's own token, created on this class's cluster
             c = CoreClient("127.0.0.1", cls.port, cls.info["fingerprint"])
             c.call("POST", "/api/v1/setup", {"team": "Equipe Teste", "username": "admin", "display": "Admin", "password": PW})
             cls._admin = c.call("POST", "/api/v1/login", {"username": "admin", "password": PW})["token"]
@@ -94,6 +103,9 @@ class CoreTest(unittest.TestCase):
                                                           "version_id": version_id, "station_id": station_id,
                                                           "inputs": kw.get("inputs", {})})
 
+
+
+class CoreTest(Harness, unittest.TestCase):
     # ---------------------------------------------------------------- tests
     def test_01_status_setup_once_and_login(self):
         c = self.client()
@@ -218,6 +230,7 @@ class CoreTest(unittest.TestCase):
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE
         conn = http.client.HTTPSConnection("127.0.0.1", self.port, context=ctx, timeout=10)
+        self.addCleanup(conn.close)
         conn.request("POST", "/api/v1/login", body=b"{nope", headers={"X-Correlation-Id": "corr-1234"})
         resp = conn.getresponse()
         body = json.loads(resp.read())

@@ -10,15 +10,15 @@ import unittest
 import uuid
 
 import test_core
-from test_core import CoreTest
+from test_core import Harness
 
 SITE = {"origin": "site", "browser": "msedge", "url": "https://x.exemplo.test/", "path": None, "isolated": True}
 
 
 class ChangesTest(unittest.TestCase):
-    setUpClass = classmethod(CoreTest.setUpClass.__func__)
-    tearDownClass = classmethod(CoreTest.tearDownClass.__func__)
-    client, expect, admin, station = CoreTest.client, CoreTest.expect, classmethod(CoreTest.admin.__func__), CoreTest.station
+    setUpClass = classmethod(Harness.setUpClass.__func__)
+    tearDownClass = classmethod(Harness.tearDownClass.__func__)
+    client, expect, admin, station = Harness.client, Harness.expect, classmethod(Harness.admin.__func__), Harness.station
 
     def now(self):
         return self.admin().call("POST", "/api/v1/changes", {})

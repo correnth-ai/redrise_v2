@@ -294,6 +294,13 @@
       "next": "Confira usuário e senha. Se esqueceu a senha, peça a um administrador da equipe.",
       "details": "Credenciais recusadas."
     },
+    "AUTH-RATE-LIMITED": {
+      "what": "Muitas tentativas em pouco tempo.",
+      "completed": "O pedido foi recusado antes de conferir a senha ou o formulário.",
+      "pending": "Nada foi alterado.",
+      "next": "Aguarde {retry_after_s} segundos e tente novamente. Se esqueceu a senha, peça a um administrador da equipe.",
+      "details": "Limite de tentativas do servidor da equipe (espera de {retry_after_s} s)."
+    },
     "AUTH-FORBIDDEN": {
       "what": "Seu perfil não permite esta ação.",
       "completed": "O pedido foi recusado antes de qualquer alteração.",
@@ -349,6 +356,13 @@
       "pending": "Não se sabe se a alteração foi concluída.",
       "next": "Atualize a tela e confira antes de repetir. Se persistir, copie o diagnóstico e encaminhe ao suporte.",
       "details": "Exceção não tratada ({reason})."
+    },
+    "CORE-BUSY": {
+      "what": "O servidor da equipe está ocupado com outros pedidos.",
+      "completed": "O pedido foi recusado antes de qualquer ação.",
+      "pending": "Nada foi alterado.",
+      "next": "Aguarde alguns instantes e tente novamente.",
+      "details": "Sem vaga para o pedido dentro da espera (tente após {retry_after_s} s)."
     },
     "CORE-UNREACHABLE": {
       "what": "Não foi possível falar com o servidor da equipe.",

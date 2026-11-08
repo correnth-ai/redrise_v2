@@ -11,19 +11,19 @@ import unittest
 import uuid
 
 import test_core
-from test_core import CoreTest
+from test_core import Harness
 
 CALC = {"target": {"kind": "app", "app_id": "Calc!App", "name": "Calculadora"}, "isolated": True}
 
 
 class StepChangeTest(unittest.TestCase):
-    setUpClass = classmethod(CoreTest.setUpClass.__func__)
-    tearDownClass = classmethod(CoreTest.tearDownClass.__func__)
-    client, expect, admin, station = CoreTest.client, CoreTest.expect, classmethod(CoreTest.admin.__func__), CoreTest.station
+    setUpClass = classmethod(Harness.setUpClass.__func__)
+    tearDownClass = classmethod(Harness.tearDownClass.__func__)
+    client, expect, admin, station = Harness.client, Harness.expect, classmethod(Harness.admin.__func__), Harness.station
 
     def login(self, name, role="operator"):
         cls = type(self)
-        cls._users = getattr(cls, "_users", {})
+        cls._users = vars(cls).get("_users", {})
         if name not in cls._users:
             u = self.admin().call("POST", "/api/v1/users", {"username": name, "display": name.capitalize(), "password": test_core.PW, "role": role})
             cls._users[name] = (u["id"], self.client().call("POST", "/api/v1/login", {"username": name, "password": test_core.PW})["token"])

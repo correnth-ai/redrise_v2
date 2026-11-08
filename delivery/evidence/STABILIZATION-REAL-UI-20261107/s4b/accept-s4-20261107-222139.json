@@ -1,0 +1,196 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "STABILIZATION-REAL-UI-20261107/S4",
+  "install": "install-beta27",
+  "scenarios": {
+    "migration": {
+      "passed": true,
+      "baseline_from": "install-beta26",
+      "tables": {
+        "processes": 25,
+        "routines": 53,
+        "routine_versions": 53,
+        "executions": 49,
+        "jobs": 127,
+        "users": 3,
+        "schema_migrations": 9
+      },
+      "baseline_tables": {
+        "processes": 25,
+        "routines": 53,
+        "routine_versions": 53,
+        "executions": 49,
+        "jobs": 127,
+        "users": 3,
+        "schema_migrations": 9
+      },
+      "api": {
+        "processes": 25,
+        "routines": 53,
+        "executions_listed": 49,
+        "users": 3
+      },
+      "baseline_api": {
+        "processes": 25,
+        "routines": 53,
+        "executions_listed": 49,
+        "users": 3
+      }
+    },
+    "empresa": {
+      "passed": true,
+      "expected": {
+        "Processos cadastrados": "25",
+        "Execuções nos últimos 30 dias": "49",
+        "Estações disponíveis": "1 de 1",
+        "Em andamento": "0",
+        "Aguardando revisão": "0",
+        "Precisam de atenção": "6",
+        "Verificadas": "43",
+        "Marcados para mim": "0"
+      },
+      "screen": {
+        "Processos cadastrados": "25",
+        "Execuções nos últimos 30 dias": "49",
+        "Marcados para mim": "0",
+        "Estações disponíveis": "1 de 1",
+        "Em andamento": "0",
+        "Aguardando revisão": "0",
+        "Precisam de atenção": "6",
+        "Verificadas": "43"
+      },
+      "diff": {},
+      "opened": "Precisam de atenção: 6. Ver no histórico",
+      "banner": "Iniciadas nos últimos 30 dias: 49 execuções.",
+      "period_rows_screen": 49,
+      "period_rows_core": 49,
+      "summary_total": 49,
+      "attention_rows_screen": 6,
+      "summary_attention": 6
+    },
+    "radios": {
+      "passed": true,
+      "radios": [
+        "Iniciar um processo",
+        "Fazer follow-up",
+        "Rotina avulsa"
+      ],
+      "chosen_by_name": true,
+      "routine_created": false
+    },
+    "start": {
+      "passed": true,
+      "windows_after_preparing": 0,
+      "windows_after_test": 1,
+      "not_closed": 0
+    },
+    "review": {
+      "passed": true,
+      "unseen": [
+        0,
+        1,
+        0
+      ],
+      "paused_until_click": "waiting_review",
+      "outcome": "verified",
+      "decided_by": "Admin de Teste"
+    },
+    "report": {
+      "passed": true,
+      "outcome": "verified",
+      "file": "Relatorio_Prova_relatorio_afa9_20261107-2219.pdf",
+      "bytes": 10129,
+      "pages": 1,
+      "explorer_opened": true,
+      "not_closed": 0
+    },
+    "cancel": {
+      "passed": true,
+      "attempts": [
+        {
+          "cancel_while": "running",
+          "answer": {
+            "state": "running",
+            "cancel_requested": true
+          },
+          "outcome": "cancelled",
+          "end_reason": "cancelled",
+          "steps": [
+            "verified",
+            null
+          ],
+          "continue_next": [
+            true,
+            true
+          ],
+          "not_closed": 0
+        }
+      ]
+    },
+    "roles": {
+      "passed": true,
+      "operator_reads_summary": "allowed",
+      "operator_reads_processes": "allowed",
+      "operator_lists_users": "AUTH-FORBIDDEN",
+      "operator_creates_user": "AUTH-FORBIDDEN",
+      "operator_registers_station": "AUTH-FORBIDDEN",
+      "operator_creates_routine": "AUTH-FORBIDDEN",
+      "no_token_reads_summary": "AUTH-REQUIRED",
+      "after_deactivation": "AUTH-REQUIRED"
+    },
+    "empresa_after": {
+      "passed": true,
+      "total_before": 52,
+      "total_on_screen_after": "53",
+      "seconds": 4.0,
+      "before": {},
+      "after": {
+        "passed": true,
+        "expected": {
+          "Processos cadastrados": "29",
+          "Execuções nos últimos 30 dias": "53",
+          "Estações disponíveis": "1 de 1",
+          "Em andamento": "0",
+          "Aguardando revisão": "0",
+          "Precisam de atenção": "7",
+          "Verificadas": "46",
+          "Marcados para mim": "0"
+        },
+        "screen": {
+          "Processos cadastrados": "29",
+          "Execuções nos últimos 30 dias": "53",
+          "Marcados para mim": "0",
+          "Estações disponíveis": "1 de 1",
+          "Em andamento": "0",
+          "Aguardando revisão": "0",
+          "Precisam de atenção": "7",
+          "Verificadas": "46"
+        },
+        "diff": {}
+      }
+    },
+    "limits": {
+      "passed": true,
+      "wrong": [
+        401,
+        401,
+        401,
+        401,
+        401
+      ],
+      "limited": [
+        429,
+        "60",
+        "AUTH-RATE-LIMITED"
+      ],
+      "session_kept": true,
+      "after_wait": 200,
+      "core": "0.3.6"
+    }
+  },
+  "core": "0.3.6",
+  "clicks_lost": [],
+  "seconds": 364,
+  "passed": true
+}

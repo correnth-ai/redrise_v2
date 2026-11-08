@@ -1,0 +1,40 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "STABILIZATION-REAL-UI-20261107/S4",
+  "install": "install-beta26",
+  "scenarios": {
+    "empresa": {
+      "passed": false,
+      "stopped": "not on screen: ('Iniciadas nos últimos 30 dias:',); screen: ListItem|RedRiseversão 0.1.0-beta.26| / Button|RedRise versão 0.1.0-beta.26| / ListItem|Empresa| / Button|Empresa| / ListItem|ProcessoAçãoHistóricoKanban| / Button|Processo| / ListItem|Ação| / Hyperlink|Ação| / ListItem|Histórico| / Hyperlink|Histórico| / ListItem|Kanban| / Hyperlink|Kanban| / ListItem|RotinaListaAtividade| / Button|Rotina| / ListItem|Lista| / Hyperlink|Lista| / ListItem|Atividade| / Hyperlink|Atividade| / ListItem|ConfiguraçãoEquipeEstaçãoAplicativo| / Button|Configuração| / ListItem|Equipe| / Hyperlink|Equipe| / ListItem|Estação| / Hyperlink|Estação| / ListItem|Aplicativo| / Hyperlink|Aplicativo| / ListItem|Admin de Teste (administrador)Sair| / Text|Admin de Teste| / Text| (| / Text|administrador| / Text|)| / Button|Sair| / Button|Recolher ou expandir o menu| / Button|Recolher ou expandir o menu| / Text|Processo > Histórico| / Button|Ativar modo escuro| / Button|Notifi"
+    },
+    "empresa_after": {
+      "passed": true,
+      "expected": {
+        "Processos cadastrados": "25",
+        "Execuções nos últimos 30 dias": "49",
+        "Estações disponíveis": "1 de 1",
+        "Em andamento": "0",
+        "Aguardando revisão": "0",
+        "Precisam de atenção": "6",
+        "Verificadas": "43"
+      },
+      "screen": {
+        "Processos cadastrados": "25",
+        "Execuções nos últimos 30 dias": "49",
+        "Marcados para mim": "0",
+        "Estações disponíveis": "1 de 1",
+        "Em andamento": "0",
+        "Aguardando revisão": "0",
+        "Precisam de atenção": "6",
+        "Verificadas": "43"
+      },
+      "diff": {},
+      "marked_for_me_screen": "0"
+    }
+  },
+  "core": "0.3.6",
+  "clicks_lost": [],
+  "seconds": 69,
+  "passed": false
+}

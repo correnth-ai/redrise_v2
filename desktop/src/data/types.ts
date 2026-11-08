@@ -73,4 +73,9 @@ export interface Storage {
   local?: { data_bytes: number | null; logs_bytes: number | null } | null;
 }
 
+/** Executions started in the last `days` days, counted by the Core per situation (GET /api/v1/executions/summary). */
+export interface ExecutionSummary {
+  days: number; since: string; until: string; total: number; running: number; waiting: number; attention: number; verified: number;
+}
+
 export interface NewExecution { request_id: string; station_id: number; process_id?: number; routine_id?: number }

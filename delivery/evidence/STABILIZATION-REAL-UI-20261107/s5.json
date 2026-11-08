@@ -1,0 +1,37 @@
+{
+  "step": "STABILIZATION-REAL-UI-20261107/S5",
+  "status": "done_plan_only",
+  "date": "2026-11-07",
+  "authorization": "User 'Start S5' in chat, 2026-11-07",
+  "kind": "planning; no code, candidate, install or external write",
+  "options_presented": [
+    "Schedule a process (Core scheduling of existing executions)",
+    "Read a spreadsheet value into the run context (new Runner capability)",
+    "Save the PDF report to a chosen team folder (extension of the report step)",
+    "Check an expected text on the opened site (extension of the browser verification)"
+  ],
+  "user_choice": "Schedule a process",
+  "grounding": {
+    "existing_kinds": "core/redrise_core/service.py PROCESS_KINDS browser_open, notepad_step, app_open, followup; FOLLOWUP_ACTIONS review, report, notify",
+    "excel": "runner/redrise_runner/excel.py opens a new blank workbook only",
+    "idempotent_execution": "Core.create_execution keyed by request_id (reused for one id per occurrence)"
+  },
+  "work_order": {
+    "path": "delivery/work-orders/SCHEDULE-PROCESS-20261107.md",
+    "sha256": "7a501017d5c33fff11e3a1a23a8c4e608ce0b086d282ef3085cb1e6b66ebcf82"
+  },
+  "open_points_for_the_user": [
+    "operator permission to schedule (proposed: administrators only)",
+    "grace window for a missed occurrence (proposed: 15 min)"
+  ],
+  "commands": {
+    "required": [
+      "read the work order, status.json and the Core/Runner routine kinds"
+    ],
+    "optional": [],
+    "not_applicable": [
+      "tests, builds, gate, install: plan only"
+    ]
+  },
+  "next_action": "User go-ahead to implement SCHEDULE-PROCESS-20261107, after confirming the two open points."
+}

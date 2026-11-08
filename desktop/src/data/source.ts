@@ -2,7 +2,7 @@
 // the demonstration source exists only in a `vite --mode demo` build (fixtures,
 // identified on screen) and is never a fallback for a failing backend.
 import { api, call } from "@/lib/api";
-import type { Execution, Job, Me, Member, NewExecution, Notifications, Process, Review, Routine, RoutineLink, RoutineVersionInput, Station, StationApp, StepChange, Storage } from "./types";
+import type { Execution, ExecutionSummary, Job, Me, Member, NewExecution, Notifications, Process, Review, Routine, RoutineLink, RoutineVersionInput, Station, StationApp, StepChange, Storage } from "./types";
 
 export interface DataSource {
   readonly mode: "real" | "demo";
@@ -10,6 +10,10 @@ export interface DataSource {
   routines(): Promise<Routine[]>;
   processes(): Promise<Process[]>;
   executions(): Promise<Execution[]>;
+  /** Counts for the period, from the Core; never from the capped list above. */
+  executionSummary(): Promise<ExecutionSummary>;
+  /** Executions started in the last `days` days, newest first, up to 500: the rows behind the summary. */
+  executionsSince(days: number): Promise<Execution[]>;
   stations(): Promise<Station[]>;
   storage(): Promise<Storage>;
   apps(stationId: number): Promise<{ apps: StationApp[] | null }>;
@@ -44,6 +48,8 @@ export const realSource: DataSource = {
   routines: () => api("GET", "/api/v1/routines"),
   processes: () => api("GET", "/api/v1/processes"),
   executions: () => api("GET", "/api/v1/executions"),
+  executionSummary: () => api("GET", "/api/v1/executions/summary"),
+  executionsSince: (days) => api("GET", `/api/v1/executions?days=${Math.trunc(days)}`),
   stations: () => api("GET", "/api/v1/stations"),
   async storage() {
     const s: Storage = await api("GET", "/api/v1/storage");

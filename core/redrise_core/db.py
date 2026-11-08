@@ -58,34 +58,52 @@ def provision(port: int, superuser: str, su_password: str, app_password: str) ->
     return applied
 
 
-class Database:
-    """Small thread-safe pool for the app role."""
+class PoolBusy(Exception):
+    """No database connection became free within the wait; nothing was run."""
 
-    def __init__(self, info: str, size: int = 8):
-        self.info, self.size = info, size
+
+class Database:
+    """Small thread-safe pool for the app role. `size` is only how many idle connections are
+    kept for reuse; `max_open` is the limit of connections in use at once, and a transaction
+    waits at most `wait_s` for one. A transaction opened inside another one on the same thread
+    does not wait for a second place (no self-deadlock when the limit is reached)."""
+
+    def __init__(self, info: str, size: int = 8, max_open: int = 32, wait_s: float = 5.0):
+        self.info, self.size, self.max_open, self.wait_s = info, size, max_open, wait_s
         self._free: list[psycopg.Connection] = []
         self._lock = threading.Lock()
+        self._open = threading.BoundedSemaphore(max_open)
+        self._held = threading.local()
 
     @contextlib.contextmanager
     def tx(self):
-        with self._lock:
-            conn = self._free.pop() if self._free else None
-        if conn is None or conn.closed:
-            conn = psycopg.connect(self.info, row_factory=dict_row)
+        depth = getattr(self._held, "depth", 0)
+        if depth == 0 and not self._open.acquire(timeout=self.wait_s):
+            raise PoolBusy(f"{self.max_open} connections in use")
+        self._held.depth = depth + 1
         try:
-            with conn.transaction():
-                yield conn
-        except psycopg.OperationalError:
-            conn.close()
-            raise
+            with self._lock:
+                conn = self._free.pop() if self._free else None
+            if conn is None or conn.closed:
+                conn = psycopg.connect(self.info, row_factory=dict_row)
+            try:
+                with conn.transaction():
+                    yield conn
+            except psycopg.OperationalError:
+                conn.close()
+                raise
+            finally:
+                if not conn.closed:
+                    with self._lock:
+                        if len(self._free) < self.size:
+                            self._free.append(conn)
+                            conn = None
+                    if conn is not None:
+                        conn.close()
         finally:
-            if not conn.closed:
-                with self._lock:
-                    if len(self._free) < self.size:
-                        self._free.append(conn)
-                        conn = None
-                if conn is not None:
-                    conn.close()
+            self._held.depth = depth
+            if depth == 0:
+                self._open.release()
 
     def close(self):
         with self._lock:

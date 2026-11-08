@@ -1,8 +1,9 @@
 // Fluxos: follow executions and history. Every view (stats, grid, Kanban,
 // timeline, log, feed, table) derives from the same execution records; the
 // Kanban is read-only (no drag-and-drop, no manual verification).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, CircleAlert, Hourglass, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,7 +13,7 @@ import { DataTable, type DataColumn } from "@/components/data-table";
 import { ErrorView } from "@/components/diagnostic";
 import { ActivityFeed, activityOf, ExecutionBadge, ExecutionLog, ExecutionReports, StateBadge, Timeline } from "@/components/blocks";
 import { JobsSection } from "@/features/legacy";
-import { COLUMN_LABEL, column, END_REASON, executionLabel, needsAttention, title, type Column } from "@/data/status";
+import { COLUMN_LABEL, column, END_REASON, executionLabel, groupOf, title, type Column } from "@/data/status";
 import type { Execution } from "@/data/types";
 import { useStore } from "@/state";
 import { when } from "@/lib/utils";
@@ -99,18 +100,39 @@ export const HISTORY_COLUMNS: DataColumn<Execution>[] = [
 
 const HISTORY_TABS = ["running", "waiting", "attention", "verified"];
 
-export function HistoryPage({ focus }: { focus?: string }) {
-  const { executions, processes, src } = useStore();
+/** Rows the Core returns for a period at most (service.py list_executions). */
+export const PERIOD_LIMIT = 500;
+
+export function HistoryPage({ focus, days }: { focus?: string; days?: number }) {
+  const { executions, processes, src, go } = useStore();
   const [open, setOpen] = useState<string | null>(focus && !HISTORY_TABS.includes(focus) ? focus : null);
-  const sel = executions?.find((e) => e.id === open) ?? null;
+  // With a period (opened from an Empresa indicator): the same rows the Core counted, read again with the store.
+  const [period, setPeriod] = useState<Execution[] | null>(null);
+  const [periodError, setPeriodError] = useState<unknown>(null);
+  useEffect(() => {
+    if (!days) return;
+    let on = true;
+    // A failed re-read keeps the rows already shown, under the error; with nothing shown yet there is no table.
+    src.executionsSince(days).then((r) => { if (on) { setPeriod(r); setPeriodError(null); } }, (e) => { if (on) setPeriodError(e); });
+    return () => { on = false; };
+  }, [src, days, executions]); // every store read (change feed or periodic) gives a new list: one read here per store read
+  const rows = days ? period : executions;
+  const sel = rows?.find((e) => e.id === open) ?? executions?.find((e) => e.id === open) ?? null;
   return (
     <div className="space-y-3">
-      <DataTable label="Execuções" storageKey="processo-historico" rows={executions} columns={HISTORY_COLUMNS} rowKey={(e) => e.id} rowLabel={title}
+      {days && <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+        <span>Iniciadas nos últimos {days} dias{period ? `: ${period.length} ${period.length === 1 ? "execução" : "execuções"}` : ""}
+          {period && period.length >= PERIOD_LIMIT ? ` (as ${PERIOD_LIMIT} mais recentes; o total está em Empresa)` : ""}.</span>
+        <Button size="sm" variant="ghost" onClick={() => go({ menu: "processo", page: "historico" })}>Ver todas as recentes</Button>
+      </div>}
+      <ErrorView error={periodError} />
+      {days && period === null && periodError ? null : <DataTable label="Execuções" storageKey="processo-historico" rows={rows} columns={HISTORY_COLUMNS} rowKey={(e) => e.id} rowLabel={title}
         empty="Nenhuma execução." searchPlaceholder="Buscar processo, estação ou pessoa…" onRowOpen={(e) => setOpen(e.id)} initialTab={HISTORY_TABS.includes(focus ?? "") ? focus : "all"}
-        tabs={[{ id: "all", label: "Todas", match: () => true }, { id: "running", label: "Em andamento", icon: Loader2, match: (e) => e.state === "running" },
-          { id: "waiting", label: "Aguardando revisão", icon: Hourglass, match: (e) => e.state === "waiting_review" },
-          { id: "attention", label: "Precisam de atenção", icon: CircleAlert, match: needsAttention }, { id: "verified", label: "Verificadas", icon: CheckCircle2, match: (e) => e.outcome === "verified" }]}
-        filters={[{ id: "process", label: "Processo", options: (processes ?? []).map((p) => ({ value: String(p.id), label: p.name, match: (e: Execution) => e.process_id === p.id })) }]} />
+        tabs={[{ id: "all", label: "Todas", match: () => true }, { id: "running", label: "Em andamento", icon: Loader2, match: (e) => groupOf(e) === "running" },
+          { id: "waiting", label: "Aguardando revisão", icon: Hourglass, match: (e) => groupOf(e) === "waiting" },
+          { id: "attention", label: "Precisam de atenção", icon: CircleAlert, match: (e) => groupOf(e) === "attention" },
+          { id: "verified", label: "Verificadas", icon: CheckCircle2, match: (e) => groupOf(e) === "verified" }]}
+        filters={[{ id: "process", label: "Processo", options: (processes ?? []).map((p) => ({ value: String(p.id), label: p.name, match: (e: Execution) => e.process_id === p.id })) }]} />}
       <Sheet open={sel !== null} onOpenChange={(o) => { if (!o) setOpen(null); }}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           {sel && <>

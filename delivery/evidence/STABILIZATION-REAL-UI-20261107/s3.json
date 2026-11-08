@@ -1,0 +1,399 @@
+{
+  "step": "STABILIZATION-REAL-UI-20261107/S3",
+  "roadmap_relation": "Fixes P06/P07/P08 components; no roadmap step state changed",
+  "status": "done_in_code_pending_review",
+  "date": "2026-11-07",
+  "authorization": "User 'Start S3' in chat, 2026-11-07, after S2",
+  "source_revision": "f78d229f4c7149bc4d3599ff794a7942353a4d29",
+  "source_note": "Uncommitted working tree on main, on top of S1 and S2; per-file sha256 below. The checkout is shared.",
+  "versions": {
+    "core": "0.3.6 (unreleased; S3 adds limits in the same version)",
+    "runner": "0.3.11 (unchanged)",
+    "desktop": "0.1.0-beta.25 (unchanged code; locale gains two codes; no candidate built)"
+  },
+  "user_decisions": {
+    "s3_login_limit": "Per account and per client address, in Core memory: 5 failures in 5 minutes -> 429 with 60 s wait, doubling to 15 min, reset on success or restart, no permanent lock (2026-11-07)"
+  },
+  "environment": {
+    "os": "Windows 11 Pro x64, build 26200",
+    "python": "%USERPROFILE%/RedRise-v2-dev/runtime/python-3.12.10/tools/python.exe (3.12.10)",
+    "postgresql": "%USERPROFILE%/RedRise-v2-dev/downloads/p06-core/pgsql/bin, 17.6 (isolated temporary clusters)",
+    "tmp": "TMP/TEMP = %USERPROFILE%/RedRise-v2-dev/scratch/stab-tmp",
+    "baseline_copy": "%USERPROFILE%/RedRise-v2-dev/scratch/stab-s3-head (git archive of f78d229: core, contracts, runner, templates, tests, engine)",
+    "desktop_input": "none; screen check in the built-in browser pane against the lab inspection server"
+  },
+  "changes": {
+    "core": [
+      "auth.AttemptLimiter: keys wait after 5 counted attempts in 300 s: 60 s, doubling per new wait to 900 s. During a wait the request is refused before the password is checked and does not lengthen the wait. A key quiet for 900 s after its last wait or attempt is forgotten; at most 4096 keys, stalest dropped first; memory only.",
+      "Core.login(client=): one count per account (user id when the user exists, so user name and e-mail share it; otherwise the typed name) and one per client address. Failure (wrong password, unknown user or inactive account) counts on both. Success clears the account; the address is cleared too unless it also counted attempts on other accounts, then only this account's failures are forgotten.",
+      "Core.register(client=): every sign-up request counts per client address, accepted or refused, same waits.",
+      "New diagnostic AUTH-RATE-LIMITED (429, effect none, params retry_after_s) with Retry-After header.",
+      "api.Admission: 16 request slots plus 4 reserved for runner routes and job cancel; 5 s wait, then 503 CORE-BUSY (effect none, retry safe, Retry-After 2). The change feed (long wait) takes no slot.",
+      "_TlsServer: at most 64 connections being served and 16 per client address; extra ones are closed at accept, before TLS, without a thread. Timeout per connection 30 s (handshake, idle keep-alive, read/write).",
+      "TLS close: after the handshake the TLS socket owns the connection; the server now shuts it down and closes it when the handler ends (finished or interrupted). Before, only the detached plain socket was 'closed' and the TLS socket was left to the garbage collector (the ResourceWarning).",
+      "db.Database: max_open 32 connections in use (the 8-connection idle cache is not a limit), 5 s wait, then PoolBusy -> 503 CORE-STORAGE-UNAVAILABLE (reason PoolBusy, effect unknown as before). A nested transaction on the same thread does not wait for a second place.",
+      "Login now validates password type (a non-string no longer reaches scrypt) and splits the lookup and session insert into two short transactions."
+    ],
+    "tests": [
+      "tests/core/test_limits.py (new, 17): limiter policy with a test clock; through HTTPS: refusal and recovery, user name and e-mail sharing a count, one address failing on many accounts, no permanent lock after the longest wait, sign-up per address, restart clears; busy refusal with Runner heartbeat and cancel passing on reserved slots and the change feed without a slot; database cap without self-deadlock and its API diagnostic; connection caps; TLS sockets closed after completed, interrupted, handshake-never-sent, non-TLS and immediately closed connections (no server-side ResourceWarning).",
+      "test_core.Harness: cluster helpers moved to a plain class (not a TestCase); only CoreTest is collected, once. setUpClass drops cached tokens/accounts (_admin, _other, _users) of the class; admin() only reuses a token created on this class's own cluster.",
+      "Other modules import Harness instead of CoreTest; per-class caches read from the class's own dict.",
+      "test_core test_10 closes its raw HTTPS connection; test_identity closes its fake provider's listening socket; SignUpTest starts each test with the limits of a fresh Core (the class signs up more than 5 times from one address)."
+    ],
+    "contracts_and_locale": [
+      "contracts/errors.json and desktop/locale/pt-BR.json: AUTH-RATE-LIMITED and CORE-BUSY; contracts/modules.json: both in RR-CORE conditions"
+    ],
+    "docs": [
+      "docs/decisions/P05-contracts-lan.md: P05-D14 with every number",
+      "docs/APP-RULES.md: S3 paragraph in pt-BR",
+      "delivery/status.json: next_action"
+    ]
+  },
+  "baseline_individualization": {
+    "command": "cd <baseline_copy>/tests/core && <lab python> -B -m unittest discover -s . -p test_*.py -v",
+    "log": "%USERPROFILE%/RedRise-v2-dev/scratch/stab-s3-head-discover.log",
+    "observed": "Ran 221 tests: failures=14, errors=74 (same totals as the work order's prior run)",
+    "cause": "test_core.CoreTest was collected 9 times: in test_core and in the 8 modules that did `from test_core import CoreTest` (browser_processes, changes, identity, notify_followup, nova_rotina, report_followup, review, step_change). The first copy cached its admin token on the class (CoreTest._admin). Each later copy started a new cluster in setUpClass but admin() kept the token of the first cluster: AUTH-REQUIRED. Three copies ran back to back (changes, core, identity) and unittest ran setUpClass once for them, sharing one cluster.",
+    "per_failure": [
+      {
+        "tests": "test_02, test_03, test_04, test_05, test_06, test_07, test_08, test_09, test_13 (9 tests x 8 later copies)",
+        "kind": "ERROR",
+        "count": 72,
+        "message": "CoreError: AUTH-REQUIRED (token of another cluster)"
+      },
+      {
+        "tests": "test_12b_setup_refused_from_lan_and_correlation_and_uuid x 8",
+        "kind": "FAIL",
+        "count": 8,
+        "message": "'AUTH-REQUIRED' != 'NOT-FOUND' (same stale token)"
+      },
+      {
+        "tests": "test_01_status_setup_once_and_login, 6 copies on a new cluster",
+        "kind": "FAIL",
+        "count": 6,
+        "message": "CoreError not raised: admin() skipped setup, so the 'eve' setup succeeded instead of SETUP-ALREADY-DONE"
+      },
+      {
+        "tests": "test_01_status_setup_once_and_login, 2 copies on the shared cluster",
+        "kind": "ERROR",
+        "count": 2,
+        "message": "AUTH-REQUIRED at /me: setup already done on that cluster by the previous copy, stale token"
+      }
+    ],
+    "check": "72 + 8 + 6 + 2 = 88 = 14 failures + 74 errors; no other failing test in the baseline",
+    "tls_warnings": "1341 'unclosed ssl.SSLSocket' ResourceWarnings: 1332 at socketserver.py:697 (server TLS socket never closed), 9 from test_10's unclosed client connection; plus 1 unclosed listening socket at exit (test_identity's fake provider)"
+  },
+  "checks": [
+    {
+      "type": "contract_check",
+      "simulated": "Runner calls made by the tests; real Core over HTTPS with pinning and real PostgreSQL; limiter clock controlled by the test",
+      "command": "cd tests/core && <lab python> -B -W always::ResourceWarning -m unittest <module>  (each module in its own process)",
+      "observed": {
+        "test_core": {
+          "tests": 14,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_browser_processes": {
+          "tests": 17,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_review": {
+          "tests": 11,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_step_change": {
+          "tests": 9,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_nova_rotina": {
+          "tests": 14,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_notify_followup": {
+          "tests": 4,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_report_followup": {
+          "tests": 4,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_agent": {
+          "tests": 6,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_changes": {
+          "tests": 7,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_identity": {
+          "tests": 23,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_cancel": {
+          "tests": 7,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_summary": {
+          "tests": 3,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_limits": {
+          "tests": 17,
+          "result": "OK",
+          "resource_warnings": 0
+        }
+      },
+      "total_tests": 136
+    },
+    {
+      "type": "contract_check",
+      "command": "cd tests/core && <lab python> -B -W always::ResourceWarning -m unittest discover -s . -p test_*.py -v",
+      "observed": {
+        "tests": 136,
+        "result": "OK",
+        "resource_warnings": 0
+      },
+      "consistency": "aggregate count equals the sum of the isolated runs; no class collected twice; no token of another database"
+    },
+    {
+      "type": "contract_check",
+      "command": "cd tests/contracts && <lab python> -B -m unittest discover -s . -p test_*.py",
+      "observed": "17 tests OK (errors.json, modules.json, locale)"
+    },
+    {
+      "type": "component_check",
+      "command": "build/sync-ui.sh; npm run typecheck; npx vitest run; npm run build:ui (%USERPROFILE%/RedRise-v2-dev/build/ui-dev)",
+      "observed": "typecheck OK; 9 files, 55 tests passed; build OK"
+    },
+    {
+      "type": "screen_check",
+      "command": "preview redrise-v2-ui-inspect (lab Core 0.3.6, seeded synthetic team), login screen",
+      "input": "user admin, 5 made-up wrong passwords, a 6th attempt; 62 s later another attempt",
+      "observed": "attempts 1-5: AUTH-INVALID 'Usuário ou senha incorretos.'; attempt 6: AUTH-RATE-LIMITED shown in pt-BR, 'Aguarde 60 segundos e tente novamente.'; after 62 s the Core checked the password again (AUTH-INVALID). The seeded password was not typed; recovery with the right password is covered by test_limits.",
+      "cleanup": "inspection PostgreSQL stopped with pg_ctl and scratch/rr-ui-inspect-* removed; no postgres process left"
+    },
+    {
+      "type": "base_check",
+      "command": "node scripts/validate-base.mjs; node scripts/validate-base.mjs --check-sources",
+      "observed": "passed, 346 and 368 checks"
+    }
+  ],
+  "dependencies": {
+    "method": "Read with tools already present: cargo tree --offline --locked -e normal --depth 1; Cargo.lock; dist-info folders of the packaged site-packages; postgres --version. No scanner installed or run (no cargo-audit, no pip-audit on this machine); nothing upgraded.",
+    "rust_desktop": {
+      "direct": {
+        "tauri": "2.12.5",
+        "serde": "1.0.229",
+        "serde_json": "1.0.154",
+        "sha2": "0.10.9",
+        "ed25519-dalek": "2.2.0",
+        "base64": "0.22.1",
+        "ureq": "2.12.1 (tls, json)",
+        "rustls": "0.23.46 (ring, std, tls12)",
+        "windows-sys": "0.61.2"
+      },
+      "build": {
+        "tauri-build": "2"
+      },
+      "locked_packages": 440
+    },
+    "python_core_site": {
+      "psycopg": "3.2.13",
+      "psycopg-binary": "3.2.13",
+      "cryptography": "46.0.7",
+      "cffi": "2.1.1",
+      "pycparser": "3.12",
+      "typing_extensions": "4.16.0",
+      "tzdata": "2026.5",
+      "source": "%USERPROFILE%/RedRise-v2-dev/downloads/p06-core/site-packages"
+    },
+    "python_browser_site": {
+      "playwright": "1.63.0",
+      "greenlet": "3.5.6",
+      "pyee": "13.0.1",
+      "typing_extensions": "4.16.0",
+      "source": "%USERPROFILE%/RedRise-v2-dev/downloads/p03-playwright/site-packages"
+    },
+    "runtimes": {
+      "cpython": "3.12.10 (NuGet package pinned by SHA-512 in packaging/runtime/build-layout.ps1)",
+      "postgresql": "17.6"
+    },
+    "runner": "standard library plus redrise_contracts; no third-party import found in runner/redrise_runner",
+    "coverage_limit": "Inventory only: no advisory database was queried for Rust or Python. The earlier npm audit covers the desktop JavaScript dependencies only and is not a statement about the whole product."
+  },
+  "security_review": {
+    "skill": "security-hardening-checklist step 2, limited to the S3 scope",
+    "preserved": [
+      "TLS 1.2+ with certificate pinning (test_11, unchanged code path)",
+      "tokens stored as hashes (auth.new_token unchanged)",
+      "permissions in the Core (role tests in test_core, test_summary, test_review pass)",
+      "update signature verification (desktop code unchanged)"
+    ],
+    "rate_limits": "sign-in and sign-up limited as decided; negative and recovery tests in test_limits",
+    "not_limited": [
+      "identity/session and identity/link (external identity suspended; provider-side limits apply when resumed)",
+      "setup (local host only, once)",
+      "authenticated routes (bounded by admission, not by attempt counts)"
+    ]
+  },
+  "acceptance_mapping": {
+    "localized regressions of limits and recovery pass": "test_limits (17); screen check",
+    "aggregate and isolated Core suites consistent, no token of another database": "final runs: per-module sum equals discovery total; Harness drops class caches per cluster",
+    "remaining failures have cause/evidence and stay open": "none remaining in the final runs; the 88 baseline failures individualized above",
+    "TLS close tested for completed, interrupted and incomplete handshake on an isolated server": "test_limits ServerLimitTest test_04; discovery and module logs show 0 server-side unclosed TLS sockets",
+    "concurrency limited with margin for heartbeat/cancel": "test_limits ServerLimitTest test_01 to test_03",
+    "npm audit not turned into a full security statement": "dependencies.coverage_limit"
+  },
+  "artifacts": [
+    {
+      "path": "core/redrise_core/auth.py",
+      "sha256": "5bf9144d8e976b67df500c513ae4fca85836c8e2d503bb06ccf9e7660137b71a"
+    },
+    {
+      "path": "core/redrise_core/service.py",
+      "sha256": "a80a597f49512dabf8fe5ab45ca791d3b10c886cdc044fb70cf7b28bbbce1857"
+    },
+    {
+      "path": "core/redrise_core/api.py",
+      "sha256": "94ef660a6a17da338e96895f743ac12fdf1927149eeeb50ff8bdab526100a5d1"
+    },
+    {
+      "path": "core/redrise_core/db.py",
+      "sha256": "42dadf7c684c8fefb13c261f14bd6e6451cadd943354173fff717aa08214ccf1"
+    },
+    {
+      "path": "contracts/errors.json",
+      "sha256": "dd0a2ffdf077c3874e6f1f5b1868a252f806df52a00fa026ad1e2bdb24bf6722"
+    },
+    {
+      "path": "contracts/modules.json",
+      "sha256": "68c2197429d0a8ad0722bc06c2087c74d78ebd33d6b75042c26a36705e7ac1a9"
+    },
+    {
+      "path": "desktop/locale/pt-BR.json",
+      "sha256": "45c0ab9bc5fcb313bb0cbcbdec8781509866322f063e20c5556bd4c191afaa0b"
+    },
+    {
+      "path": "tests/core/test_limits.py",
+      "sha256": "1bb1850f462b8a109b328a160bf3d93fb9c46ef63ed5b915820b6aee829352bc"
+    },
+    {
+      "path": "tests/core/test_core.py",
+      "sha256": "b6e38381c1b8fdea6ab4f06451c2bad9e06d3bf189581d643001d7a6b4125726"
+    },
+    {
+      "path": "tests/core/test_identity.py",
+      "sha256": "8904db608a4134e94cf25b4199e5b34467745eca0178c86bb69735725bc41178"
+    },
+    {
+      "path": "tests/core/test_browser_processes.py",
+      "sha256": "8046da762034d32bc0995f66c3d8ac709a70d3256d46583516cbaf71c631a2d6"
+    },
+    {
+      "path": "tests/core/test_changes.py",
+      "sha256": "d0fae60235b042402de2027e39ec8af8c6889ad61a566d0e578e18a090eff7da"
+    },
+    {
+      "path": "tests/core/test_notify_followup.py",
+      "sha256": "a97fb0393a634c77666a2585f8f4782709fbdcc097f8f44041b27a7fe2d4b300"
+    },
+    {
+      "path": "tests/core/test_nova_rotina.py",
+      "sha256": "bcef17847c1008109b068c9883f32f2bcb05b4a6035f991acb991354b56be737"
+    },
+    {
+      "path": "tests/core/test_report_followup.py",
+      "sha256": "4e2d3d1b546c3fe6b45cb3919cc2efd1ce1d00b2331819215791c7492262d6d5"
+    },
+    {
+      "path": "tests/core/test_review.py",
+      "sha256": "0eb4a25771b95ba468e0a72b07d82cbc0fefecd4260fa545a8f9cfcc38d97003"
+    },
+    {
+      "path": "tests/core/test_step_change.py",
+      "sha256": "827ad9430191602468b9a9ed2ce485121b3521362381c302fbbf850d4b4952a5"
+    },
+    {
+      "path": "tests/core/test_cancel.py",
+      "sha256": "c97b976271451736568a8c02eca1235fd64f6aabe45fe265156bdcb02dc4a6f7"
+    },
+    {
+      "path": "tests/core/test_summary.py",
+      "sha256": "94e8d9276ffdf0fa8de3f0a95605a112d929ac101f939c21c5cc7af41a120e37"
+    },
+    {
+      "path": "docs/APP-RULES.md",
+      "sha256": "0299b9d3f77aecbf6b7a7a600e22852b7518f53b82fef1a880d59eb34c3b00f0"
+    },
+    {
+      "path": "docs/decisions/P05-contracts-lan.md",
+      "sha256": "206ff1fc66816eba828c9c0b18716da233ce320261b795474f17a1ab7ec5fcfa"
+    },
+    {
+      "path": "delivery/status.json",
+      "sha256": "8a6651f8ca9eee4f8833f1e1f6b20d96996a66cf86c7f73ade2cca42ff68e15c"
+    }
+  ],
+  "commands": {
+    "required": [
+      "baseline discovery on a git archive of f78d229",
+      "each Core module in its own process with ResourceWarnings shown",
+      "Core discovery in one process",
+      "tests/contracts",
+      "UI typecheck, vitest and build on C:",
+      "screen check of the login refusal",
+      "validate-base (both modes)",
+      "dependency inventory with tools already present"
+    ],
+    "optional": [],
+    "not_applicable": [
+      "Runner tests: no Runner source changed",
+      "verify-candidate.ps1: no candidate (S4)",
+      "load test against the real install: forbidden by the work order; limits proven on isolated servers",
+      "vulnerability scanners: none installed; installing one needs a separate decision"
+    ]
+  },
+  "skills": {
+    "applied": [
+      {
+        "name": "api-contract-testing",
+        "sha256": "1b68a02f675b2ea183690b6aa08b957aedfee578e15926017c7c0fb9690489d3"
+      },
+      {
+        "name": "security-hardening-checklist",
+        "sha256": "cdadb1b9c5ec75d338e2fbbe905fbf6fd91e5e815801d3e7c7f4aa226fb411bb",
+        "note": "selected and read after the code changes, before the final runs and this evidence; used to check the changed controls and record residual risks"
+      }
+    ],
+    "note": "Resolved with catalogs/skills/scripts/resolve-skill.mjs"
+  },
+  "memory": "correnth/redrise-v2 operational memory not reachable from this session; canonical files used",
+  "graph": "not used; no registered Graphify root for redrise-v2",
+  "review": {
+    "file": "delivery/evidence/STABILIZATION-REAL-UI-20261107/review.json",
+    "date": "2026-11-07",
+    "result": "no blocking; findings fixed or kept with reasons, validated on 0.1.0-beta.27 (s4-fixes.json)"
+  },
+  "limitations": [
+    "No independent review yet; no installed proof (S4).",
+    "Anyone on the LAN who knows a user name can make that account wait (up to 15 min per wait, renewable by failing again); it is never permanent and needs no administrator to clear. Counting per account and address pair instead would remove this at the cost of the per-account protection; not changed without a user decision.",
+    "Users on the Core's own computer share the address 127.0.0.1 for the per-address count.",
+    "Limits live in memory: a Core restart clears them (decided).",
+    "The connection cap is reached before the request is known, so the Runner margin exists at request level only; a client holding 16 idle connections per address from 4 or more addresses could fill the 64 connections for up to 30 s each.",
+    "The numbers (64, 16, 16+4, 32, 5 s, 30 s) are sized for a small LAN team and were not measured under real load (no load test against the real install, per the work order).",
+    "Dependency inventory only; no advisory scan."
+  ],
+  "next_action": "User go-ahead for S4 (candidate 0.1.0-beta.26, verify-candidate, lab install with a free desktop, UIA names of the radios)."
+}

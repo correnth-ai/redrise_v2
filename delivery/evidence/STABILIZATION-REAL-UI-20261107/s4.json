@@ -1,0 +1,219 @@
+{
+  "step": "STABILIZATION-REAL-UI-20261107/S4",
+  "roadmap_relation": "Installed validation feeding P10/P11/P13; no roadmap step state changed",
+  "status": "accepted_on_lab_candidate_pending_review",
+  "date": "2026-11-07",
+  "authorization": "User 'Start S4' and 'Free now, start' (computer free, RedRise closed) in chat, 2026-11-07",
+  "source_revision": "f78d229f4c7149bc4d3599ff794a7942353a4d29",
+  "source_note": "Uncommitted working tree with S1-S3; candidate built from it on C:",
+  "candidate": {
+    "version": "0.1.0-beta.26",
+    "installer": "%USERPROFILE%/RedRise-v2-dev/release/0.1.0-beta.26/RedRise-Setup-0.1.0-beta.26.exe",
+    "installer_sha256": "8cee8c98376eca5ea29eea8c5fa0eb6cdd1d61d8814e07ac775ea33edd7dc81e",
+    "payload_sha256": "7eb834c4c3a5dc60a4aa0bf3e3bb4496fe8b535c5cd3c75b6320c70e0790caf8",
+    "files": 3753,
+    "desktop_exe_sha256": "8480148164ec9d8d17960107dac1d4cc2ab51a29c64426f6e066f5918384ed9e",
+    "engine_sha256": "b4f13d237db2b75d7107c046e8868738400f483e11bb0a76493a891237fd7ca9 (same binary as beta.25; no engine source change)",
+    "installer_tool": "same redrise-setup.exe as beta.25 (sha256 98657910c372e01b2c292c0f042f23c70b31374791c2c2a9f06d7891ae1f2f9b; no installer source change)",
+    "versions": {
+      "desktop": "0.1.0-beta.26",
+      "core": "0.3.6",
+      "runner": "0.3.11",
+      "python": "3.12.10",
+      "postgresql": "17.6"
+    },
+    "difference_from_beta25": "one added file, licenses/playfair-display-OFL.txt (file lists of both stages compared), plus the S1-S3 source changes",
+    "dependencies": "as listed in s3.json; no dependency changed in S4",
+    "channel_signed": false,
+    "published": false,
+    "homologated": false
+  },
+  "gate": {
+    "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.26 (through an Explorer shortcut, computer free)",
+    "passed": true,
+    "trials_per_mode": 3,
+    "record": "s4/verification.json"
+  },
+  "lab_install": {
+    "how": "RedRise-Setup-0.1.0-beta.26.exe --quiet --install-root lab-test/install-beta26",
+    "exit": 0,
+    "record": "s4/install-beta26.json",
+    "real_install": "not touched; still 0.1.0-beta.25 with its real team"
+  },
+  "practical_proof": {
+    "command": "<lab install>/runtime/python/python.exe -B -X utf8 proofs/stabilization/accept_s4.py --lab lab-test --shots lab-test/shots-s4",
+    "team": "isolated synthetic lab team (REDRISE_DATA_ROOT and REDRISE_TEST_VAULT together), written earlier by beta.25",
+    "runs": [
+      {
+        "report": "s4/accept-s4-20261107-182039.json",
+        "all_scenarios": true,
+        "result": {
+          "migration": true,
+          "empresa": false,
+          "radios": true,
+          "start": true,
+          "review": true,
+          "report": true,
+          "cancel": true,
+          "roles": true,
+          "empresa_after": false,
+          "limits": true
+        },
+        "note": "empresa and empresa_after stopped in the proof: it looked for the Empresa menu as a link, but it is a menu button. No app change."
+      },
+      {
+        "report": "s4/accept-s4-20261107-182250.json",
+        "only": "empresa, empresa_after",
+        "result": {
+          "empresa": false,
+          "empresa_after": true
+        },
+        "note": "empresa_after passed: every indicator equal to the Core. empresa stopped in the proof again: the Historico banner reaches the Windows tree in pieces; s4/inst-s4-falha-empresa.png shows the app right (49 in the period, 6 needing attention, 6 rows)."
+      },
+      {
+        "report": "s4/accept-s4-20261107-182412.json",
+        "only": "empresa",
+        "result": {
+          "empresa": true
+        },
+        "note": "proof joins the banner pieces; passed"
+      }
+    ],
+    "scenarios": {
+      "migration": "beta.25 team reopened on beta.26: Boas-vindas with 3 steps, history kept (46 executions); no new migration in S1-S3",
+      "empresa": "processes 25, executions in 30 days 49 = 0 running + 0 waiting + 6 attention + 43 verified, stations 1 de 1: screen equal to the Core; the attention card opened Historico with 'Iniciadas nos ultimos 30 dias: 49', tab 6, 6 rows",
+      "radios": "Windows tree has RadioButton 'Iniciar um processo', 'Fazer follow-up', 'Rotina avulsa'; choosing by the name alone revealed Etapa anterior; Cancelar created nothing (closes the beta.25 open point)",
+      "start": "cadastrar rotina -> Salvar e preparar opened nothing -> Quer testar? opened the Calculator, closed by the proof",
+      "review": "process run paused waiting_review; bell 0 -> 1; Aprovado! in the app; verified; bell back to 0",
+      "report": "PDF saved (1 page, 10129 bytes), Historico row, Veja aqui! opened its folder; file moved to the lab",
+      "cancel": "cancel accepted while step 1 ran on the real Runner: step 1 kept its real result (verified), execution finished cancelled, step 2 never queued; Calculator windows closed",
+      "roles": "operator reads summary and processes; listing users, creating a user, registering a station, creating a routine -> AUTH-FORBIDDEN; no token -> AUTH-REQUIRED; deactivated -> AUTH-REQUIRED",
+      "empresa_after": "after the proof's own runs, indicators still equal to the Core",
+      "limits": "5 wrong passwords 401; right password 429 AUTH-RATE-LIMITED, Retry-After 60; signed-in admin kept working; after 61 s the right password signed in (200)"
+    },
+    "clicks_lost": 0,
+    "boas_vindas_regression": "verify-candidate smoke: Boas-vindas 3 times idle and 3 times under full CPU load from the installed layout, all verified and closed"
+  },
+  "rollback_and_recovery": {
+    "command": "proofs/stabilization/rollback_check.py on a robocopy of lab-test/data (lab app closed); report s4/s4-rollback.json",
+    "binary_rollback": "Core 0.3.5 (beta.25) opened the copy written by 0.3.6: same API counts (25 processes, 53 routines, 49 executions, 3 users) and same table counts (127 jobs, 9 migrations)",
+    "data_recovery": "redrise-core backup (pg_dump, 111280 bytes) and restore into a new database redrise_restore_check: every table count equal to the live one",
+    "limits": [
+      "Reversible here only because S1-S3 added no migration (still 9). A version that adds a migration needs the pre-migration backup the Core takes, restored into a new database; the old binary does not undo a schema change.",
+      "Restore goes to a separate database by design; switching the live database to it is a manual operation, not exercised here.",
+      "Counts were compared, not every column; a field a newer version adds would not be shown by an older Core."
+    ]
+  },
+  "not_exercised": [
+    "Connection failure between the installed app and its Core: would need firewall or system changes on this computer; covered by Core contract tests (CORE-UNREACHABLE) and UI ErrorView tests.",
+    "A real e-mail or webmail draft: still pending by the user's earlier decision; no message sent.",
+    "Load behaviour of the new limits on the installed Core: no load test on installs, per the work order."
+  ],
+  "acceptance_mapping": {
+    "candidate identified by version, installer hash, source and dependencies": "candidate",
+    "Playfair license present in the package": "candidate.difference_from_beta25",
+    "short flow cadastrar -> preparar -> executar -> revisao -> historico/relatorio": "start, review, report",
+    "indicators, filters and buttons on the same records": "empresa, empresa_after",
+    "cancel without advance, permissions, data preservation": "cancel, roles, migration",
+    "Boas-vindas regression": "boas_vindas_regression",
+    "rollback distinguished from data recovery, on an isolated copy": "rollback_and_recovery",
+    "no personal data or tokens in artifacts": "reports copied with the user folder replaced by %USERPROFILE%; passwords generated in memory or read from the lab file, never written",
+    "closed_beta_available, beta_ready and published kept distinct": "status.json unchanged for those fields"
+  },
+  "artifacts": [
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/accept-s4-20261107-182039.json",
+      "sha256": "a1eafd72cf38cdf441dd486e7ce195705eb4330dce0f6ee0cbcef8e1535113c1"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/accept-s4-20261107-182250.json",
+      "sha256": "4b47b07ff0b46a957b04eef71b10e0d759109606844623b6c6074e299ce149dd"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/accept-s4-20261107-182412.json",
+      "sha256": "ea1cadf3586cb249a256fd2e8b3c4fe11af3cd60e20d3e499e024c564d0dc99f"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/s4-rollback.json",
+      "sha256": "d0afaffa4e452cc7f520ed0f904c5a133e21b03487f10dfc160c350287a1f3fb"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/verification.json",
+      "sha256": "9d692179d7127fb1631bc36409de79e04cc9165674b75e4f2dceff63b2bc6b09"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/install-beta26.json",
+      "sha256": "42f70d6ac4e8d041678187fc47e5de197e40b3bb9643c435274dedf16840b737"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/inst-s4-empresa.png",
+      "sha256": "8be638c781fec29b9a576e8144972a1e6691e96568b98b940d1fbffc61422874"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/inst-s4-radios.png",
+      "sha256": "eef5b2d6cde08724e6b7caffe1af84cb0a374b2c01e3e1326274548516835a51"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/inst-s4-cancelada.png",
+      "sha256": "ae50b5773fe2054722126b9911d4bd66730162b8be21bd4bf399429a8ce60d39"
+    },
+    {
+      "path": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4/inst-s4-falha-empresa.png",
+      "sha256": "22b04f8ff53359ff5cb1641c24f1799c089b68131af79ad57e9f7e1adf57d899"
+    },
+    {
+      "path": "proofs/stabilization/accept_s4.py",
+      "sha256": "67271fae77486690fa7f9da0aa9889557e052eaf5288abe4836a8a48477d75eb"
+    },
+    {
+      "path": "proofs/stabilization/rollback_check.py",
+      "sha256": "747138205efb3951e9e5dedd11357c1526ae581f0c21a37d63550838a0677c35"
+    },
+    {
+      "path": "desktop/package.json",
+      "sha256": "7e6f62ec17ab8bbd0ed63419f6a12b598b66c21ad6de96677b551f6c3615b586"
+    },
+    {
+      "path": "desktop/src-tauri/Cargo.toml",
+      "sha256": "300f96e44d4721d645cbe3f3a6be0645e43c8e6e307c847e32e2a40a2ce663ab"
+    },
+    {
+      "path": "desktop/src-tauri/tauri.conf.json",
+      "sha256": "9c2cd225523758899d3810b98e462acddd710d7c6d0e42343a54f9cbb22e4f79"
+    }
+  ],
+  "commands": {
+    "required": [
+      "packaging/desktop/build-desktop.ps1",
+      "packaging/release/build-release.ps1 -Version 0.1.0-beta.26",
+      "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.26",
+      "lab install --quiet --install-root",
+      "accept_s4.py (all scenarios, then empresa reruns)",
+      "rollback_check.py on a copy"
+    ],
+    "optional": [],
+    "not_applicable": [
+      "Engine and installer-tool builds: sources unchanged since beta.25, same binaries reused",
+      "channel signing (release_channel.py): needs an explicit order",
+      "real install update: needs an explicit order"
+    ]
+  },
+  "intervention": "The proof was corrected twice between runs (menu button; banner in pieces). No app code changed after the build.",
+  "skills": {
+    "applied": [
+      {
+        "name": "api-contract-testing",
+        "sha256": "1b68a02f675b2ea183690b6aa08b957aedfee578e15926017c7c0fb9690489d3"
+      }
+    ],
+    "note": "release gate and proofs are the project's own scripts"
+  },
+  "memory": "operational memory not reachable; canonical files used",
+  "graph": "not used",
+  "review": {
+    "file": "delivery/evidence/STABILIZATION-REAL-UI-20261107/review.json",
+    "date": "2026-11-07",
+    "result": "no blocking; findings fixed or kept with reasons, validated on 0.1.0-beta.27 (s4-fixes.json)"
+  },
+  "next_action": "Independent review of S1-S4; then S5 (plan only) on the user's go-ahead. Channel signing, publication or updating the real install only on explicit order."
+}

@@ -427,6 +427,19 @@
       "next": "Check user and password. If you forgot the password, ask a team administrator.",
       "details": "Credentials refused."
     },
+    "AUTH-RATE-LIMITED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Too many attempts in a short time.",
+      "completed": "The request was refused before the password or the form was checked.",
+      "pending": "Nothing was changed.",
+      "next": "Wait {retry_after_s} seconds and try again. If you forgot the password, ask a team administrator.",
+      "details": "Attempt limit of the team server (wait {retry_after_s} s)."
+    },
     "AUTH-FORBIDDEN": {
       "category": "precondition",
       "modules": [
@@ -531,6 +544,19 @@
       "pending": "Whether the change was completed is unknown.",
       "next": "Refresh the screen and check before repeating. If it persists, copy the diagnostic and send it to support.",
       "details": "Unhandled exception ({reason})."
+    },
+    "CORE-BUSY": {
+      "category": "environment",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "safe",
+      "what": "The team server is busy with other requests.",
+      "completed": "The request was refused before anything was done.",
+      "pending": "Nothing was changed.",
+      "next": "Wait a moment and try again.",
+      "details": "No request slot within the wait (retry after {retry_after_s} s)."
     },
     "CORE-UNREACHABLE": {
       "category": "communication",

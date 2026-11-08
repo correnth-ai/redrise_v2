@@ -3,6 +3,7 @@
 // fictitious and never written to the Core, the database or any evidence of
 // automation. Progress is a declared local simulation, not a verification.
 import type { DataSource } from "./source";
+import { groupOf, type Group } from "./status";
 import type { BrowserConfig, Execution, ExecutionStep, JobState, Process, Routine, Station } from "./types";
 
 const now = () => new Date().toISOString();
@@ -90,6 +91,14 @@ export const demoSource: DataSource = {
     return e ? { id: e.id, state: e.state, outcome: e.outcome, end_reason: e.end_reason, created_at: e.created_at } : null;
   })() }))),
   executions: async () => clone(executions),
+  async executionSummary() { // same groups as the Core, over the demonstration records
+    const since = Date.now() - 30 * 86400000;
+    const shown = executions.filter((e) => Date.parse(e.created_at) >= since);
+    const n = (g: Group) => shown.filter((e) => groupOf(e) === g).length;
+    return { days: 30, since: new Date(since).toISOString(), until: now(), total: shown.length,
+      running: n("running"), waiting: n("waiting"), attention: n("attention"), verified: n("verified") };
+  },
+  executionsSince: async (days) => clone(executions.filter((e) => Date.parse(e.created_at) >= Date.now() - days * 86400000)),
   stations: async () => clone(stations),
   storage: async () => ({ db_bytes: 48_300_000, counts: { routines: routines.length, processes: processes.length,
     executions: executions.length, jobs: executions.reduce((n, e) => n + e.steps.filter((s) => s.job_id).length, 0) },

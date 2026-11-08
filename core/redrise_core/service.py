@@ -192,6 +192,7 @@ class Core:
         self.templates = templates or {}  # id -> template.json of this release
         self.verifier = verifier  # identity provider adapter; None: e-mail sign-in unavailable here
         self.changes = changes.ChangeFeed(getattr(db, "info", None))
+        self.limits = auth.AttemptLimiter()  # sign-in and sign-up attempts; memory only, a restart clears it
 
     # ------------------------------------------------------------ team / accounts
     def status(self) -> dict:
@@ -234,9 +235,18 @@ class Core:
                 c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, %s, %s, true)",
                           (p["id"], i, r["id"]))
 
-    def register(self, full_name, email, password) -> dict:
+    def _attempt(self, keys, account=None) -> None:
+        """Counts this attempt before any slow check, or refuses it while a key waits (nothing counted)."""
+        left = self.limits.attempt(keys, account)
+        if left:
+            raise err(429, "AUTH-RATE-LIMITED", retry_after_s=left)
+
+    def register(self, full_name, email, password, client: str | None = None) -> dict:
         """Sign-up: records the account and nothing else. It starts inactive, as an operator, so creating an
-        account grants no access to the team until an administrator activates it in Configuracao > Equipe."""
+        account grants no access to the team until an administrator activates it in Configuracao > Equipe.
+        Every sign-up request counts against its client address, accepted or not."""
+        key = ("signup", client or "-")
+        self._attempt((key,))
         if not isinstance(full_name, str) or not 1 <= len(full_name.strip()) <= 120:
             raise err(400, "VALIDATION", reason="full name required")
         if not isinstance(email, str) or len(email) > 254 or not _EMAIL.match(email.strip()):
@@ -257,13 +267,20 @@ class Core:
                       (username, full_name.strip(), auth.hash_password(password), email))
         return {"pending": True}
 
-    def login(self, username: str, password: str) -> dict:
+    def login(self, username: str, password: str, client: str | None = None) -> dict:
+        """Failures count per account (the user when it exists, so user name and e-mail share one
+        count; otherwise the name typed) and per client address; see auth.AttemptLimiter."""
+        who = username.strip().lower()[:254] if isinstance(username, str) else None
         with self.db.tx() as c:
-            who = username.strip().lower() if isinstance(username, str) else username
-            u = c.execute("SELECT * FROM users WHERE username = %s OR email = %s", (who, who)).fetchone()
-            ok = auth.verify_password(password or "", u["pw_hash"] if u else auth.DUMMY_HASH)
-            if not u or not ok or not u["active"]:
-                raise err(401, "AUTH-INVALID")
+            u = c.execute("SELECT * FROM users WHERE username = %s OR email = %s", (who, who)).fetchone() if who else None
+        account = f"user:{u['id']}" if u else f"name:{who}"
+        keys = (("account", account), ("client", client or "-"))
+        self._attempt(keys, account)  # counted now; a right password below forgets it
+        ok = auth.verify_password(password if isinstance(password, str) else "", u["pw_hash"] if u else auth.DUMMY_HASH)
+        if not u or not ok or not u["active"]:
+            raise err(401, "AUTH-INVALID")
+        self.limits.success(keys[0], keys[1], account)
+        with self.db.tx() as c:
             token, h = auth.new_token()
             c.execute("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (%s, %s, now() + %s)",
                       (h, u["id"], SESSION_TTL))
@@ -1159,10 +1176,13 @@ class Core:
         if j:
             self._event(c, j["id"], "queued", {"execution": str(execution["id"]), "position": item["position"]})
 
-    def _advance(self, c, execution_id, position: int, state: str, verified: bool, result) -> None:
+    def _advance(self, c, execution_id, position: int, state: str, verified: bool, result,
+                 cancel_requested: bool = False) -> None:
         """R04/R05/G17/G19/G21: only a verified result with continuation on and
         a next link starts the next routine; anything else ends the execution
-        here, without retry. Runs inside the transaction that finished the job."""
+        here, without retry. Runs inside the transaction that finished the job.
+        A cancel accepted while the step ran keeps that step's real result but
+        never starts the next one; the execution ends as cancelled."""
         e = c.execute("SELECT * FROM executions WHERE id = %s FOR UPDATE", (execution_id,)).fetchone()
         if not e or e["state"] != "running":
             return
@@ -1177,9 +1197,13 @@ class Core:
             c.execute("UPDATE executions SET context = %s WHERE id = %s", (Jsonb(context), execution_id))
         if state == "verified" and verified:
             if item["continue_next"] and position < len(snapshot):
-                self._queue_step(c, {**e, "context": context}, snapshot[position])
-                return
-            end = "continuation_off" if position < len(snapshot) else "sequence_end"
+                if cancel_requested:
+                    state, end = "cancelled", "cancelled"
+                else:
+                    self._queue_step(c, {**e, "context": context}, snapshot[position])
+                    return
+            else:
+                end = "continuation_off" if position < len(snapshot) else "sequence_end"
         else:
             end = "cancelled" if state == "cancelled" else "not_verified"
         c.execute("UPDATE executions SET state = 'finished', outcome = %s, end_reason = %s, finished_at = now() WHERE id = %s",
@@ -1226,10 +1250,46 @@ class Core:
         out["steps"] = steps
         return out
 
-    def list_executions(self, actor: dict, limit: int = 100) -> list[dict]:
+    # Situation groups shared by the summary and the UI tabs (desktop/src/data/status.ts):
+    # attention = finished and not verified; verified = finished verified.
+    _GROUPS = {"running": "e.state = 'running'", "waiting": "e.state = 'waiting_review'",
+               "attention": "e.state = 'finished' AND e.outcome IS DISTINCT FROM 'verified'",
+               "verified": "e.state = 'finished' AND e.outcome = 'verified'"}
+    SUMMARY_DAYS = 30
+
+    @staticmethod
+    def _days(days) -> int | None:
+        if days is None:
+            return None
+        try:
+            n = int(days)
+        except (TypeError, ValueError):
+            n = 0
+        if not 1 <= n <= 366:
+            raise err(400, "VALIDATION", reason="days must be an integer from 1 to 366")
+        return n
+
+    def execution_summary(self, actor: dict, days=None) -> dict:
+        """Counts of executions started in the last `days` days, by situation, counted in the database
+        (not from a capped list). Same period and predicates as list_executions(days=...)."""
+        n = self._days(days) or self.SUMMARY_DAYS
+        groups = ", ".join(f"count(*) FILTER (WHERE {sql}) AS {name}" for name, sql in self._GROUPS.items())
         with self.db.tx() as c:
             self._sweep(c)
-            rows = c.execute(f"{self._EXEC_SELECT} ORDER BY e.created_at DESC LIMIT %s", (min(max(limit, 1), 500),)).fetchall()
+            row = c.execute(f"""SELECT now() AS until, now() - make_interval(days => %s) AS since, count(*) AS total, {groups}
+                                FROM executions e WHERE e.created_at >= now() - make_interval(days => %s)""", (n, n)).fetchone()
+        return {"days": n, "since": row["since"].isoformat(), "until": row["until"].isoformat(),
+                "total": int(row["total"]), **{k: int(row[k]) for k in self._GROUPS}}
+
+    def list_executions(self, actor: dict, limit: int = 100, days=None) -> list[dict]:
+        """Most recent first. With `days`, only executions started in that period (the summary's), up to 500."""
+        n = self._days(days)
+        where, args = ("WHERE e.created_at >= now() - make_interval(days => %s)", [n]) if n else ("", [])
+        if n:
+            limit = 500
+        with self.db.tx() as c:
+            self._sweep(c)
+            rows = c.execute(f"{self._EXEC_SELECT} {where} ORDER BY e.created_at DESC LIMIT %s", (*args, min(max(limit, 1), 500))).fetchall()
             ids = [r["id"] for r in rows]
             jobs = c.execute("""SELECT id, execution_id, position, state, verified, diagnostic, diagnostic ->> 'error_code' AS error_code,
                                        started_at, finished_at FROM jobs WHERE execution_id = ANY(%s)""", (ids,)).fetchall() if ids else []
@@ -1442,9 +1502,9 @@ class Core:
                   (state, Jsonb(result) if result is not None else None, Jsonb(diagnostic) if diagnostic else None,
                    verified, job_id))
         self._event(c, job_id, state, {"error_code": (diagnostic or {}).get("error_code")} if diagnostic else None)
-        j = c.execute("SELECT execution_id, position FROM jobs WHERE id = %s", (job_id,)).fetchone()
+        j = c.execute("SELECT execution_id, position, cancel_requested FROM jobs WHERE id = %s", (job_id,)).fetchone()
         if j and j["execution_id"]:
-            self._advance(c, j["execution_id"], j["position"], state, verified, result)
+            self._advance(c, j["execution_id"], j["position"], state, verified, result, cancel_requested=j["cancel_requested"])
 
     def _event(self, c, job_id, state: str, detail) -> None:
         c.execute("INSERT INTO job_events (job_id, state, detail) VALUES (%s, %s, %s)",

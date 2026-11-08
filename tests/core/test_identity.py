@@ -12,9 +12,9 @@ from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import test_core
-from test_core import PW, CoreTest
+from test_core import PW, Harness
 
-from redrise_core import identity
+from redrise_core import auth, identity
 
 DEVICE = {"installation_id": "inst-aaaa-0001", "name": "PC-TESTE", "windows_user": "maria"}
 OTHER_DEVICE = {"installation_id": "inst-bbbb-0002", "name": "PC-CASA", "windows_user": "maria"}
@@ -52,17 +52,18 @@ class Provider:
 
 
 class IdentityTest(unittest.TestCase):
-    setUpClass = classmethod(CoreTest.setUpClass.__func__)
-    client, expect, admin, su = CoreTest.client, CoreTest.expect, classmethod(CoreTest.admin.__func__), CoreTest.su
+    setUpClass = classmethod(Harness.setUpClass.__func__)
+    client, expect, admin, su = Harness.client, Harness.expect, classmethod(Harness.admin.__func__), Harness.su
 
     @classmethod
     def tearDownClass(cls):
         cls.provider.httpd.shutdown()
-        CoreTest.tearDownClass.__func__(cls)
+        cls.provider.httpd.server_close()
+        Harness.tearDownClass.__func__(cls)
 
     @classmethod
     def setUpClass(cls):
-        CoreTest.setUpClass.__func__(cls)
+        Harness.setUpClass.__func__(cls)
         cls.provider = Provider()
         cls.h.core.verifier = identity.SupabaseVerifier(cls.provider.url, "chave-publica")
 
@@ -242,9 +243,14 @@ class IdentityTest(unittest.TestCase):
 
 class SignUpTest(unittest.TestCase):
     """Sign-up on the Core (user decision of 02/11/2026): records the account, no e-mail, no access by itself."""
-    setUpClass = classmethod(CoreTest.setUpClass.__func__)
-    tearDownClass = classmethod(CoreTest.tearDownClass.__func__)
-    client, expect, admin = CoreTest.client, CoreTest.expect, classmethod(CoreTest.admin.__func__)
+    setUpClass = classmethod(Harness.setUpClass.__func__)
+    tearDownClass = classmethod(Harness.tearDownClass.__func__)
+    client, expect, admin = Harness.client, Harness.expect, classmethod(Harness.admin.__func__)
+
+    def setUp(self):
+        # Each test starts with the limits of a fresh Core: this class signs up more than 5 times from
+        # one address in a few minutes, which the sign-up limit refuses (test_limits covers that rule).
+        self.h.core.limits = auth.AttemptLimiter()
 
     def register(self, email, password="abcdefgh", name="Maria da Conceição"):
         return self.client().call("POST", "/api/v1/register", {"full_name": name, "email": email, "password": password})

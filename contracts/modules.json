@@ -192,6 +192,7 @@
       "conditions": [
         "AUTH-REQUIRED",
         "AUTH-INVALID",
+        "AUTH-RATE-LIMITED",
         "AUTH-FORBIDDEN",
         "SETUP-ALREADY-DONE",
         "NOT-FOUND",
@@ -200,6 +201,7 @@
         "STATION-INCOMPATIBLE",
         "CORE-STORAGE-UNAVAILABLE",
         "CORE-INTERNAL",
+        "CORE-BUSY",
         "JOB-LEASE-LOST",
         "ROUTINE-NOT-ISOLATED"
       ]

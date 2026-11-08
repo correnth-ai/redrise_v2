@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DiagnosticBox, ErrorView } from "@/components/diagnostic";
 import { SearchableSelect } from "@/components/searchable-select";
 import type { AppTarget, Job, Member, RoutineLink, RoutineVersionInput, StationApp } from "@/data/types";
+import { useAction } from "@/hooks/use-action";
 import { useStore } from "@/state";
 import { notifyLabels, reportLabels, tv } from "@/lib/locale";
 import { cn } from "@/lib/utils";
@@ -113,6 +114,7 @@ export function RoutineWizard({ id }: { id?: number }) {
   const [lockedCategory, setLockedCategory] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const cancelling = useAction(setError);
   const [prep, setPrep] = useState<Job | null>(null);
   const [test, setTest] = useState<Job | null>(null);
   const [testError, setTestError] = useState<unknown>(null);
@@ -256,14 +258,14 @@ export function RoutineWizard({ id }: { id?: number }) {
         {step === 1 && <>
           <div className="space-y-2"><Label htmlFor="rt-name">Nome da rotina</Label>
             <Input id="rt-name" value={name} maxLength={120} autoFocus onChange={(e) => setName(e.target.value)} /></div>
-          <div className="space-y-2"><Label>O que esta rotina faz no processo</Label>
-            <RadioGroup value={mode} onValueChange={(v) => setMode(v as Mode)} className="grid gap-2">
+          <div className="space-y-2"><Label id="rt-mode-label">O que esta rotina faz no processo</Label>
+            <RadioGroup value={mode} onValueChange={(v) => setMode(v as Mode)} className="grid gap-2" aria-labelledby="rt-mode-label">
               {([["start", "Iniciar um processo", "É a etapa 1 de um processo que ainda não tem etapa 1.", false],
                 ["followup", "Fazer follow-up", "Continua depois de uma etapa de um processo, com o contexto dela.", false],
                 ["standalone", "Rotina avulsa", "Fica salva sem vínculo e executa pela Lista.", false]] as const).map(([v, t, d, off]) => (
                 <Label key={v} htmlFor={`m-${v}`} className={cn("flex items-start gap-3 rounded-md border p-3 has-[[data-state=checked]]:border-primary", off ? "cursor-not-allowed opacity-60" : "cursor-pointer")}>
-                  <RadioGroupItem id={`m-${v}`} value={v} disabled={off} className="mt-0.5" />
-                  <span><span className="block font-medium">{t}</span><span className="block text-xs font-normal text-muted-foreground">{d}</span></span>
+                  <RadioGroupItem id={`m-${v}`} value={v} disabled={off} className="mt-0.5" aria-label={t} aria-describedby={`m-${v}-d`} />
+                  <span><span className="block font-medium">{t}</span><span id={`m-${v}-d`} className="block text-xs font-normal text-muted-foreground">{d}</span></span>
                 </Label>
               ))}
             </RadioGroup></div>
@@ -284,14 +286,14 @@ export function RoutineWizard({ id }: { id?: number }) {
         {step === 2 && editing && <div className="space-y-2"><Label htmlFor="rt-name">Nome da rotina</Label>
           <Input id="rt-name" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></div>}
         {step === 2 && followUp && <>
-          <div className="space-y-2"><Label>Ação</Label>
-            <RadioGroup value={action} onValueChange={(v) => setAction(v as "review" | "report" | "notify")} className="grid gap-2">
+          <div className="space-y-2"><Label id="rt-action-label">Ação</Label>
+            <RadioGroup value={action} onValueChange={(v) => setAction(v as "review" | "report" | "notify")} className="grid gap-2" aria-labelledby="rt-action-label">
               {([["notify", "Notificar alguém", "Prepara um rascunho para a pessoa revisar e enviar. Nada é enviado pelo RedRise.", editing && action !== "notify"],
                 ["report", "Gerar relatório", "Salva um PDF com o que foi feito na execução, em Documentos, RedRise, Relatorios.", editing && action !== "report"],
                 ["review", "Solicitar revisão", "Pausa a execução até o responsável aprovar.", editing && action !== "review"]] as const).map(([v, t, d, off]) => (
                 <Label key={v} htmlFor={`a-${v}`} className={cn("flex items-start gap-3 rounded-md border p-3 has-[[data-state=checked]]:border-primary", off ? "cursor-not-allowed opacity-60" : "cursor-pointer")}>
-                  <RadioGroupItem id={`a-${v}`} value={v} disabled={off} className="mt-0.5" />
-                  <span><span className="block font-medium">{t}</span><span className="block text-xs font-normal text-muted-foreground">{d}</span></span>
+                  <RadioGroupItem id={`a-${v}`} value={v} disabled={off} className="mt-0.5" aria-label={t} aria-describedby={`a-${v}-d`} />
+                  <span><span className="block font-medium">{t}</span><span id={`a-${v}-d`} className="block text-xs font-normal text-muted-foreground">{d}</span></span>
                 </Label>
               ))}
             </RadioGroup></div>
@@ -388,7 +390,7 @@ export function RoutineWizard({ id }: { id?: number }) {
           {step === 2 && <Button disabled={busy || !step2} onClick={followUp ? saveFollowUp : saveAndPrepare}>{busy ? "Salvando…" : followUp ? "Salvar" : editing ? "Salvar e verificar" : "Salvar e preparar"}</Button>}
           {step === 3 && <span className="flex gap-2">
             {prepDone && !prepOk && <Button variant="outline" onClick={saveAndPrepare} disabled={busy}><Play /> Verificar de novo</Button>}
-            {prep && !prepDone && prep.state === "queued" && <Button variant="outline" onClick={async () => { try { await src.cancelJob(prep.id); setPrep(await src.job(prep.id)); } catch (e) { setError(e); } }}>Cancelar verificação</Button>}
+            {prep && !prepDone && prep.state === "queued" && <Button variant="outline" disabled={cancelling.busy} onClick={() => cancelling.run(async () => { await src.cancelJob(prep.id); setPrep(await src.job(prep.id)); })}>Cancelar verificação</Button>}
             <Button disabled={!prepDone || testing} onClick={async () => { await reload(); go({ menu: "rotina", page: "lista" }); }}>Concluir</Button>
           </span>}
         </div>

@@ -1,0 +1,140 @@
+{
+  "schema": "redrise.review/1",
+  "work_order": "STABILIZATION-REAL-UI-20261107",
+  "scope": "S1-S4 working tree against f78d229",
+  "date": "2026-11-07",
+  "by": "two independent read-only reviewers (subagents): Core S1-S3; desktop S2, S4 proofs, evidence and state",
+  "skill": {
+    "name": "code-review",
+    "sha256": "231376f92ce9316a30ae9d53b4170a696f0e1d07623c92c78f61be3ecc91f2ac"
+  },
+  "authorization": "User 'Independent review' in chat, 2026-11-07",
+  "blocking": [],
+  "should_fix": [
+    {
+      "id": "R1",
+      "file": "core/redrise_core/service.py login",
+      "defect": "wait check, password check and failure count are separate steps; parallel requests all pass the check before any is counted",
+      "scenario": "16 parallel POST /login for one account each get a password checked before the first wait starts (about 3x the 5-per-5-min policy per burst)",
+      "verified_by_main_agent": "confirmed in the code",
+      "outcome": "fixed",
+      "how": "auth.AttemptLimiter.attempt checks and counts under one lock before the password check; success() forgets it; login and register use it. Tests: test_limits unit 'parallel attempts' (32 threads -> 5 pass) and HTTP test_07 (16 parallel -> 5 x 401, 11 x 429)."
+    },
+    {
+      "id": "R2",
+      "file": "desktop/src/features/processos.tsx Processo > Acao tiles",
+      "defect": "'Execucoes registradas' and the four situation tiles count the list capped at 100, unlabelled",
+      "scenario": "150 executions -> 'Execucoes registradas: 100'; 'Precisam de atencao' there differs from Empresa (30-day count) under the same label",
+      "verified_by_main_agent": "confirmed in the code",
+      "outcome": "fixed",
+      "how": "Processo > Acao tiles read the Core summary (30 days) through hooks/use-summary.ts, shared with Empresa, and open Historico with the same period; 'Execucoes registradas' removed. Test in empresa.test.tsx."
+    },
+    {
+      "id": "R3",
+      "file": "proofs/stabilization/accept_s4.py s_empresa and s4.json scenarios.empresa",
+      "defect": "the pass condition checks the period total only, not that the attention tab is selected with summary.attention rows; 'tab 6, 6 rows' comes from a screenshot of the failed run",
+      "verified_by_main_agent": "confirmed in the code and reports",
+      "outcome": "fixed",
+      "how": "accept_s4 empresa requires the attention list to show exactly summary.attention rows ('Mostrando ... de N linhas')."
+    },
+    {
+      "id": "R4",
+      "file": "proofs/nova-rotina/accept_increments.py s_migration (reused) and s4.json scenarios.migration",
+      "defect": "passes on a non-empty capped list; no before/after count, so 'history kept' is not proven by it",
+      "verified_by_main_agent": "confirmed in the code",
+      "outcome": "fixed",
+      "how": "rollback_check.py --baseline-with records the previous install's table and API counts before the upgrade; accept_s4 migration compares them (--baseline)."
+    }
+  ],
+  "minor": [
+    {
+      "id": "R5",
+      "file": "docs/APP-RULES.md lines 5, 7, 9; status.json next_action",
+      "defect": "still says S1-S3 'ainda sem candidato' and lab on beta.25",
+      "outcome": "fixed",
+      "how": "docs/APP-RULES.md state text and status.json next_action corrected."
+    },
+    {
+      "id": "R6",
+      "file": "tests/core/test_limits.py test_03",
+      "defect": "the first assertRaises block cannot fail (it ends with raise OSError); only the refused counter tests the cap",
+      "outcome": "fixed",
+      "how": "test_limits test_03: the handshake itself must fail; the vacuous block removed."
+    },
+    {
+      "id": "R7",
+      "file": "core/redrise_core/service.py list_executions(days)",
+      "defect": "500-row cap without a truncation signal in the API; the UI labels it ('as 500 mais recentes; o total esta em Empresa')",
+      "outcome": "no_change_needed",
+      "how": "no change: the UI already says when the period list shows only the 500 most recent and points to Empresa for the total (docs/ui/LIVE-TABLES.md)."
+    },
+    {
+      "id": "R8",
+      "file": "desktop/src/features/configuracoes.tsx AppPage",
+      "defect": "one error shown twice (browser card and under Iniciar executor) while the agent is stopped",
+      "outcome": "fixed",
+      "how": "configuracoes AppPage: executor and browser have separate useAction and error state."
+    },
+    {
+      "id": "R9",
+      "file": "desktop/src/features/fluxos.tsx HistoryPage period",
+      "defect": "a failed re-read after a success shows 'Carregando...' next to the error; summary and period reload twice per change (extra load, no stale data)",
+      "outcome": "fixed",
+      "how": "fluxos HistoryPage: a failed period re-read keeps the rows shown; with none, no table; Empresa and Historico read once per store read (changeTick dependency removed). Tests in empresa.test.tsx."
+    },
+    {
+      "id": "R10",
+      "file": "s4.json acceptance 'Playfair license present'",
+      "defect": "rests on prose; no file list or hash of the license file in the evidence",
+      "outcome": "fixed",
+      "how": "license hash recorded above, package equal to source."
+    },
+    {
+      "id": "R11",
+      "file": "proofs/stabilization/rollback_check.py",
+      "defect": "stdout of the served Core not drained after ready; restore database and dump left in the copy (a rerun of restore fails on the existing database)",
+      "outcome": "fixed",
+      "how": "rollback_check drains the Core's output and drops the restore database and the dump."
+    },
+    {
+      "id": "R12",
+      "file": "contracts/errors.json AUTH-RATE-LIMITED",
+      "defect": "retry after_fix where a timed wait with effect none reads as safe",
+      "outcome": "no_change_needed",
+      "how": "no change: kept 'after_fix' like the existing IDENTITY-RATE-LIMITED."
+    },
+    {
+      "id": "R13",
+      "file": "core/redrise_core/api.py _TlsServer",
+      "defect": "connection caps have no Runner reserve and refuse before TLS (not CORE-BUSY); already listed in s3.json limitations",
+      "outcome": "no_change_needed",
+      "how": "no change: documented limit (connection caps without a Runner reserve), s3.json."
+    },
+    {
+      "id": "R14",
+      "file": "accept_s4.py empresa_after",
+      "defect": "'follows the executions this proof added' not shown: the passing run restarted the app and added none; Marcados para mim and storage not compared",
+      "outcome": "fixed",
+      "how": "accept_s4 empresa_after starts a run with Empresa open and requires the cards to move without navigation; Marcados para mim compared."
+    }
+  ],
+  "decision_consequences": [
+    "User name and e-mail sharing one count lets a caller learn that both belong to the same account (5 failures on one, then a 429 on the other).",
+    "Per-account waits can be renewed by anyone who knows a user name (5 requests every 15 min); recovery is waiting or restarting the Core. Already in s3.json limitations."
+  ],
+  "found_correct": [
+    "S1 cancel path, locks and both race outcomes",
+    "S2 groups equal on Core and UI, same period predicate, days validation, auth on both endpoints",
+    "limiter policy, memory bound, no password check during a wait",
+    "admission slots always released; change feed without slot",
+    "database cap released on every path; nested transactions do not self-deadlock",
+    "TLS socket closed on every ending",
+    "Harness ends repeated collection and token reuse",
+    "useAction blocks a second call and always clears busy",
+    "cancel, roles and limits scenarios assert exact outcomes; no secret written",
+    "all 15 s4.json artifact hashes match",
+    "no personal data in evidence JSON or checkpoint",
+    "status flags kept distinct; real install recorded untouched"
+  ],
+  "status": "closed: R1-R6, R8-R11, R14 fixed and validated on 0.1.0-beta.27 in the lab; R7, R12, R13 kept with reasons (s4-fixes.json)"
+}

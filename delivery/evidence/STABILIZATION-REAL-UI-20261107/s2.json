@@ -1,0 +1,236 @@
+{
+  "step": "STABILIZATION-REAL-UI-20261107/S2",
+  "roadmap_relation": "Fixes P08/P09 components; no roadmap step state changed",
+  "status": "done_in_code_pending_review",
+  "date": "2026-11-07",
+  "authorization": "User 'Start S2' in chat, 2026-11-07, after S1",
+  "source_revision": "f78d229f4c7149bc4d3599ff794a7942353a4d29",
+  "source_note": "Uncommitted working tree on main, on top of S1; per-file sha256 below. The checkout is shared.",
+  "versions": {
+    "core": "0.3.6 (S1 bump; S2 adds an endpoint in the same unreleased version)",
+    "runner": "0.3.11 (unchanged)",
+    "desktop": "0.1.0-beta.25 (unchanged; no candidate built)"
+  },
+  "user_decisions": {
+    "s2_summary": "Core summary endpoint, last 30 days (2026-11-07)"
+  },
+  "environment": {
+    "os": "Windows 11 Pro x64, build 26200",
+    "python": "%USERPROFILE%/RedRise-v2-dev/runtime/python-3.12.10/tools/python.exe",
+    "postgresql": "%USERPROFILE%/RedRise-v2-dev/downloads/p06-core/pgsql/bin (isolated temporary clusters)",
+    "ui_build": "%USERPROFILE%/RedRise-v2-dev/build/ui-dev, synced from D: by build/sync-ui.sh before each run",
+    "desktop_input": "none; screen checks in the built-in browser pane against the lab inspection server"
+  },
+  "inventory": "docs/ui/LIVE-TABLES.md, sections 'Inventário' and 'Empresa: indicadores e controles' (one map, extended)",
+  "changes": {
+    "core": [
+      "GET /api/v1/executions/summary[?days=N]: counts in the database of executions created in the last N days (default 30): total, running, waiting, attention, verified; since/until returned",
+      "GET /api/v1/executions?days=N: the same rows, newest first, up to 500; without days the list stays capped at 100 as before",
+      "days outside 1..366 or not an integer: 400 VALIDATION; user token required like the other reads",
+      "Query string parsed only for these two handlers"
+    ],
+    "desktop": [
+      "Empresa rebuilt on real sources; fixtures file desktop/src/data/empresa-demo.ts removed; demo build computes the same indicators over its own fixtures",
+      "Indicators open their list: Processo > Ação, Histórico with the same period and group, Marcado para mim, Configuração > Estação, Configuração > Aplicativo",
+      "Histórico accepts a period from the route and states how many rows it shows; above 500 it says the total is in Empresa",
+      "groupOf() in status.ts is the single client rule for tabs, Processo > Ação tiles and Empresa, matching the Core predicates",
+      "useAction hook: one call at a time, control disabled while busy, failure on screen; applied to 7 controls listed in LIVE-TABLES.md",
+      "Assistant radios: aria-label and aria-describedby per radio, aria-labelledby per group",
+      "Timeline: a step finished before a stop says 'execução encerrada aqui' (S1 observation)"
+    ]
+  },
+  "checks": [
+    {
+      "type": "contract_check",
+      "simulated": "Runner calls made by the test; real Core over HTTPS with pinning and real PostgreSQL",
+      "command": "cd tests/core && <lab python> -B -W ignore::ResourceWarning -m unittest test_summary",
+      "input": "105 synthetic executions: 1 moved 40 days back with the superuser connection, 103 in the period (2 verified, 1 failed, 100 still running), 1 with a review step; a second class run with a review that pauses",
+      "expected": "Counts from the database beyond the 100 cap; period list equals the count; groups equal the client rule; out-of-period excluded; validation and access",
+      "observed": "3 of 3 passed: summary total 104 (running 101, verified 2, attention 1, waiting 0); default list 100 rows; days=30 list 104 rows with the same group counts; days=60 total 105; review pause moves one from running to waiting; days 0/abc/400/-1 refused 400 on both endpoints; no token and runner token refused 401; operator sees the same total",
+      "exit_code": 0
+    },
+    {
+      "type": "contract_check",
+      "command": "cd tests/core && each module in its own process: test_core, test_browser_processes, test_review, test_step_change, test_nova_rotina, test_notify_followup, test_report_followup, test_agent, test_changes, test_identity, test_cancel, test_summary",
+      "observed": "all OK: test_core 14, test_browser_processes 31, test_review 25, test_step_change 23, test_nova_rotina 28, test_notify_followup 18, test_report_followup 18, test_agent 6, test_changes 21, test_identity 37, test_cancel 7, test_summary 3",
+      "exit_code": 0,
+      "warnings": "ResourceWarning for unclosed TLS sockets suppressed with -W ignore::ResourceWarning; belongs to S3"
+    },
+    {
+      "type": "component_check",
+      "command": "build/ui-dev: npm run typecheck; npx vitest run --reporter=dot; npm run build:ui",
+      "observed": "typecheck passed; 9 files, 55 tests passed (new: empresa.test.tsx 6, use-action.test.tsx 2); build passed",
+      "exit_code": 0,
+      "covers": [
+        "counts from the summary, not from the store list",
+        "each indicator navigates with the same group and period",
+        "failed summary shows the diagnostic and '—', no rate",
+        "summary read again when the store reads executions again",
+        "no rate without finished executions",
+        "Histórico with a period uses the Core period rows and the group tab",
+        "useAction refuses a second send while busy and reports failures"
+      ]
+    },
+    {
+      "type": "manual_screen_check",
+      "command": "preview server redrise-v2-ui-inspect (proofs/ui-inspect/serve.py, synthetic lab team), built-in browser pane",
+      "observed": [
+        "Empresa: Processos 4; Execuções nos últimos 30 dias 16; Marcados para mim 2; Estações disponíveis 1 de 1; Em andamento 0, Aguardando revisão 2, Precisam de atenção 3, Verificadas 11 with '79% das finalizadas no período'; no 'Dados demonstrativos' badge; Armazenamento 9 MB",
+        "Clicking 'Precisam de atenção' opened Processo > Histórico with 'Iniciadas nos últimos 30 dias: 16 execuções', tabs 16/0/2/3/11 and the attention tab listing 3 of 3 rows",
+        "A real change: 'Nova execução' of 'Pedidos do dia' confirmed in the dialog; Histórico showed 17 with 1 running; Empresa then showed Em andamento 1",
+        "Without navigating, after the simulated Runner finished the 3 steps, Empresa showed 17, Em andamento 0, Verificadas 12, 80%, and the activity feed listed the three new verified steps",
+        "Estações disponíveis changed to 0 de 1 after the simulated station stopped sending heartbeats (no heartbeat for more than 45 s): the indicator follows the fact, not a fixed value",
+        "Nova Rotina: radiogroup labelled by 'O que esta rotina faz no processo'; radios 'Iniciar um processo', 'Fazer follow-up', 'Rotina avulsa' with their descriptions, read from the DOM and the browser accessibility tree"
+      ],
+      "cleanup": "preview stopped; the inspection PostgreSQL stopped with pg_ctl and its scratch folder removed"
+    },
+    {
+      "type": "documentation_check",
+      "command": "node scripts/validate-base.mjs",
+      "observed": "passed, 346 checks",
+      "exit_code": 0
+    }
+  ],
+  "acceptance_mapping": {
+    "persisted synthetic data gives coherent counts and filters": "test_summary 01; screen check",
+    "a real change updates card and list": "screen check (new execution, live update); empresa.test 'reads the summary again'",
+    "user without permission gets no data by click or API": "test_summary 03 (no token, runner token). There is no role restriction on execution reads for active members, as before; inactive accounts cannot sign in",
+    "error, empty and unavailable not shown as success or invented zero": "empresa.test failure case; rate absent without finished executions",
+    "more than 100 executions": "test_summary 01 with 104 in the period",
+    "accessible names of modified controls, including assistant radios": "screen check (browser accessibility tree)"
+  },
+  "artifacts": [
+    {
+      "path": "core/redrise_core/service.py",
+      "sha256": "df9330c3475405ab5dbce3370260bc78addb6a88b4457d7046698b4a345f9a1b"
+    },
+    {
+      "path": "core/redrise_core/api.py",
+      "sha256": "81dcb5164f337a33be28c5e73fc0625303acd8e1c98aefb9db54c56f81459602"
+    },
+    {
+      "path": "tests/core/test_summary.py",
+      "sha256": "d7f3c1132d2a8d948a0af6c2c9632e5e71e7639bd32950149df0826e11c5a5e1"
+    },
+    {
+      "path": "desktop/src/features/empresa.tsx",
+      "sha256": "0247f2a11942724d766dcd1cd3644b950fd527670896636f4a51732ced5e6886"
+    },
+    {
+      "path": "desktop/src/features/fluxos.tsx",
+      "sha256": "a0428186e319eec799776e350f2fbffea3860a8047b2758eebc7aca950c03cf1"
+    },
+    {
+      "path": "desktop/src/features/processos.tsx",
+      "sha256": "eb0d6a0a09766ccaaa83a285822422b9f0f3d5fd66f671e1a3883f21cc1343ee"
+    },
+    {
+      "path": "desktop/src/features/configuracoes.tsx",
+      "sha256": "1e78d9fc2fd288444bf84fad1344649428e0c5e99c11f6de3d785cde83bd39b5"
+    },
+    {
+      "path": "desktop/src/features/legacy.tsx",
+      "sha256": "4e7302561dc731c474d043221fa8c9f24006ec9050585b6ec11c207ebafa05af"
+    },
+    {
+      "path": "desktop/src/features/routine-wizard.tsx",
+      "sha256": "00c3342c2dbf6e5951b22b0763c9a10be70ab651a49662d325a9e9060eca6130"
+    },
+    {
+      "path": "desktop/src/components/blocks.tsx",
+      "sha256": "a359b790efc48ad91cf41770e5b6d5df1331c14130428ec5f8a5036775a4a7c5"
+    },
+    {
+      "path": "desktop/src/data/source.ts",
+      "sha256": "821e8e91db3a8797b208c647e9e9ff0a1827c713bb82b7849deea44adbb9cb80"
+    },
+    {
+      "path": "desktop/src/data/status.ts",
+      "sha256": "978549a2d5a365d75dbe8c6a9368c5e3133d59ebe6138fe510880ab342f94e30"
+    },
+    {
+      "path": "desktop/src/data/types.ts",
+      "sha256": "9174642c910e8e7e4f70aa262aba0e1cfe36232134ed72af2b6f2bda92fb6332"
+    },
+    {
+      "path": "desktop/src/data/demo.ts",
+      "sha256": "e628d4eea92296808bb444bffbce2436770b49603846340c7b8432df9709fe05"
+    },
+    {
+      "path": "desktop/src/routes.ts",
+      "sha256": "5aabca65c61d7a499650c77a15ec735ad8850d6bd915bddc8f2db6f731947f20"
+    },
+    {
+      "path": "desktop/src/App.tsx",
+      "sha256": "ac1db50a910d492f30c9a1c632f5a77effbad417cf151ec6c0d3d7131b083ea1"
+    },
+    {
+      "path": "desktop/src/hooks/use-action.ts",
+      "sha256": "ed677b06a2faa18e15a551b18c3b6e02686aa24c263f3e32c13238dd5f3531da"
+    },
+    {
+      "path": "desktop/tests/empresa.test.tsx",
+      "sha256": "1fbf4daa4b504bbbeae45a07b5c241b46e5bf3245a472e2e5016083dfea942cc"
+    },
+    {
+      "path": "desktop/tests/use-action.test.tsx",
+      "sha256": "933fc744fc095802d0da839d4a04f805d988fb0a452605f49dfca7de4ca8230d"
+    },
+    {
+      "path": "docs/ui/LIVE-TABLES.md",
+      "sha256": "39495f8ee2f746b6d50e4da0381cd7bef37b9db53303f3cc33e542afe72ac9a0"
+    },
+    {
+      "path": "docs/APP-RULES.md",
+      "sha256": "3a33a619342ef3ff5993c5b4fede09ee522d13c6e31af9fc3993f45983c7f2f3"
+    },
+    {
+      "path": "desktop/src/data/empresa-demo.ts",
+      "sha256": null,
+      "note": "deleted from the working tree; still in Git at f78d229"
+    }
+  ],
+  "commands": {
+    "required": [
+      "test_summary",
+      "each Core module in its own process",
+      "UI typecheck, vitest and build on C:",
+      "screen check with persisted data",
+      "validate-base"
+    ],
+    "optional": [],
+    "not_applicable": [
+      "Runner tests: no Runner source changed",
+      "verify-candidate.ps1: no candidate (S4)",
+      "UIA reading of the radios in the installed WebView2: needs the installed app and a free desktop (S4)"
+    ]
+  },
+  "skills": {
+    "applied": [
+      {
+        "name": "api-contract-testing",
+        "sha256": "1b68a02f675b2ea183690b6aa08b957aedfee578e15926017c7c0fb9690489d3"
+      },
+      {
+        "name": "documentation-decision-log",
+        "sha256": "94d7404269c6b354a8ba5e1cd0704769b7bdd648e3379f5ddc296a1696bd2d3b"
+      }
+    ],
+    "note": "Selected by catalog frontmatter, resolved with catalogs/skills/scripts/resolve-skill.mjs at S1; no new dependency or schema change in S2"
+  },
+  "memory": "correnth/redrise-v2 operational memory not reachable from this session; canonical files used",
+  "graph": "not used; no registered Graphify root for redrise-v2",
+  "review": {
+    "file": "delivery/evidence/STABILIZATION-REAL-UI-20261107/review.json",
+    "date": "2026-11-07",
+    "result": "no blocking; findings fixed or kept with reasons, validated on 0.1.0-beta.27 (s4-fixes.json)"
+  },
+  "limitations": [
+    "No independent review yet.",
+    "No installed proof; UIA names in the installed WebView2 and the real team's screens belong to S4.",
+    "Running and waiting counts are of executions started in the period; an execution started earlier and still running is not in the 30-day card. The section says 'Iniciadas nos últimos 30 dias, pela situação atual'.",
+    "Execution reads have no per-role restriction for active members, unchanged from before; the work order's permission check is covered by unauthenticated and runner-token refusals.",
+    "The deferred recording screen (out of the menu) was not changed."
+  ],
+  "next_action": "User go-ahead for S3 (login limits, concurrency, TLS close, Core test isolation)."
+}

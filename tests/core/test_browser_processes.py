@@ -9,22 +9,22 @@ import unittest
 import uuid
 
 import test_core
-from test_core import CoreTest
+from test_core import Harness
 
 SITE = {"origin": "site", "browser": "msedge", "url": "https://pedidos.exemplo.test/", "path": None, "isolated": True}
 HTML = {"origin": "html", "browser": None, "url": None, "path": "C:\\Exemplos\\manual.html", "isolated": True}
 
 
 class BrowserProcessTest(unittest.TestCase):
-    setUpClass = classmethod(CoreTest.setUpClass.__func__)
-    tearDownClass = classmethod(CoreTest.tearDownClass.__func__)
-    client, expect, admin, station = CoreTest.client, CoreTest.expect, classmethod(CoreTest.admin.__func__), CoreTest.station
+    setUpClass = classmethod(Harness.setUpClass.__func__)
+    tearDownClass = classmethod(Harness.tearDownClass.__func__)
+    client, expect, admin, station = Harness.client, Harness.expect, classmethod(Harness.admin.__func__), Harness.station
 
     # ---------------------------------------------------------------- helpers
     def other_admin(self):
         """Second administrator: whoever asks for a replacement of step 1 does not approve it alone."""
         cls = type(self)
-        if not hasattr(cls, "_other"):
+        if "_other" not in vars(cls):
             self.admin().call("POST", "/api/v1/users", {"username": "admin2", "display": "Admin 2", "password": test_core.PW, "role": "admin"})
             cls._other = self.client().call("POST", "/api/v1/login", {"username": "admin2", "password": test_core.PW})["token"]
         return cls._other
@@ -285,7 +285,7 @@ class BrowserProcessTest(unittest.TestCase):
         return Core(self.h.database, {})
 
     def su(self):
-        return CoreTest.su(self)
+        return Harness.su(self)
 
 
 if __name__ == "__main__":

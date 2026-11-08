@@ -11,20 +11,20 @@ import unittest
 import uuid
 
 import test_core
-from test_core import CoreTest
+from test_core import Harness
 
 CALC = {"target": {"kind": "app", "app_id": "Calc!App", "name": "Calculadora"}, "isolated": True}
 SITE = {"origin": "site", "browser": "msedge", "url": "https://pedidos.exemplo.test/", "path": None, "isolated": True}
 
 
 class NovaRotinaTest(unittest.TestCase):
-    setUpClass = classmethod(CoreTest.setUpClass.__func__)
-    tearDownClass = classmethod(CoreTest.tearDownClass.__func__)
-    client, expect, admin = CoreTest.client, CoreTest.expect, classmethod(CoreTest.admin.__func__)
+    setUpClass = classmethod(Harness.setUpClass.__func__)
+    tearDownClass = classmethod(Harness.tearDownClass.__func__)
+    client, expect, admin = Harness.client, Harness.expect, classmethod(Harness.admin.__func__)
 
     def station(self, name, categories=("windows", "browser")):
         """A station on the first Runner that honours a job's mode."""
-        sid, r, hb = CoreTest.station(self, name, categories=categories)
+        sid, r, hb = Harness.station(self, name, categories=categories)
         hb = {**hb, "runner_version": "0.3.10"}
         r.call("POST", "/api/v1/runner/heartbeat", hb)
         return sid, r, hb
@@ -222,7 +222,7 @@ class NovaRotinaTest(unittest.TestCase):
         self.expect("VALIDATION", lambda: a.call("POST", f"/api/v1/routines/{first}/versions", {"kind": "template", "template_id": "boas-vindas"}), 400)
 
     def test_14_older_runner_gets_no_assistant_job(self):
-        sid, r, hb = CoreTest.station(self, "nr-old")  # would open on "prepare": it ignores the mode
+        sid, r, hb = Harness.station(self, "nr-old")  # would open on "prepare": it ignores the mode
         rid = self.app_routine()["routine"]["id"]
         self.expect("STATION-INCOMPATIBLE", lambda: self.prepare(rid, sid), 409)
 

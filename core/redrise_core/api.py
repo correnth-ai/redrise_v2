@@ -8,6 +8,7 @@ import re
 import ssl
 import threading
 import traceback
+from urllib.parse import parse_qs, urlsplit
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -16,11 +17,24 @@ import psycopg
 
 from redrise_contracts import diagnostics as dg
 
-from . import __version__
+from . import __version__, db
 from .service import ApiError, Core, err
 
 MAX_BODY = 4 * 1024 * 1024
 _CID = re.compile(r"^[A-Za-z0-9-]{4,64}$")
+
+# Concurrency (S3, 2026-11-07). A connection holds one thread; a request holds one admission slot
+# while it is handled. Runner calls and cancelling a job may also use reserved slots, so a burst of
+# screen reads cannot delay heartbeats or a cancel. The change feed waits without a slot (it only
+# reads the session, then waits on memory). The database has its own cap (db.Database.max_open).
+MAX_CONNECTIONS = 64            # open connections being served
+MAX_CONNECTIONS_PER_CLIENT = 16  # per client address, so one computer cannot take all of them
+IO_TIMEOUT_S = 30.0             # handshake, idle keep-alive and each read/write
+REQUEST_SLOTS, RESERVED_SLOTS = 16, 4
+ADMISSION_WAIT_S = 5.0
+RETRY_AFTER_S = 2
+PRIORITY = {"rn_heartbeat", "rn_claim", "rn_start", "rn_progress", "rn_result", "job_cancel"}
+NO_SLOT = {"changes"}
 
 # (method, pattern, handler name, auth: None | "user" | "admin" | "runner")
 ROUTES = [
@@ -64,6 +78,7 @@ ROUTES = [
     ("POST", r"/api/v1/step-changes/([0-9a-f-]{36})/approve", "step_change_approve", "user"),
     ("POST", r"/api/v1/step-changes/([0-9a-f-]{36})/cancel", "step_change_cancel", "user"),
     ("GET", r"/api/v1/executions", "executions", "user"),
+    ("GET", r"/api/v1/executions/summary", "execution_summary", "user"),
     ("POST", r"/api/v1/executions", "execution_create", "user"),
     ("GET", r"/api/v1/executions/([0-9a-f-]{36})", "execution_get", "user"),
     ("GET", r"/api/v1/reviews", "reviews", "user"),
@@ -78,6 +93,7 @@ ROUTES = [
     ("POST", r"/api/v1/runner/jobs/([0-9a-f-]{36})/result", "rn_result", "runner"),
     ("POST", r"/api/v1/runner/jobs/([0-9a-f-]{36})/progress", "rn_progress", "runner"),
 ]
+_QUERY = {"executions", "execution_summary"}  # handlers that read the query string
 _COMPILED = [(m, re.compile(p + r"$"), h, a) for m, p, h, a in ROUTES]
 
 
@@ -91,11 +107,11 @@ class Handlers:
     def setup(self, b, who, cid):
         return self.core.bootstrap(b.get("team"), b.get("username"), b.get("display"), b.get("password"))
 
-    def register(self, b, who, cid):
-        return self.core.register(b.get("full_name"), b.get("email"), b.get("password"))
+    def register(self, b, who, cid, client=None):
+        return self.core.register(b.get("full_name"), b.get("email"), b.get("password"), client=client)
 
-    def login(self, b, who, cid):
-        return self.core.login(b.get("username"), b.get("password"))
+    def login(self, b, who, cid, client=None):
+        return self.core.login(b.get("username"), b.get("password"), client=client)
 
     def identity_session(self, b, who, cid):
         return self.core.identity_session(b.get("access_token"), b.get("remember"), b.get("device"), b.get("device_id"))
@@ -207,8 +223,11 @@ class Handlers:
     def step_change_cancel(self, b, who, cid, cid_):
         return self.core.cancel_step_change(who, cid_)
 
-    def executions(self, b, who, cid):
-        return self.core.list_executions(who)
+    def executions(self, b, who, cid, query=None):
+        return self.core.list_executions(who, days=(query or {}).get("days"))
+
+    def execution_summary(self, b, who, cid, query=None):
+        return self.core.execution_summary(who, (query or {}).get("days"))
 
     def execution_create(self, b, who, cid):
         return self.core.create_execution(who, b.get("request_id"), b.get("station_id"), b.get("process_id"),
@@ -251,7 +270,26 @@ class Handlers:
         return self.core.report_result(who, jid, str(b.get("lease_id")), b.get("result"))
 
 
-def make_handler(handlers: Handlers, log=None):
+class Admission:
+    """Request slots: `slots` for everyone, `reserved` more only for priority routes. A request
+    waits at most `wait_s` for a slot, then is refused with CORE-BUSY before anything is done."""
+
+    def __init__(self, slots=REQUEST_SLOTS, reserved=RESERVED_SLOTS, wait_s=ADMISSION_WAIT_S):
+        self.wait_s = wait_s
+        self._all, self._reserved = threading.BoundedSemaphore(slots), threading.BoundedSemaphore(reserved)
+
+    def acquire(self, priority: bool):
+        """The semaphore to release afterwards, or None when no slot came in time."""
+        if priority:
+            if self._all.acquire(blocking=False):
+                return self._all
+            return self._reserved if self._reserved.acquire(timeout=self.wait_s) else None
+        return self._all if self._all.acquire(timeout=self.wait_s) else None
+
+
+def make_handler(handlers: Handlers, log=None, admission: Admission | None = None):
+    admission = admission or Admission()
+
     class H(BaseHTTPRequestHandler):
         server_version = f"redrise-core/{__version__}"
         sys_version = ""
@@ -261,13 +299,15 @@ def make_handler(handlers: Handlers, log=None):
             if log:
                 log(f"{self.command} {self.path.split('?')[0]} -> {args[1] if len(args) > 1 else ''}")
 
-        def _send(self, status: int, obj, cid: str):
+        def _send(self, status: int, obj, cid: str, retry_after=None):
             body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.send_header("X-Correlation-Id", cid)
             self.send_header("Cache-Control", "no-store")
+            if retry_after:
+                self.send_header("Retry-After", str(retry_after))
             self.end_headers()
             self.wfile.write(body)
 
@@ -275,6 +315,7 @@ def make_handler(handlers: Handlers, log=None):
             cid = self.headers.get("X-Correlation-Id") or ""
             cid = cid if _CID.match(cid) else dg.new_correlation_id()
             path = self.path.split("?")[0]
+            slot = None
             try:
                 # Body first: any refusal below leaves the keep-alive connection in sync.
                 try:
@@ -290,6 +331,10 @@ def make_handler(handlers: Handlers, log=None):
                 if route is None:
                     raise err(404, "NOT-FOUND", cid, what_missing="rota")
                 name, need, args = route
+                if name not in NO_SLOT:
+                    slot = admission.acquire(name in PRIORITY)
+                    if slot is None:
+                        raise err(503, "CORE-BUSY", cid, retry_after_s=RETRY_AFTER_S)
                 if name == "setup" and self.client_address[0] not in ("127.0.0.1", "::1"):
                     # First admin only from the host computer itself (the LAN can reach the port).
                     raise err(403, "AUTH-FORBIDDEN", cid, required_role="acesso local no computador servidor")
@@ -308,13 +353,19 @@ def make_handler(handlers: Handlers, log=None):
                 elif need == "runner":
                     who = handlers.core.station_for(token)
                 fn = getattr(handlers, name)
-                out = fn(body, who, cid, *args, **({"token": token} if name in ("logout", "identity_devices") else {}))
+                extra = {"token": token} if name in ("logout", "identity_devices") else {}
+                if name in ("login", "register"):
+                    extra["client"] = self.client_address[0]
+                if name in _QUERY:  # last value of each parameter of the query string
+                    extra["query"] = {k: v[-1] for k, v in parse_qs(urlsplit(self.path).query).items()}
+                out = fn(body, who, cid, *args, **extra)
                 self._send(200, out, cid)
             except ApiError as e:
                 d = e.diagnostic
                 d.correlation_id = cid  # the caller's correlation id always comes back (P05-D11)
-                self._send(e.status, {"diagnostic": d.to_dict(), "message": d.render()}, cid)
-            except psycopg.OperationalError as e:
+                self._send(e.status, {"diagnostic": d.to_dict(), "message": d.render()}, cid,
+                           retry_after=d.params.get("retry_after_s") if e.status in (429, 503) else None)
+            except (psycopg.OperationalError, db.PoolBusy) as e:
                 d = dg.make("CORE-STORAGE-UNAVAILABLE", reported_by="RR-CORE", correlation_id=cid,
                             params={"reason": type(e).__name__}, version={"core": __version__})
                 self._send(503, {"diagnostic": d.to_dict(), "message": d.render()}, cid)
@@ -324,6 +375,9 @@ def make_handler(handlers: Handlers, log=None):
                 d = dg.make("CORE-INTERNAL", reported_by="RR-CORE", correlation_id=cid,
                             params={"reason": type(e).__name__}, version={"core": __version__})
                 self._send(500, {"diagnostic": d.to_dict(), "message": d.render()}, cid)
+            finally:
+                if slot is not None:
+                    slot.release()
 
         do_GET = do_POST = do_PATCH = do_PUT = do_DELETE = _dispatch
 
@@ -332,24 +386,79 @@ def make_handler(handlers: Handlers, log=None):
 
 class _TlsServer(ThreadingHTTPServer):
     """TLS handshake inside each connection's thread, with a timeout: a client
-    that never completes the handshake cannot block accept() for everyone."""
+    that never completes the handshake cannot block accept() for everyone.
+
+    Connections over MAX_CONNECTIONS, or over MAX_CONNECTIONS_PER_CLIENT from one
+    address, are closed at once without a thread. The TLS socket is the one that
+    owns the connection after the handshake, so it is the one shut down and closed
+    when the connection ends, whether the exchange finished or was interrupted."""
 
     daemon_threads = True
     tls: ssl.SSLContext | None = None
+    io_timeout_s = IO_TIMEOUT_S
+    max_connections, max_per_client = MAX_CONNECTIONS, MAX_CONNECTIONS_PER_CLIENT
+
+    def __init__(self, *a, **kw):
+        self._count_lock = threading.Lock()
+        self.active: dict[str, int] = {}  # client address -> connections being served
+        self.refused = 0
+        super().__init__(*a, **kw)
+
+    def connections(self) -> int:
+        with self._count_lock:
+            return sum(self.active.values())
+
+    def process_request(self, request, client_address):
+        addr = client_address[0]
+        with self._count_lock:
+            full = sum(self.active.values()) >= self.max_connections or self.active.get(addr, 0) >= self.max_per_client
+            if full:
+                self.refused += 1
+            else:
+                self.active[addr] = self.active.get(addr, 0) + 1
+        if full:
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:  # the thread did not start: give the place back
+            self._release(addr)
+            self.shutdown_request(request)
+            raise
+
+    def _release(self, addr: str) -> None:
+        with self._count_lock:
+            n = self.active.get(addr, 0) - 1
+            if n > 0:
+                self.active[addr] = n
+            else:
+                self.active.pop(addr, None)
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._release(client_address[0])
 
     def finish_request(self, request, client_address):
-        request.settimeout(30)
-        if self.tls is not None:
-            try:
-                request = self.tls.wrap_socket(request, server_side=True)
-            except (ssl.SSLError, OSError):
-                return
-        super().finish_request(request, client_address)
+        request.settimeout(self.io_timeout_s)
+        if self.tls is None:
+            return super().finish_request(request, client_address)
+        try:
+            conn = self.tls.wrap_socket(request, server_side=True)
+        except (ssl.SSLError, OSError):
+            return  # the TLS socket closed itself; the plain socket is closed by the caller
+        try:
+            super().finish_request(conn, client_address)
+        finally:
+            self.shutdown_request(conn)
 
 
 class ApiServer:
-    def __init__(self, core: Core, host: str, port: int, cert: Path | None, key: Path | None, log=None):
-        self.httpd = _TlsServer((host, port), make_handler(Handlers(core), log))
+    def __init__(self, core: Core, host: str, port: int, cert: Path | None, key: Path | None, log=None,
+                 admission: Admission | None = None):
+        self.handlers, self.admission = Handlers(core), admission or Admission()
+        self.httpd = _TlsServer((host, port), make_handler(self.handlers, log, self.admission))
         if cert:
             ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             ctx.minimum_version = ssl.TLSVersion.TLSv1_2

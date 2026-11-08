@@ -1,0 +1,41 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "STABILIZATION-REAL-UI-20261107/S4",
+  "install": "install-beta26",
+  "scenarios": {
+    "empresa": {
+      "passed": true,
+      "expected": {
+        "Processos cadastrados": "25",
+        "Execuções nos últimos 30 dias": "49",
+        "Estações disponíveis": "1 de 1",
+        "Em andamento": "0",
+        "Aguardando revisão": "0",
+        "Precisam de atenção": "6",
+        "Verificadas": "43"
+      },
+      "screen": {
+        "Processos cadastrados": "25",
+        "Execuções nos últimos 30 dias": "49",
+        "Marcados para mim": "0",
+        "Estações disponíveis": "1 de 1",
+        "Em andamento": "0",
+        "Aguardando revisão": "0",
+        "Precisam de atenção": "6",
+        "Verificadas": "43"
+      },
+      "diff": {},
+      "marked_for_me_screen": "0",
+      "opened": "Precisam de atenção: 6. Ver no histórico",
+      "banner": "Iniciadas nos últimos 30 dias: 49 execuções.",
+      "period_rows_screen": 49,
+      "period_rows_core": 49,
+      "summary_total": 49
+    }
+  },
+  "core": "0.3.6",
+  "clicks_lost": [],
+  "seconds": 38,
+  "passed": true
+}

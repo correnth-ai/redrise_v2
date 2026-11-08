@@ -18,10 +18,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataTable, type DataColumn } from "@/components/data-table";
 import { ErrorView } from "@/components/diagnostic";
+import { useExecutionSummary } from "@/hooks/use-summary";
 import { SearchableSelect } from "@/components/searchable-select";
 import { ExecutionBadge, StateBadge } from "@/components/blocks";
 import { describeConfig } from "@/features/run-dialog";
-import { END_REASON, needsAttention, title } from "@/data/status";
+import { END_REASON, groupOf, title } from "@/data/status";
 import { HISTORY_COLUMNS } from "@/features/fluxos";
 import { AssignedToMe } from "@/features/reviews";
 import type { Process, Routine } from "@/data/types";
@@ -242,7 +243,9 @@ function CountTile({ label, value, icon: Icon, mark, onOpen }: { label: string; 
 export function ProcessesPage({ focus }: { focus?: string }) {
   const { processes, executions, reviews, go, run, error } = useStore();
   const [tab, setTab] = useState(focus ? "mine" : "overview");
-  const history = (id: string) => () => go({ menu: "processo", page: "historico", id });
+  const { summary, error: summaryError } = useExecutionSummary();
+  const days = summary?.days ?? 30;
+  const history = (id?: string) => () => go({ menu: "processo", page: "historico", id, days });  // same period as the count
   const pending = reviews?.filter((q) => q.status === "pending").length;
   return (
     <Tabs value={tab} onValueChange={setTab} className="space-y-5">
@@ -252,16 +255,18 @@ export function ProcessesPage({ focus }: { focus?: string }) {
       </TabsList>
       <TabsContent value="overview" className="space-y-6">
         <ErrorView error={error} />
+        <ErrorView error={summaryError} />
         <div className="grid gap-3 sm:grid-cols-3">
           <CountTile label="Processos cadastrados" value={processes?.length} icon={ListChecks} />
-          <CountTile label="Execuções registradas" value={executions?.length} icon={History} onOpen={() => go({ menu: "processo", page: "historico" })} />
+          <CountTile label={"Execuções nos últimos " + days + " dias"} value={summary?.total} icon={History} onOpen={history()} />
           <CountTile label="Marcados para mim" value={pending} icon={UserCheck} onOpen={() => setTab("mine")} />
         </div>
-        <section aria-label="Execuções por situação" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <CountTile label="Em andamento" value={executions?.filter((e) => e.state === "running").length} mark="bg-warn" onOpen={history("running")} />
-          <CountTile label="Aguardando revisão" value={executions?.filter((e) => e.state === "waiting_review").length} mark="bg-info" onOpen={history("waiting")} />
-          <CountTile label="Precisam de atenção" value={executions?.filter(needsAttention).length} mark="bg-destructive" onOpen={history("attention")} />
-          <CountTile label="Verificadas" value={executions?.filter((e) => e.outcome === "verified").length} mark="bg-ok" onOpen={history("verified")} />
+        {/* Counted by the Core for the period, like Empresa; the table below shows only the most recent ones. */}
+        <section aria-label={"Execuções iniciadas nos últimos " + days + " dias, por situação"} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <CountTile label="Em andamento" value={summary?.running} mark="bg-warn" onOpen={history("running")} />
+          <CountTile label="Aguardando revisão" value={summary?.waiting} mark="bg-info" onOpen={history("waiting")} />
+          <CountTile label="Precisam de atenção" value={summary?.attention} mark="bg-destructive" onOpen={history("attention")} />
+          <CountTile label="Verificadas" value={summary?.verified} mark="bg-ok" onOpen={history("verified")} />
         </section>
         <div className="flex justify-end"><Button onClick={() => run(null)}><Play /> Nova execução</Button></div>
         <ProcessTable />

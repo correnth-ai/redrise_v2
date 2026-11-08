@@ -11,15 +11,15 @@ import unittest
 import uuid
 
 import test_core
-from test_core import CoreTest
+from test_core import Harness
 
 CALC = {"target": {"kind": "app", "app_id": "Calc!App", "name": "Calculadora"}, "isolated": True}
 
 
 class ReviewTest(unittest.TestCase):
-    setUpClass = classmethod(CoreTest.setUpClass.__func__)
-    tearDownClass = classmethod(CoreTest.tearDownClass.__func__)
-    client, expect, admin, station = CoreTest.client, CoreTest.expect, classmethod(CoreTest.admin.__func__), CoreTest.station
+    setUpClass = classmethod(Harness.setUpClass.__func__)
+    tearDownClass = classmethod(Harness.tearDownClass.__func__)
+    client, expect, admin, station = Harness.client, Harness.expect, classmethod(Harness.admin.__func__), Harness.station
 
     # ---------------------------------------------------------------- helpers
     def member(self, name):
@@ -255,7 +255,7 @@ class ReviewTest(unittest.TestCase):
             self.assertEqual(len(rows), 1)
 
     def su_rows(self, eid):
-        with CoreTest.su(self) as c:
+        with Harness.su(self) as c:
             with c.cursor() as cur:
                 cur.execute("SELECT status, decided_by FROM review_requests WHERE execution_id = %s", (eid,))
                 return cur.fetchall()
