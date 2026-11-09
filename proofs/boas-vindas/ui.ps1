@@ -100,7 +100,14 @@ switch ($Do) {
   'rect' { $r = (Find $Name).Current.BoundingRectangle; "{0} {1} {2} {3}" -f [int]$r.X, [int]$r.Y, [int]$r.Width, [int]$r.Height }
   'click' {
     Front
-    $r = (Find $Name).Current.BoundingRectangle
+    $e = Find $Name
+    # An element below the fold is scrolled into view first; a point outside this window is never clicked
+    # (it would land on whatever is there, e.g. the taskbar).
+    try { $e.GetCurrentPattern([System.Windows.Automation.ScrollItemPattern]::Pattern).ScrollIntoView(); Start-Sleep -Milliseconds 300 } catch {}
+    $r = $e.Current.BoundingRectangle
+    $w = New-Object Lab.W+RECT; [void][Lab.W]::GetWindowRect($h, [ref]$w)
+    $cx = $r.X + $r.Width / 2; $cy = $r.Y + $r.Height / 2
+    if ($r.IsEmpty -or $cx -lt $w.Left -or $cx -gt $w.Right -or $cy -lt $w.Top -or $cy -gt $w.Bottom) { 'OUTSIDE_WINDOW: no click sent'; exit 4 }
     [void][Lab.W]::SetCursorPos([int]($r.X + $r.Width / 2), [int]($r.Y + $r.Height / 2)); Start-Sleep -Milliseconds 100
     [Lab.W]::mouse_event(2, 0, 0, 0, [UIntPtr]::Zero); [Lab.W]::mouse_event(4, 0, 0, 0, [UIntPtr]::Zero)
     "clicked $Name"

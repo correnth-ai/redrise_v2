@@ -50,6 +50,7 @@ from redrise_contracts.client import CoreClient, CoreError  # noqa: E402
 Stop = base.Stop
 HB = {"platform": "windows-x86_64", "categories": ["windows"], "runner_version": "0.3.11", "session_state": "ready", "session_reason": None}
 ONLINE_S, POLL_S = 45, 10  # Core (service.ONLINE_S) and screen (configuracoes.STATIONS_POLL_MS)
+CELL = ("Text", "DataItem")  # table cells reach UI Automation as DataItem
 
 _u32 = ctypes.windll.user32
 _k32 = ctypes.windll.kernel32
@@ -96,8 +97,12 @@ class Lab(accept_schedule.Lab):
         if self.cfg.get("lan_port") != base.PORT:
             raise Stop("not the isolated team")
         self.fill("E-mail ou usuário", user)
-        self.fill("Senha", password, check=False)
-        self.invoke("Entrar")
+        for _ in range(3):  # right after the window comes up the first keys can be lost; the browser then blocks the empty field
+            self.fill("Senha", password, check=False)
+            self.invoke("Entrar")
+            time.sleep(2)
+            if not self.has("Preencha este campo"):
+                break
         self.wait("Sair", timeout=60)
 
     def client(self, token: str | None = None, by: str = "RR-UI") -> CoreClient:
@@ -119,7 +124,10 @@ class Lab(accept_schedule.Lab):
     def close_app(self) -> None:
         if not self.pid or not alive(self.pid):
             return
-        self.ui("-Do", "keys", "-Value", "{ESC}")
+        try:
+            self.ui("-Do", "keys", "-Value", "{ESC}")  # closes an open dialog; needs the foreground
+        except Stop:
+            pass  # Fechar below is a UI Automation invoke: it does not need the foreground
         for _ in range(4):
             self.ui("-Do", "invoke", "-Name", "Fechar", "-Type", "Button")
             end = time.monotonic() + 20
@@ -129,13 +137,14 @@ class Lab(accept_schedule.Lab):
                 time.sleep(1)
 
     # ---------------------------------------------------------------- screen helpers
-    def after(self, key: str, kinds=("Text",), n: int = 8) -> list[str]:
-        """Names of the next n elements of the given kinds after the first text containing `key` (one table row)."""
+    def after(self, key: str, kinds=CELL, n: int = 8) -> list[str]:
+        """Names of the next n elements of the given kinds after the first cell or text containing `key` (one table row).
+        Table cells reach UI Automation as DataItem."""
         out, seen = [], False
         for line in self.texts():
             kind, name = (line.split("|") + ["", ""])[:2]
             if not seen:
-                seen = kind == "Text" and key in name
+                seen = kind in CELL and key in name
                 continue
             if kind in kinds:
                 out.append(name)
@@ -150,13 +159,13 @@ class Lab(accept_schedule.Lab):
         idx, seen = -1, False
         for line in self.texts():
             kind, name = (line.split("|") + ["", ""])[:2]
-            if seen and stop_at and kind == "Text" and stop_at in name and key not in name:
+            if seen and stop_at and kind in CELL and stop_at in name and key not in name:
                 break
             if kind == "Button" and name == button:
                 idx += 1
                 if seen:
                     return idx
-            if kind == "Text" and key in name:
+            if kind in CELL and key in name:
                 seen = True
         raise Stop(f"no {button} in the row of {key}")
 
@@ -219,7 +228,7 @@ class Lab(accept_schedule.Lab):
         self.shot("equipe-nova-conta")
         before = {u["id"] for u in self.api.call("GET", "/api/v1/users")}
         self.invoke("Nova Conta")
-        self.wait("Nome completo", "Etapas do cadastro", timeout=15)
+        self.wait("Nome completo", "Continuar", "Confirmar senha", timeout=15)  # the step rail names all four steps
         self.invoke("Continuar")
         self.wait("Informe o nome completo da pessoa.", timeout=10)  # validated before going on
         name, email, pw = f"Pessoa Prova {self.seq}", f"pessoa.prova.{self.seq}@exemplo.test", secrets.token_urlsafe(12)
@@ -308,6 +317,7 @@ class Lab(accept_schedule.Lab):
         here = self.api.call("GET", "/api/v1/stations")
         host = next(x for x in here if x["id"] == self.station)
         host_row = self.after(host["name"], n=6)
+        host_marked = self.has(f"{host['name']} Esta estação")
         refused_on_screen = "invoked" not in self.ui("-Do", "invoke", "-Name", "Revogar", "-Type", "Button",
                                                       "-Index", str(self.button_in_row(host["name"], "Revogar", stop_at="Prova estacao"))).stdout
         end = time.monotonic() + 20
@@ -345,10 +355,10 @@ class Lab(accept_schedule.Lab):
         self.invoke_last("Excluir estação")
         self.gone(name)
         api = {x["id"]: x for x in self.api.call("GET", "/api/v1/stations")}
-        ok = ("Esta estação" in host_row and "Online" in host_row and refused_on_screen and not api[self.station]["revoked"] and online
+        ok = (host_marked and "Online" in host_row and refused_on_screen and not api[self.station]["revoked"] and online
               and offline_after is not None and offline_after <= ONLINE_S + POLL_S + 5 and back_after is not None and back_after <= POLL_S + 5
               and unbound == "STATION-SESSION-UNBOUND" and "revogada" in revoked_row and "Offline" in revoked_row and sid not in api)
-        return {"passed": ok, "host_row": host_row, "host_revoke_refused": refused_on_screen, "online_shown": online,
+        return {"passed": ok, "host_marked_esta_estacao": host_marked, "host_row": host_row, "host_revoke_refused": refused_on_screen, "online_shown": online,
                 "offline_after_s": offline_after, "online_again_after_s": back_after, "limit_s": ONLINE_S + POLL_S,
                 "unbound_session": unbound, "revoked_row": revoked_row, "deleted": sid not in api}
 
@@ -418,7 +428,7 @@ class Lab(accept_schedule.Lab):
         one = self.items(p1["id"]) == [a1, last] and self.items(p2["id"]) == [b1, linked]
         for n in (f"Prova avulsa {self.seq}", f"Prova vinculada {self.seq}"):
             self.invoke(f"Selecionar {n}", "CheckBox")
-        self.wait("2 selecionadas", "Excluir 2")
+        self.wait("Excluir 2")
         self.invoke("Excluir 2")
         self.wait("Excluir 2 rotinas", timeout=10)
         self.invoke_last("Excluir")
@@ -435,17 +445,17 @@ class Lab(accept_schedule.Lab):
         self.page("Atividade")
         self.wait("Execuções técnicas", "Mostrar detalhes")
         lines = self.texts()
-        cell = next(line.split("|")[1] for line in lines[next(i for i, x in enumerate(lines) if x.startswith("Text|Detalhes|")) + 1:] if line.startswith("Text|"))
-        row_click = self.ui("-Do", "click", "-Name", cell, "-Type", "Text")  # a cell of the first row: the row opens nothing
+        cell = next(line.split("|")[1] for line in lines[next(i for i, x in enumerate(lines) if x.startswith("DataItem|Detalhes|")) + 1:] if line.startswith("DataItem|"))
+        row_click = self.ui("-Do", "click", "-Name", cell, "-Type", "DataItem")  # a cell of the first row: the row opens nothing
         opened_by_click = self.has("Ocultar detalhes")
-        self.invoke_at("Mostrar detalhes", 0)
-        self.wait("Ocultar detalhes", "Linha do tempo", timeout=10)
+        self.click("Mostrar detalhes")  # the eye is an expand/collapse button: clicked, as a person does
+        self.wait("Ocultar detalhes", "pedida por", timeout=10)
         self.shot("execucao-tecnica-detalhes")
-        self.invoke_at("Mostrar detalhes", 0)  # another eye: the details follow it
+        self.click("Mostrar detalhes")  # another eye (the first one is now Ocultar): the details follow it
         time.sleep(1.5)
         one_open = sum(1 for line in self.texts() if line.startswith("Button|Ocultar detalhes|")) == 1
-        self.invoke("Ocultar detalhes")
-        self.gone("Ocultar detalhes", "Linha do tempo", timeout=10)
+        self.click("Ocultar detalhes")
+        self.gone("Ocultar detalhes", "pedida por", timeout=10)
         same = [j["id"] for j in self.api.call("GET", "/api/v1/jobs")] == jobs_before and self.api.call("GET", "/api/v1/executions/summary")["total"] == execs_before
         ok = not opened_by_click and one_open and same and "clicked" in row_click.stdout
         return {"passed": ok, "other_click_opened": opened_by_click, "one_detail_at_a_time": one_open, "nothing_run": same}
@@ -479,10 +489,10 @@ class Lab(accept_schedule.Lab):
             self.page("Lista")
             shots += [f"lista-acoes-{theme}", f"sidebar-{theme}"]
         self.invoke(name, "CheckBox")
-        self.invoke("Toggle Sidebar")
+        self.invoke_at("Recolher ou expandir o menu", 0)
         time.sleep(0.8)
         self.shot("sidebar-recolhida")
-        self.invoke("Toggle Sidebar")
+        self.invoke_at("Recolher ou expandir o menu", 0)
         return {"passed": True, "shots": shots + ["sidebar-recolhida"], "note": "visual: judged on the screenshots"}
 
     def s_window(self) -> dict:
@@ -534,7 +544,9 @@ def main() -> None:
     ap.add_argument("--lab", type=Path, required=True)
     ap.add_argument("--shots", type=Path, required=True)
     ap.add_argument("--baseline", type=Path, required=True, help="counts recorded by the previous version (rollback_check.py --baseline-with)")
+    ap.add_argument("--only", default="", help="comma-separated scenarios (a rerun on data an earlier run already migrated skips migration)")
     args = ap.parse_args()
+    wanted = [s for s in SCENARIOS if not args.only or s in args.only.split(",")]
     args.shots.mkdir(parents=True, exist_ok=True)
     lab = Lab(args.lab, args.shots)
     lab.created = []
@@ -547,7 +559,7 @@ def main() -> None:
         lab.guard()
         lab.start_app()
         report["core"] = lab.api.call("GET", "/api/v1/status")["core"]
-        for s in SCENARIOS:
+        for s in wanted:
             print("scenario", s, flush=True)
             try:
                 report["scenarios"][s] = getattr(lab, f"s_{s}")()
@@ -565,7 +577,8 @@ def main() -> None:
         lab.close_app()
     report["clicks_lost"] = lab.clicks_lost
     report["seconds"] = int(time.time() - started)
-    report["passed"] = len(report["scenarios"]) == len(SCENARIOS) and all(v.get("passed") for v in report["scenarios"].values())
+    report["only"] = wanted if args.only else None
+    report["passed"] = len(report["scenarios"]) == len(wanted) and all(v.get("passed") for v in report["scenarios"].values())
     out = args.lab / f"accept-team-{time.strftime('%Y%m%d-%H%M%S')}.json"
     out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(str(out))
