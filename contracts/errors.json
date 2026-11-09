@@ -1349,19 +1349,6 @@
       "next": "Deactivate the account first, then delete it.",
       "details": "Only an inactive account can be deleted; the state is read again when deleting."
     },
-    "ACCOUNT-EMAIL-RESERVED": {
-      "category": "precondition",
-      "modules": [
-        "RR-CORE"
-      ],
-      "effect_state": "none",
-      "retry": "after_fix",
-      "what": "This e-mail belonged to a deleted account.",
-      "completed": "The request was refused. No account was created.",
-      "pending": "The e-mail stays reserved and is not linked to the history of the deleted account.",
-      "next": "Use another e-mail for the new account.",
-      "details": "E-mails of deleted accounts stay reserved in this version."
-    },
     "STATION-IN-USE": {
       "category": "precondition",
       "modules": [

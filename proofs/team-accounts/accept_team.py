@@ -14,7 +14,8 @@ of the synthetic station are generated here, kept in memory and never printed.
  account    + Nova Conta through the screen (position in Meu perfil, validation, four steps); exactly one active
             operator; its OWN login by e-mail, logout and login again (not the administrator's session).
  delete     an inactive account: Cancelar keeps it; Excluir conta removes it after the Core; the list read again
-            does not show it; it cannot sign in; reactivation is refused.
+            does not show it; it cannot sign in; reactivation is refused; its e-mail opens a new account (since
+            ACCOUNT-ERASURE-20261109; before, it was refused as reserved).
  stations   Status apart from Estado; Esta estacao cannot be revoked; a synthetic station goes Online -> Offline
             within the documented limit and back; revoked through the screen, then deleted; API refusals.
  links      Processo > Acao: Cancelar keeps the composition; step 1 removed and saved without approval; the only
@@ -299,8 +300,9 @@ class Lab(accept_schedule.Lab):
         api_listed = any(u["id"] == c["id"] for u in self.api.call("GET", "/api/v1/users"))
         login = self.code(lambda: self.client().call("POST", "/api/v1/login", {"username": c_mail, "password": c_pw}))
         react = self.code(lambda: self.api.call("PATCH", f"/api/v1/users/{c['id']}", {"active": True}))
-        reuse = self.code(lambda: self.api.call("POST", "/api/v1/accounts", {"full_name": "Outra", "email": c_mail, "password": c_pw}))
-        ok = kept and not listed and not api_listed and login == "AUTH-INVALID" and react == "NOT-FOUND" and reuse == "ACCOUNT-EMAIL-RESERVED"
+        # Since ACCOUNT-ERASURE-20261109 the e-mail of a deleted account opens a new, unrelated account.
+        reuse = self.code(lambda: self.api.call("POST", "/api/v1/accounts", {"full_name": "Outra", "email": c_mail, "password": secrets.token_urlsafe(12)}))
+        ok = kept and not listed and not api_listed and login == "AUTH-INVALID" and react == "NOT-FOUND" and reuse == "accepted"
         return {"passed": ok, "cancel_kept": kept, "deleted_listed_on_screen": listed, "deleted_listed_api": api_listed,
                 "login": login, "reactivate": react, "email_reuse": reuse}
 

@@ -49,7 +49,7 @@ export function AccountWizard() {
       leave();
     } catch (e) {
       setError(e); // the context stays for a correction; an e-mail refusal goes back to that field
-      if (e instanceof AppError && ["ACCOUNT-EXISTS", "ACCOUNT-EMAIL-RESERVED"].includes(e.diagnostic.error_code)) setStep(2);
+      if (e instanceof AppError && e.diagnostic.error_code === "ACCOUNT-EXISTS") setStep(2);
     } finally { setBusy(false); }
   }
   const field = [

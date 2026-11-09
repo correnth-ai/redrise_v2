@@ -63,6 +63,7 @@ describe("Equipe", () => {
     await u.click(within(inactive).getByRole("button", { name: "Excluir conta" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText(/Pessoa 2 \(p2@x.com.br\)/)).toBeTruthy();
+    expect(within(dialog).getByText(/o e-mail fica livre para uma conta nova/)).toBeTruthy(); // erased, e-mail reusable
     await u.click(within(dialog).getByRole("button", { name: "Cancelar" }));
     expect(api).not.toHaveBeenCalledWith("DELETE", expect.anything());
     expect(screen.getByText("Pessoa 2")).toBeTruthy();
@@ -142,11 +143,11 @@ describe("+ Nova Conta", () => {
   });
 
   it("a refused e-mail goes back to its step with the diagnostic; cancel creates nothing", async () => {
-    api.mockImplementation(async () => { throw new AppError(diag("ACCOUNT-EMAIL-RESERVED")); });
+    api.mockImplementation(async () => { throw new AppError(diag("ACCOUNT-EXISTS")); });
     render(<AccountWizard />);
     await fill();
     await userEvent.click(screen.getByRole("button", { name: "Criar conta" }));
-    expect(await screen.findByText(/Código: ACCOUNT-EMAIL-RESERVED/)).toBeTruthy();
+    expect(await screen.findByText(/Código: ACCOUNT-EXISTS/)).toBeTruthy();
     expect((screen.getByLabelText("E-mail") as HTMLInputElement).value).toBe("maria@empresa.com.br");
     api.mockClear();
     await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));

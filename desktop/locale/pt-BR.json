@@ -784,13 +784,6 @@
       "next": "Desative a conta antes e depois exclua.",
       "details": "Só conta inativa pode ser excluída; o estado é relido na exclusão."
     },
-    "ACCOUNT-EMAIL-RESERVED": {
-      "what": "Este e-mail pertencia a uma conta excluída.",
-      "completed": "O pedido foi recusado. Nenhuma conta foi criada.",
-      "pending": "O e-mail continua reservado e não é ligado ao histórico da conta excluída.",
-      "next": "Use outro e-mail para a conta nova.",
-      "details": "E-mails de contas excluídas ficam reservados nesta versão."
-    },
     "STATION-IN-USE": {
       "what": "Esta é a estação que esta sessão está usando.",
       "completed": "O pedido foi recusado; a estação não foi alterada.",

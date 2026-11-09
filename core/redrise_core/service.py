@@ -20,6 +20,7 @@ from . import __version__, auth, changes, identity
 from .db import Database
 
 SESSION_TTL = timedelta(hours=12)
+ERASED_PW = "!"  # password of a deleted account: matches no password (auth.verify_password), as in migration 012
 REMEMBER_TTL = timedelta(days=30)  # absolute per remembered device; renewal does not extend it
 LEASE = timedelta(seconds=60)
 TERMINAL = ("completed_unverified", "verified", "failed", "uncertain", "refused", "cancelled", "error")
@@ -292,7 +293,8 @@ class Core:
         `station_token` (sent by the desktop, never typed) ties the session to the station it runs on."""
         who = username.strip().lower()[:254] if isinstance(username, str) else None
         with self.db.tx() as c:
-            u = c.execute("SELECT * FROM users WHERE username = %s OR email = %s", (who, who)).fetchone() if who else None
+            u = c.execute("SELECT * FROM users WHERE (username = %s OR email = %s) AND deleted_at IS NULL",
+                          (who, who)).fetchone() if who else None
         account = f"user:{u['id']}" if u else f"name:{who}"
         keys = (("account", account), ("client", client or "-"))
         self._attempt(keys, account)  # counted now; a right password below forgets it
@@ -376,7 +378,7 @@ class Core:
         """One explicit link: proof of the account (token) plus proof of the team user (local password)."""
         who = self._verified(access_token)
         with self.db.tx() as c:
-            u = c.execute("SELECT * FROM users WHERE username = %s", (username,)).fetchone()
+            u = c.execute("SELECT * FROM users WHERE username = %s AND deleted_at IS NULL", (username,)).fetchone()
             ok = auth.verify_password(password or "", u["pw_hash"] if u else auth.DUMMY_HASH)
             if not u or not ok or not u["active"]:
                 raise err(401, "AUTH-INVALID")
@@ -453,14 +455,14 @@ class Core:
 
     def create_account(self, actor: dict, full_name, email, password) -> dict:
         """Configuracao > Equipe > + Nova Conta: an active operator who can sign in at once with this e-mail
-        and password. The internal user name comes from the e-mail; the e-mail of a deleted account stays reserved."""
+        and password. The internal user name comes from the e-mail. A deleted account no longer holds its e-mail
+        (see delete_user), so the e-mail can open a new account, which never inherits the deleted one's history."""
         self.require_admin(actor)
         full_name, email = self._account_fields(full_name, email, password)
         try:
             with self.db.tx() as c:
-                prior = c.execute("SELECT deleted_at FROM users WHERE email = %s", (email,)).fetchone()
-                if prior:
-                    raise err(409, "ACCOUNT-EMAIL-RESERVED" if prior["deleted_at"] else "ACCOUNT-EXISTS")
+                if c.execute("SELECT 1 FROM users WHERE email = %s", (email,)).fetchone():
+                    raise err(409, "ACCOUNT-EXISTS")
                 u = c.execute("""INSERT INTO users (username, display, pw_hash, role, active, email)
                                  VALUES (%s, %s, %s, 'operator', true, %s) RETURNING *""",
                               (self._new_username(c, email), full_name, auth.hash_password(password), email)).fetchone()
@@ -469,8 +471,10 @@ class Core:
         return {**_public_user(u), "email": u["email"]}
 
     def delete_user(self, actor: dict, user_id: int) -> dict:
-        """Logical and final: only an inactive account, read again under its row lock (a reactivation from another
-        screen waits for this, or this sees it). The row stays for the history; access and sessions end."""
+        """Final: only an inactive account, read again under its row lock (a reactivation from another screen
+        waits for this, or this sees it). The account is erased: e-mail, password, identity link and remembered
+        devices go, and every session ends. The row stays only so the history keeps showing who did what (display
+        name and internal user name, which a new account never reuses), with the same rule as migration 012."""
         self.require_admin(actor)
         with self.db.tx() as c:
             u = c.execute("SELECT * FROM users WHERE id = %s AND deleted_at IS NULL FOR UPDATE", (user_id,)).fetchone()
@@ -478,8 +482,10 @@ class Core:
                 raise err(404, "NOT-FOUND", what_missing="user")
             if u["active"]:
                 raise err(409, "ACCOUNT-ACTIVE")
-            c.execute("UPDATE users SET deleted_at = now() WHERE id = %s", (user_id,))
-            c.execute("UPDATE sessions SET revoked = true WHERE user_id = %s", (user_id,))
+            c.execute("UPDATE sessions SET revoked = true, device_id = NULL WHERE user_id = %s", (user_id,))
+            c.execute("""DELETE FROM remembered_devices WHERE subject IN (SELECT subject FROM identity_links WHERE user_id = %s)""", (user_id,))
+            c.execute("DELETE FROM identity_links WHERE user_id = %s", (user_id,))
+            c.execute("UPDATE users SET deleted_at = now(), email = NULL, pw_hash = %s WHERE id = %s", (ERASED_PW, user_id))
         return {"deleted": True}
 
     def create_user(self, actor: dict, username: str, display: str, password: str, role: str) -> dict:

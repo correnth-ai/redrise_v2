@@ -14,6 +14,8 @@ from datetime import datetime, timedelta, timezone
 import test_core
 from test_core import PW, Harness
 
+from redrise_core import auth  # noqa: E402  (on sys.path through test_core)
+
 CALC = {"target": {"kind": "app", "app_id": "Calc!App", "name": "Calculadora"}, "isolated": True}
 
 
@@ -35,6 +37,10 @@ class TeamAccountsTest(Harness, unittest.TestCase):
         a = cls.admin()
         s = a.call("POST", "/api/v1/stations", {"name": "aqui"})
         cls.here, cls.here_token = s["station"]["id"], s["runner_token"]
+
+    def setUp(self):
+        # Wrong passwords on purpose add up on the test client's address across tests: each test starts as a fresh Core does.
+        self.h.core.limits = auth.AttemptLimiter()
 
     def account(self, client=None, **kw):
         body = {"full_name": "Pessoa Sintética", "email": mail(), "password": PW, **kw}
@@ -132,10 +138,44 @@ class TeamAccountsTest(Harness, unittest.TestCase):
         self.expect("AUTH-REQUIRED", lambda: self.client(s).call("GET", "/api/v1/me"), 401)
         self.expect("NOT-FOUND", lambda: a.call("PATCH", f"/api/v1/users/{u['id']}", {"active": True}), 404)  # no reactivation
         self.expect("NOT-FOUND", lambda: a.call("DELETE", f"/api/v1/users/{u['id']}"), 404)
-        self.expect("ACCOUNT-EMAIL-RESERVED", lambda: self.account(email=b["email"]), 409)  # reserved, never relinked
-        with self.su() as c:  # the row stays (history), inactive and marked deleted
-            row = c.execute("SELECT active, deleted_at IS NOT NULL FROM users WHERE id = %s", (u["id"],)).fetchone()
-        self.assertEqual(row, (False, True))
+        with self.su() as c:  # erased: only what the history shows stays (display and internal user name)
+            row = c.execute("SELECT active, deleted_at IS NOT NULL, email, pw_hash, display, username FROM users WHERE id = %s",
+                            (u["id"],)).fetchone()
+        self.assertEqual(row, (False, True, None, "!", u["display"], u["username"]))
+
+    def test_03b_the_email_of_a_deleted_account_opens_a_new_account_never_linked_to_the_old_one(self):
+        a = self.admin()
+        old, b = self.account(full_name="Pessoa Antiga")
+        a.call("PATCH", f"/api/v1/users/{old['id']}", {"active": False})
+        a.call("DELETE", f"/api/v1/users/{old['id']}")
+        new, _ = self.account(full_name="Pessoa Nova", email=b["email"], password="outra-senha-9")
+        self.assertNotEqual(new["id"], old["id"])
+        self.assertEqual((new["email"], new["active"], new["display"]), (b["email"], True, "Pessoa Nova"))
+        self.assertEqual(new["username"], old["username"] + ".2")  # the old user name stays with the history
+        self.assertEqual(self.client(self.login(b["email"], "outra-senha-9")["token"]).call("GET", "/api/v1/me")["id"], new["id"])
+        self.expect("AUTH-INVALID", lambda: self.login(b["email"]), 401)  # the old password opens nothing
+        self.expect("AUTH-INVALID", lambda: self.login(old["username"], "!"), 401)  # nor the erased marker
+        listed = self.users()
+        self.assertIn(new["id"], listed)
+        self.assertNotIn(old["id"], listed)
+        self.expect("ACCOUNT-EXISTS", lambda: self.account(email=b["email"]), 409)  # a live account still holds its e-mail
+
+    def test_03c_migration_012_erases_accounts_deleted_before_it(self):
+        # An account deleted by Core 0.3.8 kept its e-mail and password; migration 012 erases them and its identity link.
+        u, b = self.account()
+        subject = f"sub-{uuid.uuid4().hex[:8]}"
+        with self.su() as c:
+            c.execute("UPDATE users SET active = false, deleted_at = now() WHERE id = %s", (u["id"],))
+            c.execute("INSERT INTO identity_links (subject, user_id, email) VALUES (%s, %s, %s)", (subject, u["id"], b["email"]))
+            c.execute("INSERT INTO remembered_devices (id, subject, installation_id, device_name, expires_at) VALUES (%s, %s, 'inst-0001', 'pc', now() + interval '1 day')",
+                      (uuid.uuid4().hex, subject))
+            c.execute((test_core.ROOT / "core" / "redrise_core" / "migrations" / "012_account_erasure.sql").read_text(encoding="utf-8"))
+            row = c.execute("SELECT email, pw_hash FROM users WHERE id = %s", (u["id"],)).fetchone()
+            links = c.execute("SELECT count(*) FROM identity_links WHERE user_id = %s", (u["id"],)).fetchone()[0]
+            devices = c.execute("SELECT count(*) FROM remembered_devices WHERE subject = %s", (subject,)).fetchone()[0]
+        self.assertEqual((row, links, devices), ((None, "!"), 0, 0))
+        new, _ = self.account(email=b["email"])
+        self.assertNotEqual(new["id"], u["id"])
 
     def test_04_a_reactivation_from_another_screen_wins_over_a_stale_delete(self):
         a = self.admin()

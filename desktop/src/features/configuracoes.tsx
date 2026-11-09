@@ -95,7 +95,7 @@ function TeamAdmin() {
             </span></TableCell></TableRow>
         ))}</TableBody></Table></div>
       <ConfirmDelete open={remove !== null} title="Excluir conta" confirm="Excluir conta"
-        description={remove ? `A conta ${remove.full_name ?? remove.display} (${remove.email ?? remove.username}) deixa de existir na equipe e não pode ser reativada. O histórico dela é preservado.` : ""}
+        description={remove ? `A conta ${remove.full_name ?? remove.display} (${remove.email ?? remove.username}) é apagada e não pode ser reativada: o e-mail e a senha são removidos e o e-mail fica livre para uma conta nova. O nome continua só no histórico.` : ""}
         onCancel={() => setRemove(null)} onConfirm={async () => { await api("DELETE", `/api/v1/users/${remove!.id}`); setRemove(null); users.reload(); }} />
     </div>
   );
