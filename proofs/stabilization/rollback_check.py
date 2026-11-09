@@ -101,6 +101,15 @@ def baseline(install: Path, data: Path, vault: str, account: dict, out: Path) ->
     print(json.dumps(rep, ensure_ascii=False))
 
 
+def deleted_users(port: int, vault: WindowsVault, dbname: str) -> int:
+    """Accounts deleted logically (migration 011, Core 0.3.8): a newer Core leaves them out of its list, an older
+    one lists them as inactive (the database still refuses to reactivate them: users_deleted_inactive)."""
+    import psycopg
+    with psycopg.connect(db.conninfo(port, pg.SUPERUSER, vault.get("pg-superuser"), dbname)) as c:
+        has = c.execute("SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'deleted_at'").fetchone()
+        return c.execute("SELECT count(*) FROM users WHERE deleted_at IS NOT NULL").fetchone()[0] if has else 0
+
+
 def drop_db(port: int, vault: WindowsVault, name: str) -> None:
     import psycopg
     with psycopg.connect(db.conninfo(port, pg.SUPERUSER, vault.get("pg-superuser"), "postgres"), autocommit=True) as c:
@@ -125,8 +134,9 @@ def main() -> None:
     p, info = serve(a.new, a.data, a.vault, stop)
     try:
         report["new"] = counts(info, account)
-        report["new_tables"] = table_counts(json.loads((a.data / "host" / "host.json").read_text(encoding="utf-8-sig"))["pg_port"],
-                                            WindowsVault(a.vault), db.DBNAME)
+        port = json.loads((a.data / "host" / "host.json").read_text(encoding="utf-8-sig"))["pg_port"]
+        report["new_tables"] = table_counts(port, WindowsVault(a.vault), db.DBNAME)
+        report["deleted_users"] = deleted_users(port, WindowsVault(a.vault), db.DBNAME)
     finally:
         stop_core(p, stop)
 
@@ -160,8 +170,9 @@ def main() -> None:
     finally:
         stop_core(p, stop)
         dump.unlink(missing_ok=True)
-    same_api = {k: v for k, v in report["new"].items() if k not in ("core", "executions_366d")} == \
-               {k: v for k, v in report["old"].items() if k not in ("core", "executions_366d")}
+    skip = ("core", "executions_366d", "users")
+    same_api = ({k: v for k, v in report["new"].items() if k not in skip} == {k: v for k, v in report["old"].items() if k not in skip}
+                and report["old"]["users"] == report["new"]["users"] + report["deleted_users"])  # the older Core also lists deleted accounts
     report["passed"] = (same_api and report["new_tables"] == report["old_tables"] and report["backup"]["exit"] == 0
                         and report.get("restore", {}).get("exit") == 0 and report.get("restored_tables") == report.get("live_tables"))
     a.out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
