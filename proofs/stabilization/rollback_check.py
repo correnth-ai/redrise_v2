@@ -26,7 +26,8 @@ from redrise_contracts.client import CoreClient, CoreError
 from redrise_contracts.vault import WindowsVault
 from redrise_core import db, pg
 
-TABLES = ("processes", "routines", "routine_versions", "executions", "jobs", "users", "schema_migrations")
+TABLES = ("processes", "routines", "routine_versions", "executions", "jobs", "users", "schema_migrations",
+          "schedules", "schedule_runs", "notifications")  # the schedule tables exist from Core 0.3.7 (migration 010)
 
 
 def serve(install: Path, data: Path, vault: str, stop: Path) -> tuple[subprocess.Popen, dict]:
@@ -54,7 +55,9 @@ def counts(info: dict, account: dict) -> dict:
     a = CoreClient("127.0.0.1", info["lan_port"], info["fingerprint"], tok)
     out = {"core": st["core"], "processes": len(a.call("GET", "/api/v1/processes")), "routines": len(a.call("GET", "/api/v1/routines")),
            "executions_366d": _summary(a),
-           "executions_listed": len(a.call("GET", "/api/v1/executions")), "users": len(a.call("GET", "/api/v1/users"))}
+           "executions_listed": len(a.call("GET", "/api/v1/executions")), "users": len(a.call("GET", "/api/v1/users")),
+           # an older Core must still read the notifications a newer one wrote (schedule notices from 0.3.7)
+           "notifications": len(a.call("GET", "/api/v1/notifications")["items"])}
     a.call("POST", "/api/v1/logout")
     return out
 
@@ -78,7 +81,8 @@ def stop_core(p: subprocess.Popen, stop: Path) -> None:
 def table_counts(port: int, vault: WindowsVault, dbname: str) -> dict:
     import psycopg
     with psycopg.connect(db.conninfo(port, pg.SUPERUSER, vault.get("pg-superuser"), dbname)) as c:
-        return {t: c.execute(f"SELECT count(*) FROM {t}").fetchone()[0] for t in TABLES}
+        present = [t for t in TABLES if c.execute("SELECT to_regclass(%s)", (f"public.{t}",)).fetchone()[0]]
+        return {t: c.execute(f"SELECT count(*) FROM {t}").fetchone()[0] for t in present}  # a table an older schema lacks is left out
 
 
 def baseline(install: Path, data: Path, vault: str, account: dict, out: Path) -> None:

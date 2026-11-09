@@ -1,0 +1,115 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "SCHEDULE-PROCESS-20261107",
+  "install": "install-beta28",
+  "scenarios": {
+    "migration": {
+      "passed": true,
+      "baseline_from": "install-beta27",
+      "tables": {
+        "processes": 29,
+        "routines": 61,
+        "routine_versions": 61,
+        "executions": 53,
+        "jobs": 134,
+        "users": 4,
+        "schema_migrations": 10,
+        "schedules": 0,
+        "schedule_runs": 0,
+        "notifications": 9
+      },
+      "baseline_tables": {
+        "processes": 29,
+        "routines": 61,
+        "routine_versions": 61,
+        "executions": 53,
+        "jobs": 134,
+        "users": 4,
+        "schema_migrations": 9,
+        "notifications": 9
+      },
+      "backup_before_migration": "pre-migration-20261108-133408.dump"
+    },
+    "scheduled": {
+      "passed": true,
+      "process": "Prova agendada 148c",
+      "time_field": "Group",
+      "preview": "Próxima execução: 08/11/2026 13:40",
+      "schedule": {
+        "id": 1,
+        "weekdays": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          7
+        ],
+        "hour": 13,
+        "minute": 40,
+        "timezone": "America/Sao_Paulo",
+        "next_slot_local": "2026-11-08T13:40",
+        "owner_name": "Admin de Teste"
+      },
+      "listed_on_screen": true,
+      "run": {
+        "slot_local": "2026-11-08T13:40",
+        "state": "started",
+        "reason": null,
+        "execution_id": "e9d6ccef-cdde-4706-8b3d-d82949cfc530"
+      },
+      "execution": {
+        "state": "finished",
+        "outcome": "verified",
+        "schedule_id": 1,
+        "request_id": "agenda-1-202611081340"
+      },
+      "started_seconds_after_time": 10.7,
+      "marked_agendada": true,
+      "empresa_equal_core": true,
+      "empresa_diff": {},
+      "executions_30d": [
+        53,
+        54
+      ],
+      "windows_not_closed": 0
+    },
+    "skipped": {
+      "passed": true,
+      "run": {
+        "slot_local": "2026-11-08T13:42",
+        "state": "skipped",
+        "reason": "station_unavailable",
+        "execution_id": null
+      },
+      "executions_created": 0,
+      "notifications": 1,
+      "unseen_before": 0,
+      "bell_button": "Notificações, 1 não vista",
+      "bell_text_seen": true,
+      "listed_reason": true,
+      "next_slot_local": "2026-11-15T13:42"
+    },
+    "roles": {
+      "passed": true,
+      "operator_lists": "allowed",
+      "operator_reads_runs": "allowed",
+      "operator_creates": "AUTH-FORBIDDEN",
+      "operator_pauses": "AUTH-FORBIDDEN",
+      "operator_deletes": "AUTH-FORBIDDEN",
+      "no_token_lists": "AUTH-REQUIRED"
+    }
+  },
+  "core": "0.3.7",
+  "cleanup": {
+    "paused": [
+      1,
+      2
+    ],
+    "station_revoked": true
+  },
+  "clicks_lost": [],
+  "seconds": 519,
+  "passed": true
+}

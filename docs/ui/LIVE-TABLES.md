@@ -16,6 +16,7 @@ Work order [UI-ENGINE-BOAS-VINDAS-20261103](../../delivery/work-orders/UI-ENGINE
 | Rotina › Lista | `routines`, `processes` | routines, processes | Mantém busca, aba, ordenação, página e seleção. Linha excluída sai da seleção. |
 | Processo › Ação, processos | `processes`, `routines` | processes, routines, executions | Composição aberta não é sobrescrita: trabalha na própria cópia até salvar. |
 | Processo › Ação, contagens | `executions/summary` (30 dias, contado no Core, como a Empresa), `processes`, `reviews` | executions, jobs, reviews | Lê de novo quando a loja lê as execuções; cada bloco abre o Histórico com o mesmo período e situação. Falha mostra o diagnóstico e "—". |
+| Processo › Ação, agendamentos | `schedules` | schedules | Lê de novo a cada mudança anunciada e depois de cada ação; falha mostra o diagnóstico, nunca lista vazia. Próxima ocorrência sempre vinda do Core. |
 | Processo › Ação, execuções recentes | `executions` (as 100 mais recentes) | executions, jobs, reviews | Mesmas regras da tabela; a lista é rotulada como recentes e não serve de total. |
 | Processo › Histórico | `executions` | executions, jobs, reviews | Detalhe aberto segue a mesma execução. |
 | Processo › Histórico com período (aberto por um indicador da Empresa) | `executions?days=30` | executions, jobs, reviews | Lê de novo quando a loja lê as execuções. Mostra o período e a quantidade; acima de 500 avisa que lista as mais recentes. |

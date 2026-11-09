@@ -1,0 +1,253 @@
+{
+  "step": "SCHEDULE-PROCESS-20261107/increment-1 (code)",
+  "status": "done_in_code_no_candidate",
+  "date": "2026-11-07",
+  "authorization": "User in chat, 2026-11-07: apply the feedback on S5, then start S5; a station ready at the time but busy or disconnected before starting expires with 'Nao iniciado por desconexao.'",
+  "source_revision": "991ebc5 plus the uncommitted tree",
+  "versions": {
+    "core": "0.3.7",
+    "runner": "0.3.11 (unchanged)",
+    "desktop": "0.1.0-beta.27 (unchanged; no candidate)"
+  },
+  "documentary_fixes": [
+    "AGENTS.md current state points to the active work order, the lab candidate beta.27 and the real install beta.25",
+    "STABILIZATION-REAL-UI-20261107.md marked as historical planning, with its current state and evidence links"
+  ],
+  "decisions_incorporated": {
+    "atomic_occurrence": "occurrence, execution and both links in one transaction (Core._fire inside schedule_tick); test_02 simulates a crash after the execution was created: nothing remains and the next pass starts it once",
+    "pause_edit_resume": "always the next future occurrence; recovery only for an enabled schedule while the Core was stopped (test_07, test_08)",
+    "identity_and_zone": "slot_local in the schedule's fixed zone is the unique key and the request_id base; repeated hour once, missing hour skipped (test_09, America/New_York 2026)",
+    "permission_at_fire": "loop re-reads the owner; demoted or deactivated -> skipped owner_not_allowed, paused, admins notified; an administrator who edits or resumes becomes the owner (test_10)",
+    "not_started": "step 1 not started 15 min after the time -> expired, step cancelled with SCHEDULE-NOT-STARTED ('Nao iniciado por desconexao.'), owner notified; queued and claimed cases (test_05, test_06)",
+    "permissions_and_grace": "administrators write, operators read (test_11); 15 min grace"
+  },
+  "checks": [
+    {
+      "type": "contract_check",
+      "command": "cd tests/core && <lab python> -B -W always::ResourceWarning -m unittest <module> (each alone)",
+      "observed": {
+        "test_core": {
+          "tests": 14,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_browser_processes": {
+          "tests": 17,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_review": {
+          "tests": 11,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_step_change": {
+          "tests": 9,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_nova_rotina": {
+          "tests": 14,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_notify_followup": {
+          "tests": 4,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_report_followup": {
+          "tests": 4,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_agent": {
+          "tests": 6,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_changes": {
+          "tests": 7,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_identity": {
+          "tests": 23,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_cancel": {
+          "tests": 7,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_summary": {
+          "tests": 3,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_limits": {
+          "tests": 20,
+          "result": "OK",
+          "resource_warnings": 0
+        },
+        "test_schedules": {
+          "tests": 11,
+          "result": "OK",
+          "resource_warnings": 0
+        }
+      },
+      "total_tests": 150
+    },
+    {
+      "type": "contract_check",
+      "command": "unittest discover in one process",
+      "observed": {
+        "tests": 150,
+        "result": "OK",
+        "resource_warnings": 0
+      }
+    },
+    {
+      "type": "contract_check",
+      "command": "tests/contracts",
+      "observed": "17 OK (SCHEDULE-NOT-STARTED in errors, modules and pt-BR)"
+    },
+    {
+      "type": "component_check",
+      "command": "typecheck and vitest on C:",
+      "observed": "typecheck OK; 10 files, 64 tests passed (6 new in schedules.test.tsx)"
+    },
+    {
+      "type": "base_check",
+      "command": "validate-base (both modes)",
+      "observed": "346 and 368 checks passed"
+    },
+    {
+      "type": "screen_check",
+      "command": "lab inspection server (Core 0.3.7 from source, synthetic team), Processo > Acao",
+      "observed": "Agendar opened the dialog; the Core preview showed 'Proxima execucao: 07/11/2026 23:44'; the schedule appeared in Agendamentos; at 23:44 the loop handled it: the simulated station had no heartbeat (it only signals while it has jobs), so the occurrence was skipped 'Estacao indisponivel no horario', the next became 09/11/2026 23:44 and the bell showed 'Agendamento pulado: estacao indisponivel no horario'. A started occurrence on a ready station is covered by the contract tests and goes to the installed proof.",
+      "cleanup": "inspection PostgreSQL stopped and its folder removed"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "core/redrise_core/migrations/010_schedules.sql",
+      "sha256": "f76cc771e5ce41930d4636a0b8ae70a2b641339439b84debb285127f6180853f"
+    },
+    {
+      "path": "core/redrise_core/service.py",
+      "sha256": "59426c7116c3c6f686c6052e65684f6e1143893665cba40564966cf3594fca96"
+    },
+    {
+      "path": "core/redrise_core/api.py",
+      "sha256": "8a2991176d2f784f4a0e77aefe196c0cb98404e0d43a009ebb6aa87c739d7197"
+    },
+    {
+      "path": "core/redrise_core/host.py",
+      "sha256": "504938bf1fa1c2df912683b74e549eede4a50c92d7fd52c738db7c7e217d12ca"
+    },
+    {
+      "path": "core/redrise_core/__init__.py",
+      "sha256": "3662df50aec9b05608605827eaff9cefff95d3758fa44d3b0fbae47828413381"
+    },
+    {
+      "path": "contracts/errors.json",
+      "sha256": "cc507975a654c5e3d9c4f6c0c036b76120eb1da0b0ff7b0e37b7a81c80acbc71"
+    },
+    {
+      "path": "contracts/modules.json",
+      "sha256": "6ef8b74a409b51845c78feb8fccbefc59041e473f652f911dd70bb33754db6a1"
+    },
+    {
+      "path": "desktop/locale/pt-BR.json",
+      "sha256": "a2cbc4ad73d75e2df9223ef41a26ac252c4b23fa1993f730240b2f4903764b9a"
+    },
+    {
+      "path": "desktop/src/features/schedules.tsx",
+      "sha256": "93967f2e9bc62bd811f8d975db979e2028470ad109ff3d69a856f202b5989209"
+    },
+    {
+      "path": "desktop/src/features/processos.tsx",
+      "sha256": "1ad003b52d1ca0d1d2525d08a3c303757bf85d67e12673f29819039e05fd0998"
+    },
+    {
+      "path": "desktop/src/features/fluxos.tsx",
+      "sha256": "25c3d0536b5538c45891620069f77c21bc8d1806f1cd08a18d20a89c38b7dd3c"
+    },
+    {
+      "path": "desktop/src/components/notifications-bell.tsx",
+      "sha256": "1cd49961f3d2a54106e62a55fdff1af37194011735898c0735547792fa6691c8"
+    },
+    {
+      "path": "desktop/src/data/types.ts",
+      "sha256": "26e2de32dda64f170227f9e51edc9f2c45182fc8f939a79db9d6b2aa5eddef5b"
+    },
+    {
+      "path": "desktop/src/data/source.ts",
+      "sha256": "383c3404249d78ca72cb23c6a1190f9a93d94b827ea7e685cdbbcb0b1fc119c2"
+    },
+    {
+      "path": "desktop/src/data/demo.ts",
+      "sha256": "d09b94f3f8b1219f7756ffe7c50f74bd098883e27c97d3b2225f4b64248fba07"
+    },
+    {
+      "path": "desktop/tests/schedules.test.tsx",
+      "sha256": "1724941463dc84cae9651f53de345e8c1d437a04659bb937ee920891a34b9cc9"
+    },
+    {
+      "path": "desktop/tests/empresa.test.tsx",
+      "sha256": "9fbe6ea449ab777dcd1ef883a1dbf714dc723bd1209794fe5d5267a5a34bac49"
+    },
+    {
+      "path": "tests/core/test_schedules.py",
+      "sha256": "313bf6283748c07f237e239e6faf1425af2054e5e6318f524466d410d6ec77b4"
+    },
+    {
+      "path": "delivery/work-orders/SCHEDULE-PROCESS-20261107.md",
+      "sha256": "eef663db5f333d957a400ca40dfe4fe7e58d77670bd7f680afccbc03f5ceb1a6"
+    },
+    {
+      "path": "delivery/work-orders/STABILIZATION-REAL-UI-20261107.md",
+      "sha256": "ee4311a1824f8b72e3753a183d23aa8efdbd1de28c14fc5d2d446f7195ce8b3a"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "9a343cd87dc89f8e1a0dc61f8fa179947de720cc109a4f80f8a5792a828f9794"
+    },
+    {
+      "path": "docs/APP-RULES.md",
+      "sha256": "a16aa1f2a5a7e535374be106e26315960ef06fbda7945d9fe3224cb27e567150"
+    },
+    {
+      "path": "docs/decisions/P05-contracts-lan.md",
+      "sha256": "7925e5a9a9e353678e7a5730fe6f4fc1f569de8b9075282a6aa053d30a175eec"
+    },
+    {
+      "path": "docs/ui/LIVE-TABLES.md",
+      "sha256": "3b3a167db52eba56bffd997e2e5eb0cf15703f34c33e23d66303d0e8b792deb4"
+    }
+  ],
+  "commands": {
+    "required": [
+      "Core modules alone and discovery",
+      "tests/contracts",
+      "UI typecheck and vitest",
+      "validate-base",
+      "screen check"
+    ],
+    "optional": [],
+    "not_applicable": [
+      "candidate, gate and installed proof: next increment, needs a free computer and an order",
+      "Runner tests: no Runner change"
+    ]
+  },
+  "limits": [
+    "Not yet on an installed candidate.",
+    "The server computer must be on with RedRise open; the schedule does not wake Windows.",
+    "A locked Windows session at the time skips the occurrence.",
+    "The fixed time zone does not follow a server zone change until an administrator edits the schedule."
+  ],
+  "review": null,
+  "next_action": "Candidate (next free version after 0.1.0-beta.27), gate, lab install and the installed proof of the work order, with the computer free and on the user's order."
+}

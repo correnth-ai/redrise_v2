@@ -364,6 +364,13 @@
       "next": "Aguarde alguns instantes e tente novamente.",
       "details": "Sem vaga para o pedido dentro da espera (tente após {retry_after_s} s)."
     },
+    "SCHEDULE-NOT-STARTED": {
+      "what": "Não iniciado por desconexão.",
+      "completed": "A execução agendada foi cancelada antes de a primeira etapa começar.",
+      "pending": "Nada foi feito na estação nesta ocorrência.",
+      "next": "Confira se a estação fica conectada e livre no horário; a próxima ocorrência segue o agendamento.",
+      "details": "A primeira etapa não começou dentro da tolerância do horário agendado."
+    },
     "CORE-UNREACHABLE": {
       "what": "Não foi possível falar com o servidor da equipe.",
       "completed": "A conexão não foi concluída ou não houve resposta a tempo.",

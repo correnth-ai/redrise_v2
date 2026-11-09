@@ -1,7 +1,8 @@
 # Work Order — estabilização, interface funcional e estado canônico
 
 - **ID:** STABILIZATION-REAL-UI-20261107.
-- **Data:** 07/11/2026. **Estado:** proposta documentada; implementação não iniciada por esta Work Order.
+- **Data:** 07/11/2026. **Estado atual:** concluída em 07/11/2026 (S1–S4 implementados e validados no candidato 0.1.0-beta.27 só no laboratório; S5 planejado e desdobrado em [SCHEDULE-PROCESS-20261107](SCHEDULE-PROCESS-20261107.md)); commit `991ebc5`. Estado e provas: [checkpoint](../checkpoints/STABILIZATION-REAL-UI-20261107.md), `delivery/evidence/STABILIZATION-REAL-UI-20261107/` e `delivery/status.json`. O restante deste documento é o planejamento histórico redigido antes da implementação e foi mantido como estava.
+- **Estado na redação (histórico):** proposta documentada; implementação não iniciada por esta Work Order.
 - **Solicitação:** após a revisão do app, segurança e documentação, o usuário pediu uma Work Order com a sequência proposta. Confirmou KISS em todo o projeto, a abertura confirmada pela janela como simplificação deliberada e a necessidade de indicadores e botões funcionais, sem dados fictícios no uso normal.
 - **Produto / repositório:** `product:redrise-v2` / `repo:redrise-v2`.
 - **Root / remote / branch:** `D:/Correnth/products/redrise-v2/repos/app` / `https://github.com/correnth-ai/redrise_v2.git` / `main`.

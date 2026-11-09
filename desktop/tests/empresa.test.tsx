@@ -18,6 +18,7 @@ const src = {
   executionsSince: vi.fn(async () => [exec("p1", "finished", "failed"), exec("p2", "finished", "verified"), exec("p3", "running", null)] as any),
   storage: vi.fn(async () => ({ db_bytes: 2_097_152, counts: { routines: 1, processes: 1, executions: 1, jobs: 1 } })),
   openReportFolder: vi.fn(),
+  schedules: vi.fn(async () => []),
 };
 const store: any = {};
 vi.mock("@/state", () => ({ useStore: () => store }));

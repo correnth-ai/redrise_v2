@@ -87,6 +87,12 @@ ROUTES = [
     ("POST", r"/api/v1/notifications/(\d+)/seen", "notification_seen", "user"),
     ("POST", r"/api/v1/changes", "changes", "user"),
     ("GET", r"/api/v1/storage", "storage", "user"),
+    ("GET", r"/api/v1/schedules", "schedules", "user"),
+    ("POST", r"/api/v1/schedules", "schedule_create", "user"),
+    ("POST", r"/api/v1/schedules/preview", "schedule_preview", "user"),
+    ("PATCH", r"/api/v1/schedules/(\d+)", "schedule_update", "user"),
+    ("DELETE", r"/api/v1/schedules/(\d+)", "schedule_delete", "user"),
+    ("GET", r"/api/v1/schedules/(\d+)/runs", "schedule_runs", "user"),
     ("POST", r"/api/v1/runner/heartbeat", "rn_heartbeat", "runner"),
     ("POST", r"/api/v1/runner/claim", "rn_claim", "runner"),
     ("POST", r"/api/v1/runner/jobs/([0-9a-f-]{36})/start", "rn_start", "runner"),
@@ -253,6 +259,24 @@ class Handlers:
 
     def storage(self, b, who, cid):
         return self.core.storage(who)
+
+    def schedules(self, b, who, cid):
+        return self.core.list_schedules(who)
+
+    def schedule_create(self, b, who, cid):
+        return self.core.create_schedule(who, b)
+
+    def schedule_preview(self, b, who, cid):
+        return self.core.preview_schedule(who, b)
+
+    def schedule_update(self, b, who, cid, sid):
+        return self.core.update_schedule(who, int(sid), b)
+
+    def schedule_delete(self, b, who, cid, sid):
+        return self.core.delete_schedule(who, int(sid))
+
+    def schedule_runs(self, b, who, cid, sid):
+        return self.core.schedule_runs(who, int(sid))
 
     def rn_heartbeat(self, b, who, cid):
         return self.core.heartbeat(who, b)

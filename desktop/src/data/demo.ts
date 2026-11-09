@@ -156,4 +156,10 @@ export const demoSource: DataSource = {
     executions = [e, ...executions];
     return clone(e);
   },
+  // Scheduling is shown empty in the demonstration: the next time of a schedule exists only on a real Core.
+  async schedules() { return []; },
+  async previewSchedule() { throw new Error("Agendamento indisponível na demonstração."); },
+  async createSchedule() { throw new Error("Agendamento indisponível na demonstração."); },
+  async updateSchedule() { throw new Error("Agendamento indisponível na demonstração."); },
+  async deleteSchedule() { throw new Error("Agendamento indisponível na demonstração."); },
 };

@@ -8,7 +8,8 @@ import hashlib
 import json
 import re
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import psycopg
 from psycopg.types.json import Jsonb
@@ -1093,61 +1094,65 @@ class Core:
         if (process_id is None) == (routine_id is None):
             raise err(400, "VALIDATION", cid, reason="give either process_id or routine_id")
         with self.db.tx() as c:
-            prior = c.execute("SELECT * FROM executions WHERE request_id = %s", (request_id,)).fetchone()
-            if prior:  # idempotent: a repeated request never starts a second execution (no duplicate tab)
-                if prior["requested_by"] != actor["id"]:
-                    raise err(409, "CONFLICT", cid, reason="request_id already used")
-                return {**self._execution_view(c, prior), "duplicate": True}
-            s = c.execute("SELECT * FROM stations WHERE id = %s", (station_id,)).fetchone() if isinstance(station_id, int) else None
-            if not s or s["revoked_at"]:
-                raise err(404, "NOT-FOUND", cid, what_missing="station")
-            if routine_id is not None:
-                rows = c.execute("""SELECT 1 AS position, r.id AS routine_id, v.id AS routine_version_id, r.name, false AS continue_next,
-                                           v.kind, v.config, v.platform, r.category, r.archived
-                                    FROM routines r JOIN LATERAL (SELECT * FROM routine_versions WHERE routine_id = r.id
-                                                                  ORDER BY version DESC LIMIT 1) v ON true
-                                    WHERE r.id = %s""", (routine_id,)).fetchall()
-                if not rows or rows[0]["archived"]:
-                    raise err(404, "NOT-FOUND", cid, what_missing="routine")
-                if rows[0]["kind"] not in PROCESS_KINDS:
-                    raise err(400, "VALIDATION", cid, reason="this kind of routine does not run as an execution in this version")
-                # A linked routine, even as the only step, runs through its process.
-                linked = c.execute("""SELECT p.name FROM process_items i JOIN processes p ON p.id = i.process_id
-                                      WHERE i.routine_id = %s AND NOT p.archived ORDER BY p.id LIMIT 1""", (routine_id,)).fetchone()
-                if linked:
-                    raise err(409, "ROUTINE-LINKED", cid, process=linked["name"])
-                if not (rows[0]["config"] or {}).get("isolated"):
-                    # G25: enforced here, not only by a disabled button.
-                    raise err(409, "ROUTINE-NOT-ISOLATED", cid, routine=rows[0]["name"])
-            else:
-                # FOR SHARE: a replacement of step 1 waits for this start, or this start sees the new step.
-                if not c.execute("SELECT id FROM processes WHERE id = %s AND NOT archived FOR SHARE", (process_id,)).fetchone():
-                    raise err(404, "NOT-FOUND", cid, what_missing="process")
-                rows = c.execute("""SELECT i.position, r.id AS routine_id, v.id AS routine_version_id, r.name, i.continue_next,
-                                           v.kind, v.config, v.platform, r.category, r.archived
-                                    FROM process_items i JOIN routines r ON r.id = i.routine_id
-                                    JOIN LATERAL (SELECT * FROM routine_versions WHERE routine_id = r.id
-                                                  ORDER BY version DESC LIMIT 1) v ON true
-                                    WHERE i.process_id = %s ORDER BY i.position""", (process_id,)).fetchall()
-                if not rows:
-                    raise err(400, "VALIDATION", cid, reason="the process has no linked routine")
-                if any(r["archived"] or r["kind"] not in PROCESS_KINDS for r in rows):
-                    raise err(400, "VALIDATION", cid, reason="the process links a routine that cannot run")
-            for r in rows:  # every step must be able to run on the chosen station; a review runs on none
-                if _is_review(r):
-                    continue
-                reason = compat_reason(r["category"], r["platform"], s)
-                if reason:
-                    raise err(409, "STATION-INCOMPATIBLE", cid, reason=reason)
-            # G27: versions and links fixed at start; later edits only affect new executions.
-            snapshot = [{"position": i, "routine_id": r["routine_id"], "routine_version_id": r["routine_version_id"],
-                         "name": r["name"], "continue_next": bool(r["continue_next"]), "config": r["config"]}
-                        for i, r in enumerate(rows, 1)]
-            e = c.execute("""INSERT INTO executions (request_id, process_id, station_id, requested_by, snapshot, state, correlation_id)
-                             VALUES (%s, %s, %s, %s, %s, 'running', %s) RETURNING *""",
-                          (request_id, process_id, station_id, actor["id"], Jsonb(snapshot), cid)).fetchone()
-            self._queue_step(c, e, snapshot[0])  # G22: always the first linked routine
-            return self._execution_view(c, e)
+            return self._create_execution_in(c, actor, request_id, station_id, process_id, routine_id, cid)
+
+    def _create_execution_in(self, c, actor: dict, request_id: str, station_id, process_id, routine_id, cid: str) -> dict:
+        """Inside the caller's transaction: the scheduler records the occurrence and its execution together."""
+        prior = c.execute("SELECT * FROM executions WHERE request_id = %s", (request_id,)).fetchone()
+        if prior:  # idempotent: a repeated request never starts a second execution (no duplicate tab)
+            if prior["requested_by"] != actor["id"]:
+                raise err(409, "CONFLICT", cid, reason="request_id already used")
+            return {**self._execution_view(c, prior), "duplicate": True}
+        s = c.execute("SELECT * FROM stations WHERE id = %s", (station_id,)).fetchone() if isinstance(station_id, int) else None
+        if not s or s["revoked_at"]:
+            raise err(404, "NOT-FOUND", cid, what_missing="station")
+        if routine_id is not None:
+            rows = c.execute("""SELECT 1 AS position, r.id AS routine_id, v.id AS routine_version_id, r.name, false AS continue_next,
+                                       v.kind, v.config, v.platform, r.category, r.archived
+                                FROM routines r JOIN LATERAL (SELECT * FROM routine_versions WHERE routine_id = r.id
+                                                              ORDER BY version DESC LIMIT 1) v ON true
+                                WHERE r.id = %s""", (routine_id,)).fetchall()
+            if not rows or rows[0]["archived"]:
+                raise err(404, "NOT-FOUND", cid, what_missing="routine")
+            if rows[0]["kind"] not in PROCESS_KINDS:
+                raise err(400, "VALIDATION", cid, reason="this kind of routine does not run as an execution in this version")
+            # A linked routine, even as the only step, runs through its process.
+            linked = c.execute("""SELECT p.name FROM process_items i JOIN processes p ON p.id = i.process_id
+                                  WHERE i.routine_id = %s AND NOT p.archived ORDER BY p.id LIMIT 1""", (routine_id,)).fetchone()
+            if linked:
+                raise err(409, "ROUTINE-LINKED", cid, process=linked["name"])
+            if not (rows[0]["config"] or {}).get("isolated"):
+                # G25: enforced here, not only by a disabled button.
+                raise err(409, "ROUTINE-NOT-ISOLATED", cid, routine=rows[0]["name"])
+        else:
+            # FOR SHARE: a replacement of step 1 waits for this start, or this start sees the new step.
+            if not c.execute("SELECT id FROM processes WHERE id = %s AND NOT archived FOR SHARE", (process_id,)).fetchone():
+                raise err(404, "NOT-FOUND", cid, what_missing="process")
+            rows = c.execute("""SELECT i.position, r.id AS routine_id, v.id AS routine_version_id, r.name, i.continue_next,
+                                       v.kind, v.config, v.platform, r.category, r.archived
+                                FROM process_items i JOIN routines r ON r.id = i.routine_id
+                                JOIN LATERAL (SELECT * FROM routine_versions WHERE routine_id = r.id
+                                              ORDER BY version DESC LIMIT 1) v ON true
+                                WHERE i.process_id = %s ORDER BY i.position""", (process_id,)).fetchall()
+            if not rows:
+                raise err(400, "VALIDATION", cid, reason="the process has no linked routine")
+            if any(r["archived"] or r["kind"] not in PROCESS_KINDS for r in rows):
+                raise err(400, "VALIDATION", cid, reason="the process links a routine that cannot run")
+        for r in rows:  # every step must be able to run on the chosen station; a review runs on none
+            if _is_review(r):
+                continue
+            reason = compat_reason(r["category"], r["platform"], s)
+            if reason:
+                raise err(409, "STATION-INCOMPATIBLE", cid, reason=reason)
+        # G27: versions and links fixed at start; later edits only affect new executions.
+        snapshot = [{"position": i, "routine_id": r["routine_id"], "routine_version_id": r["routine_version_id"],
+                     "name": r["name"], "continue_next": bool(r["continue_next"]), "config": r["config"]}
+                    for i, r in enumerate(rows, 1)]
+        e = c.execute("""INSERT INTO executions (request_id, process_id, station_id, requested_by, snapshot, state, correlation_id)
+                         VALUES (%s, %s, %s, %s, %s, 'running', %s) RETURNING *""",
+                      (request_id, process_id, station_id, actor["id"], Jsonb(snapshot), cid)).fetchone()
+        self._queue_step(c, e, snapshot[0])  # G22: always the first linked routine
+        return self._execution_view(c, e)
 
     def _open_review(self, c, execution: dict, item: dict) -> None:
         """Pauses the execution. The responsible is the current one of the step, not the one when it started."""
@@ -1249,6 +1254,235 @@ class Core:
         out["requested_by"] = e["requested_by_name"]
         out["steps"] = steps
         return out
+
+    # ------------------------------------------------------------ schedules (work order SCHEDULE-PROCESS-20261107)
+    # An occurrence is its local date and time in the schedule's fixed time zone ('YYYY-MM-DDTHH:MM'); the database
+    # key and the execution request_id are both made from it. Creating, editing or resuming computes the next FUTURE
+    # occurrence: only a schedule that stayed enabled while the Core was stopped recovers a missed one.
+    SCHEDULE_GRACE = timedelta(minutes=15)  # late start after a stop, and the longest wait for step 1 to begin
+
+    @staticmethod
+    def _zone(tz) -> ZoneInfo:
+        if not isinstance(tz, str) or not re.fullmatch(r"[A-Za-z0-9_+\-/]{1,64}", tz):
+            raise err(400, "VALIDATION", reason="invalid time zone")
+        try:
+            return ZoneInfo(tz)
+        except (ZoneInfoNotFoundError, ValueError):
+            raise err(400, "VALIDATION", reason="unknown time zone") from None
+
+    @staticmethod
+    def next_slot(weekdays: int, hour: int, minute: int, tz: str, after: datetime) -> tuple[str, datetime]:
+        """First local occurrence strictly after `after`. A local time that does not exist that day (a clock
+        jumping forward) skips the day; a repeated one (a clock going back) is its first instant only."""
+        z = ZoneInfo(tz)
+        local_day = after.astimezone(z).date()
+        for d in range(9):
+            day = local_day + timedelta(days=d)
+            if not weekdays & (1 << day.weekday()):
+                continue
+            naive = datetime(day.year, day.month, day.day, hour, minute)
+            at = naive.replace(tzinfo=z, fold=0).astimezone(timezone.utc)
+            if at.astimezone(z).replace(tzinfo=None) != naive:  # does not exist in this zone that day
+                continue
+            if at > after:
+                return naive.strftime("%Y-%m-%dT%H:%M"), at
+        raise err(400, "VALIDATION", reason="no occurrence in the next week")
+
+    @staticmethod
+    def _schedule_input(b: dict) -> dict:
+        days = b.get("weekdays")
+        if not isinstance(days, list) or not days or any(not isinstance(x, int) or not 1 <= x <= 7 for x in days):
+            raise err(400, "VALIDATION", reason="weekdays: 1 (Monday) to 7 (Sunday)")
+        hour, minute = b.get("hour"), b.get("minute")
+        if not isinstance(hour, int) or not 0 <= hour <= 23 or not isinstance(minute, int) or not 0 <= minute <= 59:
+            raise err(400, "VALIDATION", reason="time: hour 0-23 and minute 0-59")
+        Core._zone(b.get("timezone"))
+        return {"weekdays": sum(1 << (x - 1) for x in set(days)), "hour": hour, "minute": minute, "timezone": b["timezone"]}
+
+    _SCHED_SELECT = """SELECT s.*, p.name AS process_name, st.name AS station_name, u.display AS owner_name,
+                              r.slot_local AS last_slot_local, r.state AS last_state, r.reason AS last_reason,
+                              r.execution_id AS last_execution_id
+                       FROM schedules s JOIN processes p ON p.id = s.process_id JOIN stations st ON st.id = s.station_id
+                       JOIN users u ON u.id = s.owner_id
+                       LEFT JOIN LATERAL (SELECT * FROM schedule_runs WHERE schedule_id = s.id ORDER BY slot_at DESC LIMIT 1) r ON true"""
+
+    @staticmethod
+    def _schedule_view(r: dict) -> dict:
+        out = _jsonable({k: v for k, v in r.items() if k not in ("weekdays",)})
+        out["weekdays"] = [d + 1 for d in range(7) if r["weekdays"] & (1 << d)]
+        return out
+
+    def list_schedules(self, actor: dict) -> list[dict]:
+        with self.db.tx() as c:
+            rows = c.execute(f"{self._SCHED_SELECT} ORDER BY p.name, s.hour, s.minute, s.id").fetchall()
+        return [self._schedule_view(r) for r in rows]
+
+    def schedule_runs(self, actor: dict, schedule_id: int) -> list[dict]:
+        with self.db.tx() as c:
+            if not c.execute("SELECT 1 FROM schedules WHERE id = %s", (schedule_id,)).fetchone():
+                raise err(404, "NOT-FOUND", what_missing="schedule")
+            rows = c.execute("""SELECT id, slot_local, slot_at, state, reason, execution_id, created_at FROM schedule_runs
+                                WHERE schedule_id = %s ORDER BY slot_at DESC LIMIT 50""", (schedule_id,)).fetchall()
+        return [_jsonable(r) for r in rows]
+
+    def preview_schedule(self, actor: dict, b: dict) -> dict:
+        self.require_admin(actor)
+        v = self._schedule_input(b)
+        slot, at = self.next_slot(v["weekdays"], v["hour"], v["minute"], v["timezone"], datetime.now(timezone.utc))
+        return {"next_slot_local": slot, "next_run_at": at.isoformat()}
+
+    def _schedule_target(self, c, process_id, station_id) -> None:
+        if not isinstance(process_id, int) or not c.execute("SELECT 1 FROM processes WHERE id = %s AND NOT archived", (process_id,)).fetchone():
+            raise err(404, "NOT-FOUND", what_missing="process")
+        if not isinstance(station_id, int) or not c.execute("SELECT 1 FROM stations WHERE id = %s AND revoked_at IS NULL", (station_id,)).fetchone():
+            raise err(404, "NOT-FOUND", what_missing="station")
+
+    def create_schedule(self, actor: dict, b: dict) -> dict:
+        self.require_admin(actor)
+        v = self._schedule_input(b)
+        slot, at = self.next_slot(v["weekdays"], v["hour"], v["minute"], v["timezone"], datetime.now(timezone.utc))
+        with self.db.tx() as c:
+            self._schedule_target(c, b.get("process_id"), b.get("station_id"))
+            sid = c.execute("""INSERT INTO schedules (process_id, station_id, weekdays, hour, minute, timezone, owner_id, next_slot_local, next_run_at)
+                               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                            (b["process_id"], b["station_id"], v["weekdays"], v["hour"], v["minute"], v["timezone"], actor["id"], slot, at)).fetchone()["id"]
+            return self._schedule_view(c.execute(f"{self._SCHED_SELECT} WHERE s.id = %s", (sid,)).fetchone())
+
+    def update_schedule(self, actor: dict, schedule_id: int, b: dict) -> dict:
+        """Edit, pause or resume. Any edit or resume recomputes the next FUTURE occurrence and makes the
+        administrator who did it the owner (runs are requested in the owner's name)."""
+        self.require_admin(actor)
+        with self.db.tx() as c:
+            cur = c.execute("SELECT * FROM schedules WHERE id = %s FOR UPDATE", (schedule_id,)).fetchone()
+            if not cur:
+                raise err(404, "NOT-FOUND", what_missing="schedule")
+            timing = any(k in b for k in ("weekdays", "hour", "minute", "timezone"))
+            v = self._schedule_input({"weekdays": [d + 1 for d in range(7) if cur["weekdays"] & (1 << d)], "hour": cur["hour"],
+                                      "minute": cur["minute"], "timezone": cur["timezone"], **{k: b[k] for k in b if k in
+                                      ("weekdays", "hour", "minute", "timezone")}})
+            station = b.get("station_id", cur["station_id"])
+            self._schedule_target(c, cur["process_id"], station)
+            enabled = cur["enabled"] if "enabled" not in b else b["enabled"]
+            if not isinstance(enabled, bool):
+                raise err(400, "VALIDATION", reason="enabled must be true or false")
+            if enabled:
+                slot, at = self.next_slot(v["weekdays"], v["hour"], v["minute"], v["timezone"], datetime.now(timezone.utc))
+            else:
+                slot, at = None, None
+            c.execute("""UPDATE schedules SET weekdays = %s, hour = %s, minute = %s, timezone = %s, station_id = %s, enabled = %s,
+                                paused_reason = %s, owner_id = %s, next_slot_local = %s, next_run_at = %s, updated_at = now()
+                         WHERE id = %s""",
+                      (v["weekdays"], v["hour"], v["minute"], v["timezone"], station, enabled, None if enabled else "paused_by_user",
+                       actor["id"] if (enabled or timing or "station_id" in b) else cur["owner_id"], slot, at, schedule_id))
+            return self._schedule_view(c.execute(f"{self._SCHED_SELECT} WHERE s.id = %s", (schedule_id,)).fetchone())
+
+    def delete_schedule(self, actor: dict, schedule_id: int) -> dict:
+        self.require_admin(actor)
+        with self.db.tx() as c:
+            if not c.execute("DELETE FROM schedules WHERE id = %s RETURNING id", (schedule_id,)).fetchone():
+                raise err(404, "NOT-FOUND", what_missing="schedule")
+        return {"deleted": True}
+
+    def _schedule_note(self, c, run_id: int, user_ids) -> None:
+        for uid in user_ids:
+            c.execute("INSERT INTO notifications (user_id, kind, schedule_run_id) VALUES (%s, 'schedule', %s)", (uid, run_id))
+
+    def _schedule_run(self, c, s: dict, state: str, reason: str | None, execution_id=None, diagnostic=None) -> int | None:
+        r = c.execute("""INSERT INTO schedule_runs (schedule_id, slot_local, slot_at, state, reason, execution_id, diagnostic)
+                         VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (schedule_id, slot_local) DO NOTHING RETURNING id""",
+                      (s["id"], s["next_slot_local"], s["next_run_at"], state, reason, execution_id,
+                       Jsonb(diagnostic) if diagnostic else None)).fetchone()
+        return r["id"] if r else None
+
+    def schedule_tick(self, now: datetime | None = None) -> dict:
+        """One pass of the scheduler (every 30 s on the host; the tests give the clock). Each due schedule is
+        handled in ONE transaction: the occurrence, its execution and both links commit together or not at all."""
+        now = now or datetime.now(timezone.utc)
+        done = {"started": 0, "skipped": 0, "missed": 0, "expired": self._expire_unstarted(now)}
+        with self.db.tx() as c:
+            due = [r["id"] for r in c.execute("""SELECT id FROM schedules WHERE enabled AND next_run_at <= %s
+                                                 ORDER BY next_run_at LIMIT 50""", (now,)).fetchall()]
+        for sid in due:
+            try:
+                with self.db.tx() as c:
+                    s = c.execute("""SELECT * FROM schedules WHERE id = %s AND enabled AND next_run_at <= %s
+                                     FOR UPDATE SKIP LOCKED""", (sid, now)).fetchone()
+                    if s:
+                        done[self._fire(c, s, now)] += 1
+            except Exception as e:  # noqa: BLE001 - one schedule never stops the others; nothing of it was committed
+                done.setdefault("errors", []).append({"schedule_id": sid, "error": type(e).__name__})
+        return done
+
+    def _fire(self, c, s: dict, now: datetime) -> str:
+        nxt_slot, nxt_at = self.next_slot(s["weekdays"], s["hour"], s["minute"], s["timezone"], max(now, s["next_run_at"]))
+        c.execute("UPDATE schedules SET next_slot_local = %s, next_run_at = %s WHERE id = %s", (nxt_slot, nxt_at, s["id"]))
+        if now - s["next_run_at"] > self.SCHEDULE_GRACE:  # the Core was stopped: never a late run, never several
+            run = self._schedule_run(c, s, "missed", "core_stopped")
+            if run:
+                self._schedule_note(c, run, [s["owner_id"]])
+            return "missed"
+        owner = c.execute("SELECT * FROM users WHERE id = %s", (s["owner_id"],)).fetchone()
+        if not owner or not owner["active"] or owner["role"] != "admin":  # the loop is not the API: check it here
+            c.execute("UPDATE schedules SET enabled = false, paused_reason = 'owner_not_allowed', next_slot_local = NULL, next_run_at = NULL WHERE id = %s",
+                      (s["id"],))
+            run = self._schedule_run(c, s, "skipped", "owner_not_allowed")
+            if run:
+                self._schedule_note(c, run, [u["id"] for u in c.execute("SELECT id FROM users WHERE active AND role = 'admin'")])
+            return "skipped"
+
+        def skip(reason: str, diagnostic=None, pause: bool = False) -> str:
+            if pause:
+                c.execute("UPDATE schedules SET enabled = false, paused_reason = %s, next_slot_local = NULL, next_run_at = NULL WHERE id = %s",
+                          (reason, s["id"]))
+            run = self._schedule_run(c, s, "skipped", reason, diagnostic=diagnostic)
+            if run:
+                self._schedule_note(c, run, [owner["id"]])
+            return "skipped"
+
+        if c.execute("""SELECT 1 FROM executions WHERE schedule_id = %s AND state IN ('running', 'waiting_review') LIMIT 1""",
+                     (s["id"],)).fetchone():
+            return skip("previous_still_running")
+        st = c.execute("""SELECT revoked_at IS NULL AS active, last_seen_at > now() - interval '45 seconds' AS online, session_state
+                          FROM stations WHERE id = %s""", (s["station_id"],)).fetchone()
+        if not st or not st["active"] or not st["online"] or st["session_state"] != "ready":
+            return skip("station_unavailable")
+        request_id = f"agenda-{s['id']}-{s['next_slot_local'].replace('-', '').replace('T', '').replace(':', '')}"
+        cid = dg.new_correlation_id()
+        try:
+            with c.transaction():  # savepoint: a refused start leaves only the skipped occurrence
+                e = self._create_execution_in(c, owner, request_id, s["station_id"], s["process_id"], None, cid)
+        except ApiError as x:
+            code = x.diagnostic.error_code
+            pause = code in ("NOT-FOUND", "VALIDATION")  # process archived, without step 1, or not runnable
+            return skip("process_unavailable" if pause else "station_incompatible" if code == "STATION-INCOMPATIBLE" else code.lower(),
+                        diagnostic=x.diagnostic.to_dict(), pause=pause)
+        if not self._schedule_run(c, s, "started", None, execution_id=e["id"]):
+            raise RuntimeError("occurrence already recorded")  # rolls the whole transaction back, execution included
+        c.execute("UPDATE executions SET schedule_id = %s WHERE id = %s", (s["id"], e["id"]))
+        return "started"
+
+    def _expire_unstarted(self, now: datetime) -> int:
+        """Ready at the time, but the station got busy or disconnected before step 1 began: after the grace the
+        occurrence expires, step 1 is cancelled without effect and the owner is told it did not start."""
+        n = 0
+        with self.db.tx() as c:
+            rows = c.execute("""SELECT r.id, s.owner_id, j.id AS job_id, j.state AS job_state, j.correlation_id
+                                FROM schedule_runs r JOIN schedules s ON s.id = r.schedule_id
+                                JOIN jobs j ON j.execution_id = r.execution_id AND j.position = 1
+                                WHERE r.state = 'started' AND r.slot_at < %s AND j.state IN ('queued', 'claimed')
+                                FOR UPDATE OF r, j SKIP LOCKED""", (now - self.SCHEDULE_GRACE,)).fetchall()
+            for r in rows:
+                d = dg.make("SCHEDULE-NOT-STARTED", reported_by="RR-CORE", correlation_id=r["correlation_id"], effect_state="none").to_dict()
+                if r["job_state"] == "queued":
+                    self._finish(c, r["job_id"], "cancelled", diagnostic=d)
+                else:  # claimed: the Runner is told not to start; a lost lease brings it back here as queued
+                    c.execute("UPDATE jobs SET cancel_requested = true WHERE id = %s", (r["job_id"],))
+                    self._event(c, r["job_id"], "cancel_requested", {"by": "scheduler", "error_code": "SCHEDULE-NOT-STARTED"})
+                c.execute("UPDATE schedule_runs SET state = 'expired', reason = 'not_started', diagnostic = %s WHERE id = %s",
+                          (Jsonb(d), r["id"]))
+                self._schedule_note(c, r["id"], [r["owner_id"]])
+                n += 1
+        return n
 
     # Situation groups shared by the summary and the UI tabs (desktop/src/data/status.ts):
     # attention = finished and not verified; verified = finished verified.
@@ -1448,10 +1682,13 @@ class Core:
 
     def list_notifications(self, actor: dict) -> dict:
         with self.db.tx() as c:
-            rows = c.execute("""SELECT n.id, n.kind, n.review_id, n.change_id, n.created_at, n.seen_at,
-                                       coalesce(r.name, nr.name) AS step_name, q.position,
-                                       coalesce(p.name, cp.name, r.name) AS process_name
+            rows = c.execute("""SELECT n.id, n.kind, n.review_id, n.change_id, n.schedule_run_id, n.created_at, n.seen_at,
+                                       coalesce(r.name, nr.name, '') AS step_name, q.position,
+                                       coalesce(p.name, cp.name, r.name, schp.name) AS process_name,
+                                       sr.state AS schedule_state, sr.reason AS schedule_reason, sr.slot_local AS schedule_slot
                                 FROM notifications n LEFT JOIN review_requests q ON q.id = n.review_id
+                                LEFT JOIN schedule_runs sr ON sr.id = n.schedule_run_id LEFT JOIN schedules sch ON sch.id = sr.schedule_id
+                                LEFT JOIN processes schp ON schp.id = sch.process_id
                                 LEFT JOIN routines r ON r.id = q.routine_id LEFT JOIN executions e ON e.id = q.execution_id
                                 LEFT JOIN processes p ON p.id = e.process_id
                                 LEFT JOIN step_change_requests sc ON sc.id = n.change_id LEFT JOIN routines nr ON nr.id = sc.new_routine_id

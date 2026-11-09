@@ -558,6 +558,19 @@
       "next": "Wait a moment and try again.",
       "details": "No request slot within the wait (retry after {retry_after_s} s)."
     },
+    "SCHEDULE-NOT-STARTED": {
+      "category": "environment",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Not started: the station was busy or disconnected.",
+      "completed": "The scheduled run was cancelled before its first step began.",
+      "pending": "Nothing was done on the station for this occurrence.",
+      "next": "Check that the station is connected and free at the scheduled time; the next occurrence runs as planned.",
+      "details": "First step not started within the grace period of the scheduled time."
+    },
     "CORE-UNREACHABLE": {
       "category": "communication",
       "modules": [

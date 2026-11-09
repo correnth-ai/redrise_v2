@@ -1,67 +1,85 @@
 # Work Order — agendar um processo
 
 - **ID:** SCHEDULE-PROCESS-20261107.
-- **Data:** 07/11/2026. **Estado:** proposta documentada; implementação não iniciada.
+- **Data:** 07/11/2026. **Estado atual:** concluída em 08/11/2026: candidato 0.1.0-beta.28 aceito no laboratório (gate, prova prática, rollback numa cópia), assinado no canal local e instalado na instalação real por ordem do usuário ([incremento 1](../evidence/SCHEDULE-PROCESS-20261107/increment-1.json), [incremento 2](../evidence/SCHEDULE-PROCESS-20261107/increment-2.json)); sem publicação nem commit. **Estado na implementação (histórico):** em implementação desde 07/11/2026, por ordem do usuário ("devemos fazê-los e depois iniciar a S5"), depois de incorporar a devolutiva sobre esta proposta (seção "Decisões de 07/11").
 - **Origem:** S5 da [STABILIZATION-REAL-UI-20261107](STABILIZATION-REAL-UI-20261107.md). Escolha do usuário em 07/11 entre quatro necessidades apresentadas (agendar processo, ler valor de planilha, relatório numa pasta da equipe, conferir texto no site): **agendar um processo**.
 - **Produto / repositório:** `product:redrise-v2` / `repo:redrise-v2`, `D:/Correnth/products/redrise-v2/repos/app`, `main`.
-- **Base:** `f78d229` mais a árvore não commitada da STABILIZATION (Core 0.3.6, candidato 0.1.0-beta.27 aceito só no laboratório). Revalidar HEAD e árvore antes da engenharia.
-- **Autorização atual:** criar este documento. Implementação, candidato, instalação e qualquer escrita externa exigem ordem própria.
+- **Base:** commit `991ebc5` (STABILIZATION concluída; Core 0.3.6; candidato 0.1.0-beta.27 aceito só no laboratório).
+- **Autorização:** implementar e testar no código. Candidato, instalação no laboratório (com o computador livre), instalação real, assinatura, publicação e commit seguem ordens próprias.
 
 ## Microetapa
 
-Executar um processo já cadastrado automaticamente, num horário e em dias da semana escolhidos, numa estação escolhida, sem ninguém clicar em "Executar". Cada ocorrência é uma execução comum: mesmo contexto entre etapas, mesmas revisões, relatório, cancelamento, histórico e indicadores.
+Executar um processo já cadastrado automaticamente, num horário e em dias da semana escolhidos, numa estação escolhida, sem ninguém clicar em "Executar". Cada ocorrência que inicia é uma execução comum: mesmo contexto entre etapas, mesmas revisões, relatório, cancelamento, histórico e indicadores.
 
-**KISS:** um horário por agendamento, dias da semana marcados, hora local do computador servidor. Sem expressões cron, intervalos ("a cada N minutos"), feriados, exceções de calendário, várias estações, nova tentativa automática ou agendamento de rotina avulsa.
+**KISS:** um horário por agendamento, dias da semana marcados. Um laço no Core, uma ocorrência identificável e a execução existente. Sem cron, intervalos, feriados, exceções de calendário, várias estações, nova tentativa automática, agendamento de rotina avulsa, novo serviço ou framework de agendamento.
 
-## Reaproveitamento
+## Decisões de 07/11 (devolutiva e usuário)
 
-- **Execução:** `Core.create_execution(actor, request_id, station_id, process_id, …)` já é idempotente por `request_id`. Cada ocorrência usa `request_id = "agenda-<id>-<AAAAMMDDHHMM local>"`: reiniciar o Core ou checar duas vezes nunca cria duas execuções da mesma ocorrência.
-- **Fila e Runner:** sem mudança. A compatibilidade da estação é conferida antes de enfileirar (P05-D8); o Runner só reivindica com a sessão do Windows pronta (P05-D9).
-- **Avisos:** notificações existentes (sino) para o dono do agendamento quando uma ocorrência é pulada ou termina sem verificação.
-- **Telas:** Processo › Ação (ação na linha do processo) e Histórico/Empresa como hoje; feed de mudanças com um domínio novo `schedules`.
+1. **Ocorrência e execução gravadas juntas.** Na mesma transação e conexão: travar o agendamento (`FOR UPDATE SKIP LOCKED`), inserir a ocorrência, criar a execução, gravar o vínculo nos dois sentidos (`schedule_runs.execution_id` e `executions.schedule_id`) e avançar a próxima ocorrência. Uma queda antes do commit não deixa nada; depois do commit deixa tudo. O `request_id` continua impedindo uma segunda execução da mesma ocorrência.
+2. **Criar, editar ou retomar calcula a próxima ocorrência futura.** Nunca executa retroativamente o que estava pausado ou o horário que acabou de ser alterado. Recuperar um horário perdido vale só quando o agendamento ficou habilitado e o Core estava parado.
+3. **Identidade da ocorrência = data e hora local no fuso do agendamento** (`AAAA-MM-DDTHH:MM`). Ela é a chave única no banco (`schedule_id + slot_local`) e a base do `request_id` (`agenda-<id>-<AAAAMMDDHHMM>`): as duas sempre coincidem. Numa hora repetida, executa uma vez; numa hora que não existe, aquele dia é pulado. **O fuso é gravado no agendamento e fica fixo**: não acompanha mudanças do servidor; só muda quando um administrador edita o agendamento (vale o fuso do computador de quem editou).
+4. **Permissão relida no disparo.** O laço não passa pela API: relê o dono e exige pessoa ativa e administradora. Se o dono foi desativado ou rebaixado a operador, a ocorrência é pulada (`owner_not_allowed`), o agendamento fica pausado e os administradores ativos recebem aviso. Um administrador que editar ou retomar o agendamento passa a ser o dono.
+5. **Estação pronta no horário, mas ocupada ou desconectada antes de iniciar:** a ocorrência espera no máximo 15 min a partir do horário; depois **expira**. O passo é cancelado sem efeito, a ocorrência fica `expired` e o dono recebe "Não iniciado por desconexão." (decisão do usuário).
+6. **Só administradores criam, editam, pausam, retomam e excluem.** Operadores veem os agendamentos e as ocorrências. **Tolerância de 15 min** para horário perdido e para início.
 
 ## Comportamento
 
 | Situação no horário | Resultado |
 |---|---|
-| Estação conectada, compatível e com sessão pronta | Cria a execução (pedida pelo dono do agendamento, marcada "agendada") e grava a ocorrência como `started` com o id da execução. |
-| Estação desconectada, revogada, incompatível ou com sessão indisponível | Não enfileira. Grava a ocorrência como `skipped` com o diagnóstico e avisa o dono. Sem fila esperando e sem nova tentativa. |
-| Uma execução anterior do mesmo agendamento ainda em andamento ou aguardando revisão | Pula (`skipped`, motivo `previous_still_running`): nunca duas ocorrências do mesmo agendamento ao mesmo tempo. |
-| Core parado no horário | Ao voltar, uma ocorrência perdida há no máximo 15 min ainda executa; mais antiga fica `missed`, sem executar. Nunca recupera várias ocorrências seguidas. |
-| Agendamento pausado, processo arquivado ou sem etapa 1 | Não executa; os dois últimos casos pausam o agendamento e avisam o dono. |
-
-Hora local do servidor, gravada com fuso (`America/Sao_Paulo` hoje). Mudança de fuso ou horário de verão: a próxima ocorrência é recalculada a partir do relógio local; uma hora inexistente pula e uma hora repetida executa uma vez (mesmo `request_id`).
+| Dono ativo e administrador; estação conectada (últimos 45 s), compatível e com sessão pronta; nenhuma ocorrência anterior em andamento | Cria a execução em nome do dono, marcada "Agendada"; ocorrência `started` com o vínculo. |
+| Estação desconectada, revogada, incompatível ou com sessão indisponível | Não enfileira. Ocorrência `skipped` com o motivo; aviso ao dono. Sem fila e sem nova tentativa. |
+| Execução anterior do mesmo agendamento em andamento ou aguardando revisão | `skipped` (`previous_still_running`); aviso ao dono. |
+| Iniciou a execução, mas a etapa 1 não começou em 15 min (estação ocupada ou desconectada) | `expired`: etapa cancelada sem efeito; aviso "Não iniciado por desconexão." |
+| Core parado no horário, agendamento habilitado | Ao voltar, até 15 min de atraso: executa uma vez; mais que isso: `missed` com aviso e nenhuma execução. Nunca recupera várias ocorrências seguidas: a próxima passa a ser a primeira futura. |
+| Agendamento pausado | Não executa nem acumula. Retomar calcula a próxima futura. |
+| Processo arquivado ou sem etapa 1 | `skipped`, agendamento pausado, aviso ao dono. |
+| Dono desativado ou rebaixado | `skipped` (`owner_not_allowed`), agendamento pausado, aviso aos administradores ativos. |
 
 ## Dados e API (Core)
 
-- Migração `010_schedules.sql`: `schedules` (id, process_id, station_id, hour, minute, weekdays smallint bitmask, timezone, enabled, created_by, created_at, updated_at) e `schedule_runs` (schedule_id, slot timestamptz, state `started|skipped|missed`, execution_id, diagnostic, created_at; único por schedule_id + slot).
-- Laço no host do Core a cada 30 s, num único processo (o Core é único por equipe): procura ocorrências vencidas com `FOR UPDATE SKIP LOCKED` e cria as execuções como acima. Usa as vagas e o teto de conexões de S3 como qualquer pedido.
-- Rotas: `GET/POST /api/v1/schedules`, `PATCH /api/v1/schedules/{id}` (pausar, horário, dias, estação), `DELETE /api/v1/schedules/{id}`, `GET /api/v1/schedules/{id}/runs` (últimas 50). Erros com diagnóstico `redrise.diagnostic/1`; textos em inglês ASCII no backend e pt-BR só na máscara.
-- **Permissões (padrão proposto, confirmar na engenharia):** administrador cria, altera e apaga qualquer agendamento; operador vê os agendamentos e as ocorrências. A execução fica em nome de quem criou o agendamento; desativar essa pessoa pausa os agendamentos dela.
+- Migração `010_schedules.sql`: `schedules` (processo, estação, dias da semana em máscara, hora, minuto, fuso, habilitado, motivo da pausa, dono, próxima ocorrência local e seu instante) e `schedule_runs` (ocorrência local, instante, estado `started|skipped|missed|expired`, motivo, execução, diagnóstico; única por agendamento + ocorrência local). `executions.schedule_id` e notificação do tipo `schedule`. Mudanças entram no feed com o domínio `schedules`.
+- Laço no host do Core a cada 30 s (`Core.schedule_tick`), dentro do processo único do Core; os testes chamam o mesmo método com relógio controlado.
+- Rotas: `GET /api/v1/schedules`, `POST /api/v1/schedules`, `POST /api/v1/schedules/preview`, `PATCH /api/v1/schedules/{id}`, `DELETE /api/v1/schedules/{id}`, `GET /api/v1/schedules/{id}/runs`. Diagnósticos `redrise.diagnostic/1`; textos do backend em inglês ASCII, pt-BR só na máscara e na interface.
 
 ## Interface
 
-- Processo › Ação, linha do processo: "Agendar…" abre um diálogo com dias da semana, horário, estação (só as compatíveis) e a próxima ocorrência calculada pelo Core antes de salvar.
-- Lista "Agendamentos" na mesma página: processo, dias e horário, estação, próxima ocorrência, última ocorrência (iniciada, pulada com motivo, perdida) e ações Pausar/Retomar/Excluir com `useAction`.
-- Histórico: execuções agendadas marcadas "Agendada"; ocorrências puladas aparecem só na lista de agendamentos e no sino, não como execução.
+- Processo › Ação, linha do processo: "Agendar…" (só administradores) abre um diálogo com dias da semana, horário e estação. Mostra a próxima ocorrência calculada pelo Core antes de salvar.
+- Lista "Agendamentos" na mesma página: processo, dias e horário, estação, próxima ocorrência, última ocorrência (iniciada, pulada com motivo, perdida, expirada) e Pausar/Retomar/Excluir com `useAction`.
+- Histórico: execuções agendadas com a marca "Agendada". Ocorrências que não iniciaram aparecem só na lista e no sino.
 
 ## Aceite
 
-1. **Contrato (Core, PostgreSQL isolado, relógio controlado, Runner simulado):** a ocorrência vencida cria exatamente uma execução; verificar duas vezes e reiniciar o Core não duplicam; estação desconectada, incompatível ou com sessão indisponível gera `skipped` com diagnóstico e aviso, sem fila; execução anterior em andamento gera `skipped`; Core parado 10 min executa a perdida e parado 2 h gera `missed`; pausar, alterar e excluir; permissões administrador/operador e sem token; processo arquivado pausa.
-2. **Componente (UI):** diálogo mostra a próxima ocorrência vinda do Core; lista mostra o estado real, inclusive falha de leitura com diagnóstico, sem zero inventado; botões com estado ocupado.
-3. **Prática (candidato instalado no laboratório, computador livre, equipe sintética):** agendar o processo de teste com a Calculadora para 2 min adiante; a execução começa sem clique, aparece no Histórico como agendada e na Empresa; agendar com a estação bloqueada gera ocorrência pulada e aviso no sino; o executor é encerrado só pela prova.
-4. Gate `verify-candidate.ps1`, contagens antes e depois da atualização e rollback numa cópia, como na S4 (a migração 010 torna o rollback para versões anteriores dependente do backup antes da migração; documentar).
+1. **Contrato (Core, PostgreSQL isolado, relógio controlado, Runner simulado):**
+   - Uma ocorrência vencida cria exatamente uma execução, com o vínculo nos dois sentidos.
+   - Repetir o laço ou reiniciar não duplica.
+   - A falha ao criar a execução não deixa ocorrência solta.
+   - Estação indisponível e execução anterior em andamento dão `skipped` com aviso.
+   - A etapa 1 não iniciada em 15 min dá `expired` com aviso.
+   - Core parado: 10 min executa; 2 h dá `missed` e a próxima é futura.
+   - Pausar, editar e retomar nunca executam retroativamente.
+   - Hora repetida executa uma vez e hora inexistente pula, num fuso com horário de verão.
+   - Dono rebaixado ou desativado: pausa e aviso.
+   - Permissões: administrador, operador e sem token.
+2. **Componente (UI):** o diálogo mostra a próxima ocorrência vinda do Core; a lista mostra o estado real, inclusive falha de leitura com diagnóstico, sem zero inventado; botões com estado ocupado; marca "Agendada" no Histórico.
+3. **Prática (candidato instalado no laboratório, computador livre, equipe sintética):**
+   - O processo de teste com a Calculadora, agendado para 2 min adiante, começa sem clique e aparece no Histórico como agendado e na Empresa.
+   - Com a estação indisponível, a ocorrência é pulada e o aviso chega ao sino.
+4. **Gate e recuperação:** `verify-candidate.ps1`, contagens antes e depois da atualização e rollback numa cópia, como na S4. A migração 010 faz o rollback para versões anteriores depender do backup feito antes da migração; documentar. **Resultado (08/11):** o Core 0.3.5 abre a base migrada com as mesmas contagens e ignora os agendamentos; voltar o esquema exige o backup anterior à migração ([evidência](../evidence/SCHEDULE-PROCESS-20261107/increment-2.json)).
 
 ## Fora do escopo
 
-Intervalos, cron, feriados, várias estações por agendamento, nova tentativa automática, agendar rotina avulsa, disparo por e-mail ou arquivo, execução na instalação real sem ordem explícita, publicação. Itens adiados da STABILIZATION continuam adiados.
+Intervalos, cron, feriados, várias estações por agendamento, nova tentativa automática, agendar rotina avulsa, disparo por e-mail ou arquivo, execução na instalação real sem ordem explícita, publicação. Os itens adiados da STABILIZATION continuam adiados.
 
-## Write-set proposto
+## Write-set
 
-`core/redrise_core/{service,api}.py`, `core/redrise_core/migrations/010_schedules.sql`, `core/redrise_core/host.py` (laço), `contracts/errors.json`, `contracts/modules.json`, `desktop/locale/pt-BR.json`, `desktop/src/features/processos.tsx` e um componente de agendamento, `desktop/src/data/{source,types,demo}.ts`, testes `tests/core/test_schedules.py` e `desktop/tests/schedules.test.tsx`, prova `proofs/schedules/`, `docs/APP-RULES.md`, `docs/ui/LIVE-TABLES.md`, evidência e checkpoint próprios.
+- Core: `core/redrise_core/{service,api,host}.py` e `core/redrise_core/migrations/010_schedules.sql`.
+- Contratos e máscara: `contracts/errors.json`, `contracts/modules.json`, `desktop/locale/pt-BR.json`.
+- Interface: `desktop/src/features/processos.tsx`, `desktop/src/features/fluxos.tsx` (marca), `desktop/src/components/notifications-bell.tsx`, um componente de agendamento, `desktop/src/data/{source,types,demo}.ts`.
+- Testes e prova: `tests/core/test_schedules.py`, `desktop/tests/schedules.test.tsx`, `proofs/schedules/`.
+- Documentos: `docs/APP-RULES.md`, `docs/ui/LIVE-TABLES.md`, `docs/decisions/P05-contracts-lan.md`, evidência e checkpoint próprios.
 
-## Riscos e pontos a confirmar
+## Riscos
 
-- O computador servidor precisa estar ligado e com o RedRise aberto no horário; o agendamento não acorda o Windows nem inicia o app.
-- A estação precisa de sessão do Windows desbloqueada; com a tela bloqueada a ocorrência é pulada (comportamento atual do Runner).
-- Permissão de operador para agendar e o limite de 15 min para ocorrência perdida são propostas; confirmar com o usuário antes da implementação.
+- O computador servidor precisa estar ligado e com o RedRise aberto no horário: o agendamento não acorda o Windows nem inicia o app.
+- A estação precisa de sessão do Windows desbloqueada; com a tela bloqueada, a ocorrência é pulada (comportamento atual do Runner).
+- O fuso fixo não acompanha uma mudança de fuso do servidor até que um administrador edite o agendamento.

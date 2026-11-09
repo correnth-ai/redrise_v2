@@ -1,0 +1,11 @@
+{
+  "schema": "redrise.release/1",
+  "version": "0.1.0-beta.28",
+  "notes": "Agendar um processo: execução automática nos dias e no horário escolhidos.",
+  "published_at": "2026-11-08T16:44:01+00:00",
+  "installer": {
+    "file": "RedRise-Setup-0.1.0-beta.28.exe",
+    "size": 310649900,
+    "sha256": "25a400e970a4e89ad3c5cec1832708ea03c848bf6693b526f09020d3649e33c3"
+  }
+}

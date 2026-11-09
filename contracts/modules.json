@@ -202,6 +202,7 @@
         "CORE-STORAGE-UNAVAILABLE",
         "CORE-INTERNAL",
         "CORE-BUSY",
+        "SCHEDULE-NOT-STARTED",
         "JOB-LEASE-LOST",
         "ROUTINE-NOT-ISOLATED"
       ]

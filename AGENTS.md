@@ -1,9 +1,9 @@
 # RedRise v2 — instructions for agents
 
-## Current state (2026-11-07)
+## Current state (2026-11-08)
 
-- Active work order: `delivery/work-orders/STABILIZATION-REAL-UI-20261107.md` (S1 to S5); its evidence and checkpoint go under `delivery/evidence/STABILIZATION-REAL-UI-20261107/` and `delivery/checkpoints/`.
-- Installed: 0.1.0-beta.25 (Core 0.3.5, Runner 0.3.11) in the lab and, by user order on 2026-11-05, in the real install; not signed to a channel, not published, not homologated. Facts in `delivery/status.json` (`current_candidate`) and `delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/evidence.json`.
+- Active work order: `delivery/work-orders/SCHEDULE-PROCESS-20261107.md` (S5 of the stabilization: scheduling a process). `STABILIZATION-REAL-UI-20261107` (S1 to S4) is done (commit 991ebc5); its evidence and checkpoint are under `delivery/evidence/STABILIZATION-REAL-UI-20261107/` and `delivery/checkpoints/`.
+- Real install: 0.1.0-beta.28 (Core 0.3.7 with scheduling, Runner 0.3.11), by user order on 2026-11-08, after the gate and the lab proof; signed to the local release channel only. Not published or homologated. Facts in `delivery/status.json` (`current_candidate`, `earlier_candidates`) and `delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2.json`.
 - External identity is suspended (user, 2026-11-02, `docs/APP-RULES.md`): sign-up and login live only in the Core; Supabase, Resend, confirmation, recovery, remembered sessions and Google/GitHub are out of use. The Supabase V1 reuse in the next section is historical until identity is resumed.
 - Menus, in order: Empresa, Processo, Rotina, Configuração (2026-11-03). UI stack: Tauri + TypeScript + React with shadcn/Radix and Tailwind, built by Vite with npm; "TypeScript Vanilla / Vanilla UI" below is superseded.
 - Deferred, not to be reopened to enable a button: human Excel recording, second LAN station, external identity, automatic sending, full site/Contact Sales, Authenticode (`docs/BETA-ACCEPTANCE.md`, reconciliation section).

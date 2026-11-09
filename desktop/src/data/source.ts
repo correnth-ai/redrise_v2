@@ -2,6 +2,7 @@
 // the demonstration source exists only in a `vite --mode demo` build (fixtures,
 // identified on screen) and is never a fallback for a failing backend.
 import { api, call } from "@/lib/api";
+import type { Schedule, ScheduleInput } from "./types";
 import type { Execution, ExecutionSummary, Job, Me, Member, NewExecution, Notifications, Process, Review, Routine, RoutineLink, RoutineVersionInput, Station, StationApp, StepChange, Storage } from "./types";
 
 export interface DataSource {
@@ -40,6 +41,11 @@ export interface DataSource {
   archiveRoutine(id: number): Promise<void>;
   saveProcess(id: number | null, name: string, items: { routine_id: number; continue_next: boolean }[]): Promise<void>;
   startExecution(req: NewExecution): Promise<Execution>;
+  schedules(): Promise<Schedule[]>;
+  previewSchedule(input: ScheduleInput): Promise<{ next_slot_local: string; next_run_at: string }>;
+  createSchedule(input: ScheduleInput): Promise<Schedule>;
+  updateSchedule(id: number, patch: Partial<ScheduleInput> & { enabled?: boolean }): Promise<Schedule>;
+  deleteSchedule(id: number): Promise<void>;
 }
 
 export const realSource: DataSource = {
@@ -107,6 +113,13 @@ export const realSource: DataSource = {
     else await api("PUT", `/api/v1/processes/${id}`, { name, items });
   },
   startExecution: (req) => api("POST", "/api/v1/executions", req),
+  schedules: () => api("GET", "/api/v1/schedules"),
+  previewSchedule: (input) => api("POST", "/api/v1/schedules/preview", input),
+  createSchedule: (input) => api("POST", "/api/v1/schedules", input),
+  updateSchedule: (id, patch) => api("PATCH", `/api/v1/schedules/${id}`, patch),
+  async deleteSchedule(id) {
+    await api("DELETE", `/api/v1/schedules/${id}`);
+  },
 };
 
 export const isDemoBuild = import.meta.env.MODE === "demo";

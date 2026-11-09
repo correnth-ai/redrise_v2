@@ -212,7 +212,7 @@
     }
   ],
   "roadmap_revision": 4,
-  "next_action": "Work order STABILIZATION-REAL-UI-20261107: S1 (cancel of a process step), S2 (real Empresa indicators), S3 (attempt, request, connection and database limits, TLS close, Core test isolation) and S4 (installed validation) done; independent review findings fixed; candidate 0.1.0-beta.27 (Core 0.3.6) accepted in the lab only (gate, practical proof, rollback on a copy; delivery/evidence/STABILIZATION-REAL-UI-20261107/s4-fixes.json; 2026-11-07). Real install still 0.1.0-beta.25; not signed, not published. S5 planned: the user chose scheduling a process; work order delivery/work-orders/SCHEDULE-PROCESS-20261107.md (proposal, not started). Next: confirm its two open points and order its implementation. Earlier: Work order UI-ENGINE-BOAS-VINDAS-20261103: increments 1 to 7 accepted on the installed 0.1.0-beta.25 in the lab, and the real install updated to it (delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/evidence.json; 2026-11-05); a real draft not exercised; not homologation or publication. Next: user checks the screens with the real team. Earlier: Template close fixed in candidate 0.1.0-beta.23, gate passed, not installed, signed or published (delivery/evidence/TEMPLATE-CLOSE-20261104/evidence.json; 2026-11-04). Earlier: Boas-vindas process accepted on the installed 0.1.0-beta.22 (delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/evidence.json; 2026-11-04); not homologation or publication. Next: user chooses the next part of the work order. Earlier: Browser update: 0.1.0-beta.14 passed verify-candidate, signed into the lab channel and installed through the app (2026-11-01); installed Browser campaign passed with open findings. Next: user review of homologation and findings. Evidence: delivery/evidence/BROWSER-UPDATE-20261101/evidence.json.",
+  "next_action": "Work order STABILIZATION-REAL-UI-20261107: S1 (cancel of a process step), S2 (real Empresa indicators), S3 (attempt, request, connection and database limits, TLS close, Core test isolation) and S4 (installed validation) done; independent review findings fixed; candidate 0.1.0-beta.27 (Core 0.3.6) accepted in the lab only (gate, practical proof, rollback on a copy; delivery/evidence/STABILIZATION-REAL-UI-20261107/s4-fixes.json; 2026-11-07). Work order SCHEDULE-PROCESS-20261107 (scheduling a process): Core 0.3.7 in candidate 0.1.0-beta.28: gate, practical proof on the lab install (scheduled run without a click, skip with notice, roles), rollback to 0.1.0-beta.25 on a copy; signed to the local channel and installed on the real install by user order (delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2.json; 2026-11-08). Not published. Next: the user checks scheduling on the real team; commit only on order. Earlier: Work order UI-ENGINE-BOAS-VINDAS-20261103: increments 1 to 7 accepted on the installed 0.1.0-beta.25 in the lab, and the real install updated to it (delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/evidence.json; 2026-11-05); a real draft not exercised; not homologation or publication. Next: user checks the screens with the real team. Earlier: Template close fixed in candidate 0.1.0-beta.23, gate passed, not installed, signed or published (delivery/evidence/TEMPLATE-CLOSE-20261104/evidence.json; 2026-11-04). Earlier: Boas-vindas process accepted on the installed 0.1.0-beta.22 (delivery/evidence/UI-ENGINE-BOAS-VINDAS-20261103/evidence.json; 2026-11-04); not homologation or publication. Next: user chooses the next part of the work order. Earlier: Browser update: 0.1.0-beta.14 passed verify-candidate, signed into the lab channel and installed through the app (2026-11-01); installed Browser campaign passed with open findings. Next: user review of homologation and findings. Evidence: delivery/evidence/BROWSER-UPDATE-20261101/evidence.json.",
   "direction_revision_evidence": "delivery/evidence/PRACTICAL-20261027/revision.json",
   "closed_beta_available": true,
   "closed_beta_evidence": "delivery/evidence/P10/closed-beta.json",
@@ -241,23 +241,43 @@
     }
   ],
   "current_candidate": {
-    "version": "0.1.0-beta.27",
-    "installer_sha256": "f9956ea325df51d2f193eaede56fb6f2fd46b54f284bd97928d8444998426510",
+    "version": "0.1.0-beta.28",
+    "installer_sha256": "25a400e970a4e89ad3c5cec1832708ea03c848bf6693b526f09020d3649e33c3",
     "installed": true,
     "installed_where": [
-      "lab folder only (gate passed 2026-11-07)"
+      "lab folder (gate passed 2026-11-08)",
+      "real install, by user order 2026-11-08"
     ],
-    "real_install": "0.1.0-beta.25, not updated",
-    "channel_signed": false,
+    "real_install": "0.1.0-beta.28 (from 0.1.0-beta.25, 2026-11-08, user order)",
+    "channel_signed": true,
+    "channel": "local release channel only (latest.json signed 2026-11-08)",
     "published": false,
     "homologated": false,
     "versions": {
-      "core": "0.3.6",
+      "core": "0.3.7",
       "runner": "0.3.11"
     },
-    "evidence": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4-fixes.json"
+    "evidence": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2.json"
   },
   "earlier_candidates": [
+    {
+      "version": "0.1.0-beta.27",
+      "installer_sha256": "f9956ea325df51d2f193eaede56fb6f2fd46b54f284bd97928d8444998426510",
+      "installed": true,
+      "installed_where": [
+        "lab folder only (gate passed 2026-11-07)"
+      ],
+      "real_install": "not installed on the real install; superseded by 0.1.0-beta.28",
+      "channel_signed": false,
+      "published": false,
+      "homologated": false,
+      "versions": {
+        "core": "0.3.6",
+        "runner": "0.3.11"
+      },
+      "evidence": "delivery/evidence/STABILIZATION-REAL-UI-20261107/s4-fixes.json",
+      "note": "Superseded by 0.1.0-beta.28 (scheduling); stays installed in the lab folder only."
+    },
     {
       "version": "0.1.0-beta.26",
       "installer_sha256": "8cee8c98376eca5ea29eea8c5fa0eb6cdd1d61d8814e07ac775ea33edd7dc81e",

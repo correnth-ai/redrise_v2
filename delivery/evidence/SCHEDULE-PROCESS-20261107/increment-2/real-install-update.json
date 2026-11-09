@@ -1,0 +1,30 @@
+{
+    "started":  "2026-11-08T13:50:58.0732870-03:00",
+    "mode":  "check only, after the installer ran (the first script waited on the relaunched app and was stopped)",
+    "last_install":  {
+                         "at":  1794156351,
+                         "ok":  true,
+                         "result":  {
+                                        "data_root_untouched":  "%USERPROFILE%\\AppData\\Local\\RedRise",
+                                        "files":  3754,
+                                        "install_root":  "%USERPROFILE%\\AppData\\Local\\Programs\\@redrise",
+                                        "installed":  "0.1.0-beta.28",
+                                        "previous_kept":  true,
+                                        "shortcut":  "%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\RedRise.lnk"
+                                    }
+                     },
+    "version_after":  "0.1.0-beta.28",
+    "previous_folder":  true,
+    "uninstall_key_version":  "0.1.0-beta.28",
+    "app_running_after":  true,
+    "newest_backup":  {
+                          "name":  "pre-migration-20261108-134606.dump",
+                          "bytes":  78414,
+                          "at":  "2026-11-08T13:46:07.0820907-03:00"
+                      },
+    "status":  "python.exe :   File \"\u003cstring\u003e\", line 3\r\nNo %USERPROFILE%\\RedRise-v2-dev\\scratch\\check-real-beta28.ps1:17 caractere:13\r\n+ $r.status = \u0026 $py -B -X utf8 -c @\u0027\r\n+             ~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (  File \"\u003cstring\u003e\", line 3:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError\r\n \r\n    cfg = json.load(open(os.path.expandvars(r%LOCALAPPDATA%\\RedRise\\host\\host.json), encoding=utf-8-sig))\r\n                                                            ^\r\nSyntaxError: unexpected character after line continuation character\r\n",
+    "log_errors":  [
+
+                   ],
+    "finished":  "2026-11-08T13:50:58.6207248-03:00"
+}

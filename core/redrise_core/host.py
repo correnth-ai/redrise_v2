@@ -108,12 +108,29 @@ class Host:
         core.ensure_welcome_process()
         core.changes.log = self.log
         core.changes.start()
+        self._sched_stop = threading.Event()
+        self._sched = threading.Thread(target=self._schedule_loop, name="core-schedules", daemon=True)
+        self._sched.start()
         self.api = ApiServer(core, bind, cfg["lan_port"], self.p.host / "tls" / "host-cert.pem",
                              self.p.host / "tls" / "host-key.pem", log=self.log).start()
         info["lan_port"] = self.api.port
         return info
 
+    SCHEDULE_EVERY_S = 30.0
+
+    def _schedule_loop(self) -> None:
+        """Scheduled processes (SCHEDULE-PROCESS-20261107): one pass every 30 s in this single Core process."""
+        while not self._sched_stop.wait(self.SCHEDULE_EVERY_S):
+            try:
+                out = self.core.schedule_tick()
+                if out.get("errors"):
+                    self.log(f"schedules: {out['errors']}")
+            except Exception as e:  # noqa: BLE001 - the loop goes on; the next pass tries again
+                self.log(f"schedules: {type(e).__name__}")
+
     def stop(self) -> None:
+        if getattr(self, "_sched_stop", None):
+            self._sched_stop.set()
         if self.api:
             self.core.changes.stop()
             self.api.stop()

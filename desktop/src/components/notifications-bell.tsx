@@ -6,12 +6,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import type { NotificationItem } from "@/data/types";
 import { cn, when } from "@/lib/utils";
 import { useStore } from "@/state";
+import { scheduleNote } from "@/features/schedules";
 
 export function NotificationsBell() {
   const { notifications, src, reload, go } = useStore();
   const unseen = notifications?.unseen ?? 0;
   async function open(n: NotificationItem) {
-    go({ menu: "processo", page: "acao", id: n.review_id ?? n.change_id, nonce: Date.now() });
+    go({ menu: "processo", page: "acao", id: n.kind === "schedule" ? "schedules" : n.review_id ?? n.change_id, nonce: Date.now() });
     try { if (!n.seen_at) await src.markNotificationSeen(n.id); } finally { await reload(); }
   }
   return (
@@ -30,7 +31,7 @@ export function NotificationsBell() {
           <DropdownMenuItem key={n.id} onSelect={() => void open(n)} className="items-start">
             <span aria-hidden className={cn("mt-1.5 size-2 shrink-0 rounded-full", n.seen_at ? "bg-transparent" : "bg-red-600")} />
             <span className="min-w-0">
-              <span className={cn("block truncate", !n.seen_at && "font-medium")}>{n.kind === "step_change" ? "Substituição da etapa 1" : "Revisão pedida"}: {n.step_name}</span>
+              <span className={cn("block truncate", !n.seen_at && "font-medium")}>{n.kind === "schedule" ? scheduleNote(n.schedule_state ?? null, n.schedule_reason ?? null) : `${n.kind === "step_change" ? "Substituição da etapa 1" : "Revisão pedida"}: ${n.step_name}`}</span>
               <span className="block truncate text-xs text-muted-foreground">{n.process_name} · {when(n.created_at)}{n.seen_at ? "" : " · não vista"}</span>
             </span>
           </DropdownMenuItem>

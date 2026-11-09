@@ -2,7 +2,7 @@
 // process with table-02 row actions and filters, routine library, routine
 // detail in a side sheet and process composition in dialog-11.
 import { Fragment, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Eye, History, Link2, ListChecks, Pencil, Play, Plus, Replace, Trash2, Unlink, UserCheck, Workflow } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, Eye, History, Link2, ListChecks, Pencil, Play, Plus, Replace, Trash2, Unlink, UserCheck, Workflow } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { DataTable, type DataColumn } from "@/components/data-table";
 import { ErrorView } from "@/components/diagnostic";
 import { useExecutionSummary } from "@/hooks/use-summary";
+import { ScheduleDialog, SchedulesSection } from "@/features/schedules";
 import { SearchableSelect } from "@/components/searchable-select";
 import { ExecutionBadge, StateBadge } from "@/components/blocks";
 import { describeConfig } from "@/features/run-dialog";
@@ -62,6 +63,7 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
   const [detail, setDetail] = useState<Routine | null>(null);
   const [integrate, setIntegrate] = useState<Process | null>(null);
   const [replace, setReplace] = useState<Process | null>(null);
+  const [schedule, setSchedule] = useState<Process | null>(null);
   if (!processes) return <Loading what="processos" />;
   const shown = processes.filter((p) => (filterProc === "all" || String(p.id) === filterProc) && (filterStatus === "all" ||
     (filterStatus === "running" ? p.last_execution?.state === "running" : filterStatus === "attention" ?
@@ -103,6 +105,7 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
                   <TableCell>{p.last_execution ? <ExecutionBadge e={{ state: p.last_execution.state, outcome: p.last_execution.outcome } as any} /> : <Badge variant="outline">Nunca executado</Badge>}</TableCell>
                   <TableCell className="text-right">
                     <Action label={p.items.length ? "Executar processo" : "Sem etapa 1 para executar"} onClick={() => run({ kind: "process", id: p.id })} disabled={!p.items.length}><Play /></Action>
+                    {me.role === "admin" && !compact && !!p.items.length && <Action label="Agendar" onClick={() => setSchedule(p)}><CalendarClock /></Action>}
                     {me.role === "admin" && !p.system_key && <Action label="Integrar rotina avulsa" onClick={() => setIntegrate(p)}><Link2 /></Action>}
                     {me.role === "admin" && !p.system_key && !!p.items.length && <Action label={p.pending_change ? "Já há substituição pendente" : p.last_execution && p.last_execution.state !== "finished" ? "Em execução: aguarde terminar" : "Substituir etapa 1"}
                       disabled={!!p.pending_change || (!!p.last_execution && p.last_execution.state !== "finished")} onClick={() => setReplace(p)}><Replace /></Action>}
@@ -131,6 +134,7 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
       <ProcessComposer value={compose} onClose={() => setCompose(null)} />
       <IntegrateRoutine process={integrate} onClose={() => setIntegrate(null)} />
       <ReplaceStepOne process={replace} onClose={() => setReplace(null)} />
+      <ScheduleDialog key={schedule?.id ?? "none"} process={schedule} onClose={() => setSchedule(null)} />
       <RoutineSheet routine={detail} onClose={() => setDetail(null)} />
     </div>
   );
@@ -242,7 +246,7 @@ function CountTile({ label, value, icon: Icon, mark, onOpen }: { label: string; 
 
 export function ProcessesPage({ focus }: { focus?: string }) {
   const { processes, executions, reviews, go, run, error } = useStore();
-  const [tab, setTab] = useState(focus ? "mine" : "overview");
+  const [tab, setTab] = useState(focus && focus !== "schedules" ? "mine" : "overview");  // "schedules": from a schedule notification
   const { summary, error: summaryError } = useExecutionSummary();
   const days = summary?.days ?? 30;
   const history = (id?: string) => () => go({ menu: "processo", page: "historico", id, days });  // same period as the count
@@ -270,6 +274,7 @@ export function ProcessesPage({ focus }: { focus?: string }) {
         </section>
         <div className="flex justify-end"><Button onClick={() => run(null)}><Play /> Nova execução</Button></div>
         <ProcessTable />
+        <SchedulesSection />
         <section aria-label="Execuções recentes" className="space-y-2">
           <h3 className="text-sm font-semibold">Execuções recentes</h3>
           <DataTable label="Execuções recentes" storageKey="processo-acao-execucoes" rows={executions} columns={HISTORY_COLUMNS} rowKey={(e) => e.id} rowLabel={title}

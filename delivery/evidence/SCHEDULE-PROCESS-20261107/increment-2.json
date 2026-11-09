@@ -1,0 +1,187 @@
+{
+  "step": "SCHEDULE-PROCESS-20261107/increment-2 (candidate, lab proof, channel, real install)",
+  "status": "accepted_on_lab_candidate; signed to the local channel and installed on the real install by user order",
+  "date": "2026-11-08",
+  "authorization": [
+    "User in chat, 2026-11-08: 'Yes, build it' (candidate and installed proof, computer free)",
+    "User in chat, 2026-11-08: 'Se tudo testado e OK, ao final deve atualizar a built da versão oficial do instalador e fazer o update no app.'"
+  ],
+  "source_revision": "991ebc5 plus the uncommitted tree (increment 1 and this increment)",
+  "candidate": {
+    "version": "0.1.0-beta.28",
+    "installer_sha256": "25a400e970a4e89ad3c5cec1832708ea03c848bf6693b526f09020d3649e33c3",
+    "payload_sha256": "b7f41f8bd53dd84f17e7e3f8396ee96c6de14e48849b67d23fb64ae4fc60302e",
+    "desktop_exe_sha256": "ff25ddf43532475d729be2b54dbf9161511d7359ffd2d1dcb8bfefb58180d07d",
+    "files": 3754,
+    "file_list": "beta.27 plus core/redrise_core/migrations/010_schedules.sql (compared)",
+    "versions": {
+      "desktop": "0.1.0-beta.28",
+      "core": "0.3.7",
+      "runner": "0.3.11"
+    }
+  },
+  "code_changes_in_this_increment": [
+    "desktop version 0.1.0-beta.28 (package.json, package-lock.json, Cargo.toml, Cargo.lock, tauri.conf.json)",
+    "proofs/schedules/accept_schedule.py (new practical proof)",
+    "proofs/stabilization/rollback_check.py: schedule tables and notifications counted; a table an older schema lacks is left out; the old Core must read the notifications the new one wrote"
+  ],
+  "checks": [
+    {
+      "type": "gate",
+      "command": "verify-candidate.ps1 -Version 0.1.0-beta.28",
+      "observed": "passed (install, health 3754 files, Boas-vindas idle and load 3/3 each, uninstall)",
+      "record": "increment-2/verification.json"
+    },
+    {
+      "type": "baseline",
+      "command": "rollback_check.py --baseline-with install-beta27 on the lab data, before the upgrade",
+      "record": "increment-2/sched-baseline.json"
+    },
+    {
+      "type": "practical_e2e",
+      "command": "accept_schedule.py --baseline on lab install-beta28 (one run, computer free)",
+      "report": "increment-2/accept-schedule-20261108-134236.json",
+      "passed": true,
+      "seconds": 519,
+      "clicks_lost": 0,
+      "highlights": {
+        "migration": "every table of the baseline kept its count; migration 010 the only new one; schedule tables empty; backup pre-migration-20261108-133408.dump written before migrating",
+        "scheduled": "through the screen (Processo > Acao > Agendar): preview 'Proxima execucao: 08/11/2026 13:40' from the Core; at 13:40 the Core started it with no click (10.7 s after the time), request_id agenda-1-202611081340, ended verified; Historico marked 'Agendada'; Empresa equal to the Core, executions 53 -> 54; Calculator closed",
+        "skipped": "schedule on a registered station that never connected: 13:42 skipped station_unavailable, no execution, one notice; the bell showed 'Agendamento pulado: estacao indisponivel no horario'; next occurrence 15/11",
+        "roles": "operator lists and reads runs; creating, pausing and deleting refused AUTH-FORBIDDEN; no token AUTH-REQUIRED"
+      },
+      "cleanup": {
+        "paused": [
+          1,
+          2
+        ],
+        "station_revoked": true
+      }
+    },
+    {
+      "type": "rollback_isolated_copy",
+      "command": "rollback_check.py --new install-beta28 --old install-beta25 on a copy",
+      "record": "increment-2/sched-rollback.json",
+      "observed": "Core 0.3.5 opens the migrated copy (10 migrations, schedules 2, runs 2): every table and API count equal to 0.3.7, including the 10 notifications with the schedule ones; backup and restore into a separate database equal; restore database dropped"
+    },
+    {
+      "type": "contract_check",
+      "command": "tests/contracts; validate-base (both modes)",
+      "observed": "17 OK; 346 and 368 checks passed"
+    }
+  ],
+  "rollback_note": "Migration 010 only adds tables and columns. A Core before 0.3.7 runs on the migrated data (proved above to 0.3.5) and ignores schedules: nothing fires, and the bell lists schedule notices without step names. Returning the schema itself to before 010 means restoring the pre-migration backup the Core wrote at the upgrade, which also drops what happened after it.",
+  "channel": {
+    "signed": true,
+    "where": "local release channel %USERPROFILE%\\RedRise-v2-dev\\channel (latest.json, latest.json.sig, installer)",
+    "manifest": "increment-2/channel-latest.json",
+    "signature_check": "valid against desktop/src-tauri/channel-public-key.b64 (the key compiled into the app)",
+    "signed_by": "release_channel.py sign (key used in-process from the OS vault, never displayed)",
+    "previous_latest": "0.1.0-beta.17",
+    "published": false,
+    "note": "local channel only; no external site, upload or publication"
+  },
+  "real_install": {
+    "status": "updated_by_user_order",
+    "at": "2026-11-08",
+    "from": "0.1.0-beta.25",
+    "to": "0.1.0-beta.28",
+    "how": "RedRise-Setup-0.1.0-beta.28.exe (from the channel folder) --quiet --relaunch, through an Explorer shortcut; no input on the desktop",
+    "observed": [
+      "Install record: installed 0.1.0-beta.28, 3754 files, previous version kept, data folder untouched.",
+      "Manifest and uninstall key: 0.1.0-beta.28; the app reopened by itself.",
+      "The Core wrote a backup before migrating: pre-migration-20261108-134606.dump, 78414 bytes.",
+      "The status endpoint answered core 0.3.7 and an initialized team; no ERROR, FATAL or Traceback in the host logs since the update."
+    ],
+    "record": "increment-2/real-install-update.json, increment-2/real-core-status.json",
+    "not_checked": [
+      "Nobody signed in and nothing was scheduled or run on the real team after the update.",
+      "Migration 010 was not read from the real database (needs team credentials); it is inferred from the new backup and the Core answering 0.3.7."
+    ],
+    "slip": "The first check script waited on the installer with Start-Process -Wait, which also waits for the relaunched app; that script alone was stopped and a read-only check ran instead. The app kept running.",
+    "rollback": "uninstall.exe --rollback restores the program (beta.25 kept); the data stay migrated, which 0.3.5 reads (proved on the lab copy); the pre-migration backup holds them as they were."
+  },
+  "artifacts": [
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/accept-schedule-20261108-134236.json",
+      "sha256": "f6f51fd2a2a4a00419c51c6376d1addc5b6a02596e81e1e031fd472be7866192"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/channel-latest.json",
+      "sha256": "5faa697cc162fb78cd17ae16f218f8d5fc8eccf30ab82d1abbba9dd16b9aa841"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/inst-agendamentos-lista.png",
+      "sha256": "4d9fb3e9f2952b65837ae123ea0bff5b858a8d2fea7397208e4d67c39efeb48b"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/inst-agendar-dialogo.png",
+      "sha256": "1e5e195b85e6bd86462f5798b5cc971c011214d56d1ce6203c557612254438c9"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/inst-empresa-depois-agendada.png",
+      "sha256": "0cced9fae96ef6404992d596cf665c0bc8eb6c00a99eb040dd7d2ee1a14260b7"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/inst-historico-agendada.png",
+      "sha256": "58affce05a9f9042afdc53c74e65d416e0ee7a6752f796853e6ba82d14a75e07"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/inst-sino-agendamento-pulado.png",
+      "sha256": "2004655d480ee17adc826c536eff4be4769847d5794b5d719d447289c260d6ea"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/install-beta28.json",
+      "sha256": "5a1c060381bfff77f8c21abf3c56a97bee7efab7f53cacd4d0daa124fba32f69"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/real-core-status.json",
+      "sha256": "ce570e2b70f4a98220fe85007aa615add15b873eeb97f339ce16fda1b3c28229"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/real-install-update.json",
+      "sha256": "bb31c91aead1745c72f7ed7992bae45e9329412893ce0bfc371a2ddd9251e246"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/sched-baseline.json",
+      "sha256": "2ee12c2438792e84f41d6713157e62b09b40c8692d82c38a02a67f2d1c4cb823"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/sched-rollback.json",
+      "sha256": "494242220acaa4b68b0a14df9fdbbd419d8dfd2eea99c049d8e60f66eefb572a"
+    },
+    {
+      "path": "delivery/evidence/SCHEDULE-PROCESS-20261107/increment-2/verification.json",
+      "sha256": "62ec4fdb5470826995f0bccb3bfb0916a604dbd732effcdead0308989cfdfa18"
+    },
+    {
+      "path": "proofs/schedules/accept_schedule.py",
+      "sha256": "d71ee77e74b4c0d6e5186a5760c458ff5c7a29d731d41214dd7d422cf07870e5"
+    },
+    {
+      "path": "proofs/stabilization/rollback_check.py",
+      "sha256": "c7800b7ffbad3483abfecc3829888031450470056e41e38c958ea4f021896014"
+    }
+  ],
+  "commands": {
+    "required": [
+      "build-desktop.ps1",
+      "build-release.ps1 -Version 0.1.0-beta.28",
+      "verify-candidate.ps1",
+      "lab chain (baseline, install, proof, rollback)",
+      "release_channel.py sign",
+      "real install update",
+      "tests/contracts",
+      "validate-base"
+    ],
+    "optional": [
+      "independent review of the scheduling code (not done)"
+    ],
+    "not_applicable": [
+      "Runner tests: no Runner change"
+    ]
+  },
+  "published": false,
+  "homologated": false,
+  "next_action": "The user checks scheduling on the real team. Commit only on order. Optional independent review."
+}

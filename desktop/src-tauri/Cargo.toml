@@ -1,6 +1,6 @@
 [package]
 name = "redrise-desktop"
-version = "0.1.0-beta.27"
+version = "0.1.0-beta.28"
 edition = "2021"
 description = "RedRise desktop (Tauri): UI, process lifecycle of Core/Runner agent, pinned Core client"
 license = "LicenseRef-RedRise-Proprietary"

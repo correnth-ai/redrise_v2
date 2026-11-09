@@ -3,6 +3,7 @@
 // Kanban is read-only (no drag-and-drop, no manual verification).
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, CircleAlert, Hourglass, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -91,7 +92,8 @@ export function KanbanPage({ process }: { process?: number }) {
 
 export const HISTORY_COLUMNS: DataColumn<Execution>[] = [
   { id: "when", header: "Quando", cell: (e) => when(e.created_at), sortValue: (e) => e.created_at },
-  { id: "what", header: "Processo ou rotina", cell: (e) => <span className="font-medium">{title(e)}</span>, sortValue: title, searchText: title },
+  { id: "what", header: "Processo ou rotina", cell: (e) => <span className="font-medium">{title(e)}{e.schedule_id ? <Badge variant="outline" className="ml-2 font-normal">Agendada</Badge> : null}</span>,
+    sortValue: title, searchText: (e) => `${title(e)}${e.schedule_id ? " agendada" : ""}` },
   { id: "station", header: "Estação", cell: (e) => e.station_name, sortValue: (e) => e.station_name, searchText: (e) => e.station_name },
   { id: "state", header: "Situação", cell: (e) => <ExecutionBadge e={e} />, sortValue: executionLabel, searchText: executionLabel },
   { id: "end", header: "Término", className: "text-muted-foreground", cell: (e) => (e.end_reason ? END_REASON[e.end_reason] ?? e.end_reason : "—"), sortValue: (e) => e.end_reason },
