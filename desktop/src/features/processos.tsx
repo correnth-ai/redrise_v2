@@ -15,9 +15,9 @@ import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataTable, type DataColumn } from "@/components/data-table";
 import { ErrorView } from "@/components/diagnostic";
+import { IconAction } from "@/components/icon-action";
 import { useExecutionSummary } from "@/hooks/use-summary";
 import { ScheduleDialog, SchedulesSection } from "@/features/schedules";
 import { SearchableSelect } from "@/components/searchable-select";
@@ -35,24 +35,16 @@ const CATEGORY: Record<string, string> = { windows: "Windows", browser: "Navegad
 const FOLLOW_UP: Record<string, string> = { review: "Solicitar revisão", report: "Gerar relatório", notify: "Notificar alguém" };
 const originLabel = (kind: string, c: Routine["config"]) => kind === "followup" ? FOLLOW_UP[c?.action ?? ""] ?? "Follow-up" : kind === "notepad_step" ? "Bloco de Notas" : kind === "app_open" ? (c?.target?.kind === "file" ? "Arquivo" : "Aplicativo") : c ? (c.origin === "site" ? "Site" : "HTML local") : "Legada";
 const PREPARED = ["browser_open", "app_open"];
+/** Why a process cannot start as composed (the Core refuses it too: PROCESS-START-INVALID), or null. */
+export const startProblem = (p: Process): string | null => !p.items.length ? "Sem etapa 1 para executar"
+  : p.items[0].kind === "followup" ? "A etapa 1 é um follow-up, que precisa de uma etapa anterior" : null;
 const EDITABLE = [...PREPARED, "followup"];
 
 function Loading({ what }: { what: string }) {
   return <p className="text-sm text-muted-foreground">Carregando {what}…</p>;
 }
 
-function Action({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span tabIndex={disabled ? 0 : -1}>
-          <Button size="icon" variant="ghost" className="size-8" aria-label={label} onClick={onClick} disabled={disabled}>{children}</Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
+const Action = IconAction;
 
 // ---------------------------------------------------------------- table-04 + table-02
 export function ProcessTable({ compact = false }: { compact?: boolean }) {
@@ -99,12 +91,13 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                   <TableCell colSpan={3} className="font-semibold">
                     {p.name} <span className="ml-2 font-normal text-muted-foreground">{p.items.length ? `${p.items.length} rotina(s)` : "sem etapa 1"}</span>
+                    {p.items[0]?.kind === "followup" && <Badge variant="outline" className="ml-2 border-transparent bg-warn-soft font-medium text-warn">Etapa 1 é um follow-up: não executa</Badge>}
                     {p.pending_change && <Badge variant="outline" className="ml-2 border-transparent bg-info-soft font-medium text-info">Substituição da etapa 1 pendente</Badge>}
                     {p.last_execution && <span className="ml-3 font-normal text-xs text-muted-foreground">última: {when(p.last_execution.created_at)}{p.last_execution.end_reason ? ` · ${END_REASON[p.last_execution.end_reason] ?? p.last_execution.end_reason}` : ""}</span>}
                   </TableCell>
                   <TableCell>{p.last_execution ? <ExecutionBadge e={{ state: p.last_execution.state, outcome: p.last_execution.outcome } as any} /> : <Badge variant="outline">Nunca executado</Badge>}</TableCell>
                   <TableCell className="text-right">
-                    <Action label={p.items.length ? "Executar processo" : "Sem etapa 1 para executar"} onClick={() => run({ kind: "process", id: p.id })} disabled={!p.items.length}><Play /></Action>
+                    <Action label={startProblem(p) ?? "Executar processo"} onClick={() => run({ kind: "process", id: p.id })} disabled={!!startProblem(p)}><Play /></Action>
                     {me.role === "admin" && !compact && !!p.items.length && <Action label="Agendar" onClick={() => setSchedule(p)}><CalendarClock /></Action>}
                     {me.role === "admin" && !p.system_key && <Action label="Integrar rotina avulsa" onClick={() => setIntegrate(p)}><Link2 /></Action>}
                     {me.role === "admin" && !p.system_key && !!p.items.length && <Action label={p.pending_change ? "Já há substituição pendente" : p.last_execution && p.last_execution.state !== "finished" ? "Em execução: aguarde terminar" : "Substituir etapa 1"}
@@ -150,6 +143,8 @@ export function RoutinesPage() {
   const [remove, setRemove] = useState<Routine[] | null>(null);
   // A linked routine, even as the only step, runs through its process.
   const linkOf = (id: number) => (processes ?? []).filter((p) => p.items.some((i) => i.routine_id === id));
+  // The ready-made Boas-vindas process keeps its routines (the Core refuses them too).
+  const readyMade = (id: number) => linkOf(id).some((p) => !!p.system_key);
   const columns: DataColumn<Routine>[] = [
     { id: "name", header: "Rotina", cell: (r) => <span className="font-medium">{r.name}</span>, sortValue: (r) => r.name, searchText: (r) => r.name },
     { id: "type", header: "Tipo", cell: routineType, sortValue: routineType, searchText: routineType },
@@ -167,7 +162,7 @@ export function RoutinesPage() {
           onClick={() => (r.config ? run({ kind: "routine", id: r.id }) : go({ menu: "rotina", page: "executar-legada", id: r.id }))}><Play /></Action>
         <Action label="Ver detalhes" onClick={() => setDetail(r)}><Eye /></Action>
         {me.role === "admin" && EDITABLE.includes(r.kind) && <Action label="Editar" onClick={() => go({ menu: "rotina", page: "editar", id: r.id })}><Pencil /></Action>}
-        {me.role === "admin" && <Action label={linked ? "Retire do processo para excluir" : "Excluir"} disabled={linked} onClick={() => setRemove([r])}><Trash2 /></Action>}
+        {me.role === "admin" && <Action label={readyMade(r.id) ? "Rotina do processo pronto: não é excluída" : "Excluir"} disabled={readyMade(r.id)} onClick={() => setRemove([r])}><Trash2 /></Action>}
       </>;
     } },
   ];
@@ -192,40 +187,54 @@ export function RoutinesPage() {
         ] }]}
         selectable={me.role === "admin"}
         selectionActions={(rows) => {
-          const free = rows.filter((r) => !linkOf(r.id).length);
-          return <Button size="sm" variant="outline" disabled={!free.length} onClick={() => setRemove(free)}
-            title={free.length < rows.length ? "Rotinas vinculadas a processo não são excluídas" : undefined}><Trash2 /> Excluir {free.length}</Button>;
+          const ok = rows.filter((r) => !readyMade(r.id));
+          return <Button size="sm" variant="outline" disabled={!ok.length} onClick={() => setRemove(ok)}
+            title={ok.length < rows.length ? "Rotinas do processo pronto Boas-vindas não são excluídas" : undefined}><Trash2 /> {ok.length ? `Excluir ${ok.length}` : "Excluir"}</Button>;
         }}
       />
       <RoutineSheet routine={detail} onClose={() => setDetail(null)} />
-      <RemoveRoutines rows={remove} onClose={() => setRemove(null)} remove={src.archiveRoutine} reload={reload} />
+      <RemoveRoutines rows={remove} linkOf={linkOf} onClose={() => setRemove(null)} remove={src.archiveRoutine} reload={reload} />
     </div>
   );
 }
 
-// Deleting hides the routine from new work; versions and past executions stay in the history.
-function RemoveRoutines({ rows, onClose, remove, reload }: { rows: Routine[] | null; onClose: () => void; remove: (id: number) => Promise<void>; reload: () => Promise<void> }) {
+// Deleting archives the routine and takes it out of every process in one Core transaction; the other steps keep
+// their order and continuation. Versions, running executions and the history stay. Several are deleted one by one:
+// the dialog then says exactly which ones were deleted and which failed, and only those that failed stay selected.
+function RemoveRoutines({ rows, linkOf, onClose, remove, reload }: { rows: Routine[] | null; linkOf: (id: number) => Process[]; onClose: () => void;
+  remove: (id: number) => Promise<void>; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<unknown>(null);
+  const [done, setDone] = useState<Routine[]>([]);
+  const [failed, setFailed] = useState<{ r: Routine; error: unknown }[]>([]);
+  const pending = (rows ?? []).filter((r) => !done.some((d) => d.id === r.id));
+  const close = () => { if (busy) return; setDone([]); setFailed([]); onClose(); };
   async function confirm() {
-    setBusy(true); setError(null);
-    try {
-      for (const r of rows ?? []) await remove(r.id); // one by one: a refusal stops here and reports which one
-      onClose();
-    } catch (e) { setError(e); } finally { setBusy(false); await reload(); }
+    setBusy(true); setFailed([]);
+    const ok: Routine[] = [...done];
+    const bad: { r: Routine; error: unknown }[] = [];
+    for (const r of pending) {
+      try { await remove(r.id); ok.push(r); } catch (e) { bad.push({ r, error: e }); }
+    }
+    setDone(ok); setFailed(bad); setBusy(false);
+    await reload();
+    if (!bad.length) { setDone([]); onClose(); }
   }
+  const affected = [...new Map(pending.flatMap((r) => linkOf(r.id)).map((p) => [p.id, p])).values()];
   return (
-    <Dialog open={rows !== null} onOpenChange={(o) => { if (!o && !busy) { setError(null); onClose(); } }}>
+    <Dialog open={rows !== null} onOpenChange={(o) => { if (!o) close(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{rows?.length === 1 ? "Excluir rotina" : `Excluir ${rows?.length ?? 0} rotinas`}</DialogTitle>
           <DialogDescription>Elas deixam de aparecer na Lista. O histórico de execuções é preservado.</DialogDescription>
         </DialogHeader>
-        <ul className="list-disc pl-5 text-sm">{rows?.map((r) => <li key={r.id}>{r.name}</li>)}</ul>
-        <ErrorView error={error} />
+        <ul className="list-disc pl-5 text-sm">{pending.map((r) => <li key={r.id}>{r.name}{linkOf(r.id).length ? <span className="text-muted-foreground"> · em {linkOf(r.id).map((p) => p.name).join(", ")}</span> : null}</li>)}</ul>
+        {!!affected.length && <p className="text-sm">Será retirada dos processos {affected.map((p) => p.name).join(", ")}. As demais etapas continuam na mesma ordem; um processo sem etapa 1 válida não executa até ser corrigido. Execuções em andamento não mudam.</p>}
+        {!!done.length && <p role="status" className="text-sm">Excluídas: {done.map((r) => r.name).join(", ")}.</p>}
+        {!!failed.length && <div className="space-y-1"><p className="text-sm font-medium">Não excluídas ({failed.length}): {failed.map((f) => f.r.name).join(", ")}. Elas continuam selecionadas.</p>
+          {failed.map((f) => <ErrorView key={f.r.id} error={f.error} />)}</div>}
         <DialogFooter>
-          <Button variant="ghost" disabled={busy} onClick={onClose}>Voltar</Button>
-          <Button variant="destructive" disabled={busy} onClick={confirm}>{busy ? "Excluindo…" : "Excluir"}</Button>
+          <Button variant="ghost" disabled={busy} onClick={close}>{failed.length ? "Fechar" : "Cancelar"}</Button>
+          <Button variant="destructive" disabled={busy || !pending.length} onClick={confirm}>{busy ? "Excluindo…" : failed.length ? "Tentar de novo" : "Excluir"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -404,7 +413,10 @@ function ProcessComposer({ value, onClose }: { value: Process | "new" | null; on
   const nameOf = (id: number) => routines?.find((r) => r.id === id)?.name ?? `#${id}`;
   const move = (i: number, d: number) => setItems((xs) => { const ys = [...xs]; const [x] = ys.splice(i, 1); ys.splice(i + d, 0, x); return ys; });
   const valid = name.trim().length > 0; // the first routine may come later, from Nova Rotina or an integration
-  const locked = !!editing?.items.length; // step 1 of a process that has one changes only with approval
+  // Any link can be removed, step 1 included (the process may end empty). Putting another routine ahead of the
+  // current step 1 while it stays is a replacement: that one goes through Substituir etapa 1 (approval).
+  const firstId = editing?.items[0]?.kind === "followup" ? undefined : editing?.items[0]?.routine_id; // a follow-up first is no start to protect
+  const locked = firstId !== undefined && items[0]?.routine_id === firstId;
   async function save(ev: React.FormEvent) {
     ev.preventDefault();
     if (!valid || busy) return;
@@ -427,6 +439,7 @@ function ProcessComposer({ value, onClose }: { value: Process | "new" | null; on
                 </div>
                 <Separator className="my-4" />
                 <p className="text-sm leading-6 text-muted-foreground">A execução sempre começa pela primeira rotina. Só um resultado verificado, com continuação marcada, chama a próxima. O processo pode ser salvo sem rotinas e ganhar a etapa 1 em Nova Rotina.</p>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">Remover uma rotina daqui não a exclui da Lista nem de outros processos. Um processo vazio ou que começa por um follow-up é salvo, mas não executa até ser corrigido.</p>
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">A mesma rotina pode estar em vários processos; alterações nela valem na próxima execução. Salvar não executa nada.</p>
                 <ErrorView error={error} />
               </div>
@@ -465,7 +478,7 @@ function ProcessComposer({ value, onClose }: { value: Process | "new" | null; on
                       </label>
                       <Button type="button" size="icon" variant="ghost" className="size-7" aria-label="Mover para cima" disabled={i === 0 || (locked && i === 1)} onClick={() => move(i, -1)}><ArrowUp /></Button>
                       <Button type="button" size="icon" variant="ghost" className="size-7" aria-label="Mover para baixo" disabled={i === items.length - 1 || (locked && i === 0)} onClick={() => move(i, 1)}><ArrowDown /></Button>
-                      <Button type="button" size="icon" variant="ghost" className="size-7" aria-label="Remover do processo" disabled={locked && i === 0} onClick={() => setItems((xs) => xs.filter((_, j) => j !== i))}><Trash2 /></Button>
+                      <Button type="button" size="icon" variant="ghost" className="size-7" aria-label={`Remover ${nameOf(it.routine_id)} do processo`} title="Remover do processo" onClick={() => setItems((xs) => xs.filter((_, j) => j !== i))}><Trash2 /></Button>
                     </li>
                   ))}
                 </ol>

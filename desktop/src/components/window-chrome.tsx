@@ -1,9 +1,11 @@
 // Integrated window chrome (M04/M08): the native white title bar is off
-// (tauri.conf decorations=false). The top strip is the drag region; round
-// controls on the top right in the order minimize, maximize/restore, close;
-// the moon turns the dark theme on, the sun turns the light theme on.
+// (tauri.conf decorations=false). The top strip is the drag region; on the top right
+// three small colored circles, left to right green = maximize/restore, yellow =
+// minimize, red = close (TEAM-ACCOUNTS-20261108 item 11: look only, the native calls
+// are the same). Names and tooltips do not depend on color; hover or focus shows a
+// discreet symbol. The moon turns the dark theme on, the sun turns the light theme on.
 import { useEffect, useState } from "react";
-import { Copy, Minus, Moon, Square, Sun, X } from "lucide-react";
+import { Maximize2, Minimize2, Minus, Moon, Sun, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Theme = "light" | "dark";
@@ -47,21 +49,27 @@ export function WindowControls() {
     return () => off?.();
   }, []);
   if (!win()) return null; // demo build in a plain browser: no window to control
-  const btn = "inline-flex size-7 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-xs outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring";
   return (
-    <div className="flex items-center gap-2" role="group" aria-label="Controles da janela">
-      <button type="button" className={cn(btn, "hover:bg-accent")} aria-label="Minimizar" title="Minimizar" onClick={() => win()?.minimize()}>
-        <Minus className="size-3.5" />
-      </button>
-      <button type="button" className={cn(btn, "hover:bg-accent")} aria-label={max ? "Restaurar" : "Maximizar"} title={max ? "Restaurar" : "Maximizar"}
-        onClick={() => win()?.toggleMaximize()}>
-        {max ? <Copy className="size-3" /> : <Square className="size-3" />}
-      </button>
-      <button type="button" className={cn(btn, "hover:border-destructive hover:bg-destructive hover:text-white")} aria-label="Fechar" title="Fechar"
-        onClick={() => win()?.close()}>
-        <X className="size-3.5" />
-      </button>
+    <div className="flex items-center gap-0.5" role="group" aria-label="Controles da janela">
+      <Light color="bg-[#28C840]" label={max ? "Restaurar" : "Maximizar"} onClick={() => win()?.toggleMaximize()}>
+        {max ? <Minimize2 /> : <Maximize2 />}
+      </Light>
+      <Light color="bg-[#FEBC2E]" label="Minimizar" onClick={() => win()?.minimize()}><Minus /></Light>
+      <Light color="bg-[#FF5F57]" label="Fechar" onClick={() => win()?.close()}><X /></Light>
     </div>
+  );
+}
+
+/** One control: a 14 px circle in a fixed color inside a 24 px clickable area; the symbol appears on hover or focus. */
+function Light({ color, label, onClick, children }: { color: string; label: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" aria-label={label} title={label} onClick={onClick}
+      className="group/light inline-flex size-6 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
+      <span aria-hidden className={cn("inline-flex size-3.5 items-center justify-center rounded-full shadow-[inset_0_0_0_0.5px_rgb(0_0_0/0.25)]", color,
+        "text-black/60 [&>svg]:size-2.5 [&>svg]:stroke-[3] [&>svg]:opacity-0 group-hover/light:[&>svg]:opacity-100 group-focus-visible/light:[&>svg]:opacity-100")}>
+        {children}
+      </span>
+    </button>
   );
 }
 

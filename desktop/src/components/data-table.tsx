@@ -50,8 +50,12 @@ export interface DataTableProps<T> {
   toolbar?: React.ReactNode;
 }
 
-// Row actions stay reachable in a narrow window: the other columns scroll under them.
-const PINNED = "sticky right-0 z-[1] bg-card shadow-[-1px_0_0_var(--border)]";
+// Row actions stay reachable in a narrow window: the other columns scroll under them. The pinned cell is opaque
+// (nothing shows through it) and follows its own row: page background, the same hover mix and the selected color,
+// in both themes (TEAM-ACCOUNTS-20261108 item 2: no lighter strip under Ações).
+const PINNED = "sticky right-0 z-[1] bg-background shadow-[-1px_0_0_var(--border)] " +
+  "group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] " +
+  "group-has-aria-expanded/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))] group-data-[state=selected]/row:bg-muted";
 
 function readLayout(key: string | undefined, ids: string[]): ColumnLayout {
   let stored: Partial<ColumnLayout> | null = null;
@@ -173,7 +177,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, rowLabel, tabs, ini
       <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="group/row">
               {selectable && (
                 <TableHead className="w-9">
                   <Checkbox aria-label="Selecionar as linhas desta página" disabled={!pageKeys.length}
@@ -199,7 +203,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, rowLabel, tabs, ini
               const key = rowKey(r);
               return (
                 <TableRow key={key} data-state={selected.has(key) ? "selected" : undefined}
-                  className={onRowOpen ? "cursor-pointer" : undefined} tabIndex={onRowOpen ? 0 : undefined}
+                  className={cn("group/row", onRowOpen && "cursor-pointer")} tabIndex={onRowOpen ? 0 : undefined}
                   onClick={onRowOpen ? () => onRowOpen(r) : undefined}
                   onKeyDown={onRowOpen ? (k) => { if (k.target === k.currentTarget && (k.key === "Enter" || k.key === " ")) { k.preventDefault(); onRowOpen(r); } } : undefined}>
                   {selectable && (

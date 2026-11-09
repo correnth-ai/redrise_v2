@@ -31,7 +31,7 @@ from redrise_contracts.vault import MemoryVault  # noqa: E402
 PW = "senha-forte-01"
 # Tokens and accounts a test class keeps between its tests. They belong to one cluster: a class
 # that starts a new cluster (or is run again) must not reuse them against another database.
-CACHED = ("_admin", "_other", "_users")
+CACHED = ("_admin", "_other", "_users", "_bound")
 
 
 class Harness:
@@ -82,6 +82,17 @@ class Harness:
             c.call("POST", "/api/v1/setup", {"team": "Equipe Teste", "username": "admin", "display": "Admin", "password": PW})
             cls._admin = c.call("POST", "/api/v1/login", {"username": "admin", "password": PW})["token"]
         return CoreClient("127.0.0.1", cls.port, cls.info["fingerprint"], cls._admin)
+
+    @classmethod
+    def bound_admin(cls):
+        """An administrator session tied to a station of its own, proved at login by that station's runner token, as the
+        desktop does (TEAM-ACCOUNTS-20261108): revoking or deleting stations needs it."""
+        if "_bound" not in vars(cls):
+            a = cls.admin()
+            s = a.call("POST", "/api/v1/stations", {"name": f"sessao-{uuid.uuid4().hex[:6]}"})
+            c = CoreClient("127.0.0.1", cls.port, cls.info["fingerprint"])
+            cls._bound = c.call("POST", "/api/v1/login", {"username": "admin", "password": PW, "station_token": s["runner_token"]})["token"]
+        return CoreClient("127.0.0.1", cls.port, cls.info["fingerprint"], cls._bound)
 
     def station(self, name, categories=("windows", "browser"), platform="windows-x86_64", ready=True):
         a = self.admin()
@@ -206,7 +217,7 @@ class CoreTest(Harness, unittest.TestCase):
     def test_08_revoked_station(self):
         sid, r, hb = self.station("revogada")
         j = self.job(self.routine(), sid)
-        self.admin().call("DELETE", f"/api/v1/stations/{sid}")
+        self.bound_admin().call("DELETE", f"/api/v1/stations/{sid}")
         self.expect("AUTH-REQUIRED", lambda: r.call("POST", "/api/v1/runner/claim", hb), 401)
         self.assertEqual(self.admin().call("GET", f"/api/v1/jobs/{j['id']}")["state"], "refused")
 

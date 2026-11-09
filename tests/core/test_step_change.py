@@ -48,14 +48,18 @@ class StepChangeTest(unittest.TestCase):
         r.call("POST", f"/api/v1/runner/jobs/{job['job_id']}/start", {"lease_id": job["lease_id"]})
         r.call("POST", f"/api/v1/runner/jobs/{job['job_id']}/result", {"lease_id": job["lease_id"], "result": {"schema": "redrise.job-result/1", "state": "verified", "verified": True}})
 
-    def test_01_composition_cannot_replace_step_1(self):
+    def test_01_composition_cannot_put_another_routine_ahead_of_step_1(self):
         a = self.admin()
         pid, one = self.process()
         two, three = self.routine(), self.routine()
-        self.expect("STEP1-NEEDS-APPROVAL", lambda: a.call("PUT", f"/api/v1/processes/{pid}", {"name": "x", "items": [{"routine_id": two, "continue_next": True}]}), 409)
-        self.expect("STEP1-NEEDS-APPROVAL", lambda: a.call("PUT", f"/api/v1/processes/{pid}", {"name": "x", "items": []}), 409)
-        a.call("PUT", f"/api/v1/processes/{pid}", {"name": "x", "items": [{"routine_id": one, "continue_next": True}, {"routine_id": three, "continue_next": True}]})  # the rest can change
+        put = lambda ids: a.call("PUT", f"/api/v1/processes/{pid}", {"name": "x", "items": [{"routine_id": r, "continue_next": True} for r in ids]})
+        self.expect("STEP1-NEEDS-APPROVAL", lambda: put([two, one]), 409)  # step 1 stays but is no longer first
+        self.expect("STEP1-NEEDS-APPROVAL", lambda: put([three, one, two]), 409)
+        put([one, three])  # the rest can change
         self.assertEqual(self.first(pid), one)
+        # TEAM-ACCOUNTS-20261108 item 5 (user order, 2026-11-08): removing step 1 needs no approval; the next one starts.
+        put([three])
+        self.assertEqual(self.first(pid), three)
 
     def test_02_approval_applies_once_and_old_routine_becomes_standalone(self):
         a = self.admin()

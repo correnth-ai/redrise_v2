@@ -25,8 +25,8 @@ Work order [UI-ENGINE-BOAS-VINDAS-20261103](../../delivery/work-orders/UI-ENGINE
 | Sino | `notifications` | notifications | Contagem e lista. |
 | Rotina › Atividade, linha do tempo e feed | `executions` | executions, jobs | Derivados da mesma execução. |
 | Rotina › Atividade, execuções técnicas | `jobs` | jobs | Lê de novo com o aviso e mantém a leitura periódica própria. |
-| Configuração › Equipe | `users` | users | Lê de novo com o aviso; só administrador lê. |
-| Configuração › Estação | `stations` | stations | Fica offline pelo tempo sem sinal, que não gera aviso: quem mostra é a leitura periódica de 30 s. |
+| Configuração › Equipe | `users` | users | Lê de novo com o aviso e depois de cada ação; só administrador lê. Linha excluída sai só depois da confirmação do Core; falha mantém a linha e mostra o diagnóstico. |
+| Configuração › Estação | `stations` | stations | Lê de novo com o aviso e a cada 10 s enquanto visível (TEAM-ACCOUNTS-20261108): ficar offline é falta de sinal, que não gera aviso, então Online→Offline aparece em até ~55 s (45 s do Core + 10 s). Leitura que falha mostra Status "Desconhecido" e o diagnóstico, nunca Offline. |
 | Configuração › Aplicativo, espaço usado | `storage` | nenhum | Medida cara: lida ao abrir. |
 | Empresa, indicadores | `executions/summary`, `processes`, `stations`, `reviews` | executions, jobs, reviews, processes, stations | O resumo lê de novo sempre que a loja lê as execuções. Falha mostra o diagnóstico e "—". |
 | Empresa, atividade recente | `executions` | executions, jobs | Mesmo feed de Rotina › Atividade. |

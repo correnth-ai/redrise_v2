@@ -72,7 +72,7 @@ class NovaRotinaTest(unittest.TestCase):
         sid, _, _ = self.station("nr-empty")
         p = self.empty_process()
         self.assertEqual(p["items"], [])
-        self.expect("VALIDATION", lambda: self.admin().call("POST", "/api/v1/executions", {"request_id": uuid.uuid4().hex, "station_id": sid, "process_id": p["id"]}), 400)
+        self.expect("PROCESS-START-INVALID", lambda: self.admin().call("POST", "/api/v1/executions", {"request_id": uuid.uuid4().hex, "station_id": sid, "process_id": p["id"]}), 409)
 
     def test_03_one_starting_routine_per_process(self):
         p = self.empty_process("Com inicio")

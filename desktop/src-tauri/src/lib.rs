@@ -11,6 +11,7 @@ mod local;
 mod paths;
 mod procs;
 mod update;
+mod vault;
 
 use std::sync::Mutex;
 
@@ -97,7 +98,14 @@ fn api(app: State<App>, method: String, path: String, body: Option<Value>, token
     }
     let client = core_api::Client::from_connection(&app.paths, token)
         .map_err(|e| diag_err("STATION-NOT-JOINED", "This computer is not connected to a team yet.", &e))?;
-    client.call(&method, &path, &body.unwrap_or(json!({})))
+    let mut body = body.unwrap_or(json!({}));
+    if method == "POST" && path == "/api/v1/login" {
+        // The session is tied to this station by its own credential, never by a name the page sends.
+        if let (Some(obj), Some(t)) = (body.as_object_mut(), vault::station_token()) {
+            obj.insert("station_token".into(), Value::String(t));
+        }
+    }
+    client.call(&method, &path, &body)
 }
 
 #[tauri::command(async)]

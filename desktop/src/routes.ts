@@ -9,7 +9,7 @@ export const PAGE_TITLE: Record<string, string> = {
   "rotina/lista": "Rotina › Lista", "rotina/atividade": "Rotina › Atividade", "rotina/nova": "Nova Rotina", "rotina/editar": "Editar rotina",
   "rotina/gravacao": "Nova rotina por gravação", "rotina/modelos": "Nova rotina a partir de modelo", "rotina/executar-legada": "Executar rotina",
   "processo/acao": "Processo › Ação", "processo/historico": "Processo › Histórico", "processo/kanban": "Processo › Kanban",
-  "configuracao/equipe": "Configuração › Equipe", "configuracao/estacao": "Configuração › Estação", "configuracao/aplicativo": "Configuração › Aplicativo",
+  "configuracao/equipe": "Configuração › Equipe", "configuracao/nova-conta": "Nova Conta", "configuracao/estacao": "Configuração › Estação", "configuracao/aplicativo": "Configuração › Aplicativo",
 };
 
 /** Smaller title with the page name, under the main title of the menu. */
@@ -17,7 +17,7 @@ export const SUB_TITLE: Record<string, string> = {
   "rotina/lista": "Lista", "rotina/atividade": "Atividade", "rotina/nova": "Nova Rotina", "rotina/editar": "Editar rotina",
   "rotina/gravacao": "Nova rotina por gravação", "rotina/modelos": "Nova rotina a partir de modelo", "rotina/executar-legada": "Executar rotina",
   "processo/acao": "Ação", "processo/historico": "Histórico", "processo/kanban": "Kanban",
-  "configuracao/equipe": "Equipe", "configuracao/estacao": "Estação", "configuracao/aplicativo": "Aplicativo",
+  "configuracao/equipe": "Equipe", "configuracao/nova-conta": "Nova Conta", "configuracao/estacao": "Estação", "configuracao/aplicativo": "Aplicativo",
 };
 
 // Internal links of earlier versions keep working; ids of routines, processes and results do not change.

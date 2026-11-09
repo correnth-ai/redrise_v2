@@ -1,6 +1,6 @@
 [package]
 name = "redrise-desktop"
-version = "0.1.0-beta.28"
+version = "0.1.0-beta.29"
 edition = "2021"
 description = "RedRise desktop (Tauri): UI, process lifecycle of Core/Runner agent, pinned Core client"
 license = "LicenseRef-RedRise-Proprietary"
@@ -22,7 +22,7 @@ ed25519-dalek = "2"
 base64 = "0.22"
 ureq = { version = "2", default-features = false, features = ["tls", "json"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
-windows-sys = { version = "0.61", features = ["Win32_UI_Shell", "Win32_UI_Controls_Dialogs", "Win32_Foundation", "Win32_System_Com", "Win32_System_Threading"] }
+windows-sys = { version = "0.61", features = ["Win32_UI_Shell", "Win32_UI_Controls_Dialogs", "Win32_Foundation", "Win32_System_Com", "Win32_System_Threading", "Win32_Security", "Win32_Security_Credentials"] }
 
 [profile.release]
 codegen-units = 1

@@ -776,6 +776,48 @@
       "pending": "A execução parou aqui; as próximas etapas não executaram.",
       "next": "Entre na conta nesse navegador e execute o processo de novo.",
       "details": "O RedRise nunca entra em contas."
+    },
+    "ACCOUNT-ACTIVE": {
+      "what": "Conta ativa não pode ser excluída.",
+      "completed": "O pedido foi recusado; a conta não foi alterada.",
+      "pending": "A conta continua na equipe, com acesso.",
+      "next": "Desative a conta antes e depois exclua.",
+      "details": "Só conta inativa pode ser excluída; o estado é relido na exclusão."
+    },
+    "ACCOUNT-EMAIL-RESERVED": {
+      "what": "Este e-mail pertencia a uma conta excluída.",
+      "completed": "O pedido foi recusado. Nenhuma conta foi criada.",
+      "pending": "O e-mail continua reservado e não é ligado ao histórico da conta excluída.",
+      "next": "Use outro e-mail para a conta nova.",
+      "details": "E-mails de contas excluídas ficam reservados nesta versão."
+    },
+    "STATION-IN-USE": {
+      "what": "Esta é a estação que esta sessão está usando.",
+      "completed": "O pedido foi recusado; a estação não foi alterada.",
+      "pending": "A estação continua conectada.",
+      "next": "Revogue ou exclua a partir de outra estação da equipe.",
+      "details": "A estação da sessão atual é identificada pela credencial dela no login."
+    },
+    "STATION-SESSION-UNBOUND": {
+      "what": "Esta sessão não está ligada a uma estação da equipe.",
+      "completed": "O pedido foi recusado; nenhuma estação foi alterada.",
+      "pending": "Revogar e excluir estações ficam indisponíveis nesta sessão.",
+      "next": "Saia e entre de novo no RedRise de uma estação conectada.",
+      "details": "Sem a prova da estação em uso, o Core não consegue protegê-la de ser revogada."
+    },
+    "STATION-NOT-REVOKED": {
+      "what": "Só estação revogada pode ser excluída.",
+      "completed": "O pedido foi recusado; a estação não foi alterada.",
+      "pending": "A estação continua na lista.",
+      "next": "Revogue a estação antes e depois exclua.",
+      "details": "O estado é relido na exclusão."
+    },
+    "PROCESS-START-INVALID": {
+      "what": "O processo {process} não pode começar como está composto.",
+      "completed": "O pedido foi recusado antes de iniciar qualquer ação.",
+      "pending": "Nada foi executado.",
+      "next": "Edite o processo para que a etapa 1 seja uma rotina que o inicia (não um follow-up) e execute de novo.",
+      "details": "Motivo: {reason}. Um follow-up precisa do contexto de uma etapa anterior."
     }
   },
   "values": {
@@ -885,7 +927,11 @@
     "invalid e-mail": "e-mail inválido",
     "choose where to prepare the message": "escolha onde preparar a mensagem",
     "Windows mail app": "Aplicativo de e-mail do Windows",
-    "Outlook on the web": "Outlook na web"
+    "Outlook on the web": "Outlook na web",
+    "no linked routine": "processo sem rotina vinculada",
+    "step 1 is a follow-up": "a etapa 1 é um follow-up",
+    "a process changed at the same time; try again": "um processo mudou ao mesmo tempo; tente de novo",
+    "full name required": "nome completo obrigatório"
   },
   "patterns": [
     {

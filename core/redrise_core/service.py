@@ -248,29 +248,48 @@ class Core:
         Every sign-up request counts against its client address, accepted or not."""
         key = ("signup", client or "-")
         self._attempt((key,))
-        if not isinstance(full_name, str) or not 1 <= len(full_name.strip()) <= 120:
-            raise err(400, "VALIDATION", reason="full name required")
-        if not isinstance(email, str) or len(email) > 254 or not _EMAIL.match(email.strip()):
-            raise err(400, "VALIDATION", reason="invalid e-mail")
-        _check_password(password)
-        email = email.strip().lower()
-        base = re.sub(r"[^a-z0-9._-]", "", email.split("@")[0])[:32].ljust(3, "0")
+        full_name, email = self._account_fields(full_name, email, password)
         with self.db.tx() as c:
             if not c.execute("SELECT 1 FROM team").fetchone():
                 raise err(409, "VALIDATION", reason="team not set up")
             if c.execute("SELECT 1 FROM users WHERE email = %s", (email,)).fetchone():
                 raise err(409, "ACCOUNT-EXISTS")
-            username, n = base, 1
-            while c.execute("SELECT 1 FROM users WHERE username = %s", (username,)).fetchone():
-                n += 1
-                username = f"{base}.{n}"
             c.execute("INSERT INTO users (username, display, pw_hash, role, active, email) VALUES (%s, %s, %s, 'operator', false, %s)",
-                      (username, full_name.strip(), auth.hash_password(password), email))
+                      (self._new_username(c, email), full_name, auth.hash_password(password), email))
         return {"pending": True}
 
-    def login(self, username: str, password: str, client: str | None = None) -> dict:
+    @staticmethod
+    def _account_fields(full_name, email, password) -> tuple[str, str]:
+        """Full name and e-mail of a new account, checked the same way for sign-up and for an administrator."""
+        if not isinstance(full_name, str) or not 1 <= len(full_name.strip()) <= 120:
+            raise err(400, "VALIDATION", reason="full name required")
+        if not isinstance(email, str) or len(email) > 254 or not _EMAIL.match(email.strip()):
+            raise err(400, "VALIDATION", reason="invalid e-mail")
+        _check_password(password)
+        return full_name.strip(), email.strip().lower()
+
+    @staticmethod
+    def _new_username(c, email: str) -> str:
+        """Internal user name from the e-mail: the part before @, normalized; a taken one gets .2, .3..."""
+        base = re.sub(r"[^a-z0-9._-]", "", email.split("@")[0])[:32].ljust(3, "0")
+        username, n = base, 1
+        while c.execute("SELECT 1 FROM users WHERE username = %s", (username,)).fetchone():
+            n += 1
+            username = f"{base}.{n}"
+        return username
+
+    def _session_station(self, c, station_token) -> int | None:
+        """The station a sign-in comes from, only when proved by that station's own runner token."""
+        if not isinstance(station_token, str) or not station_token:
+            return None
+        s = c.execute("SELECT id FROM stations WHERE token_hash = %s AND revoked_at IS NULL",
+                      (auth.token_hash(station_token),)).fetchone()
+        return s["id"] if s else None
+
+    def login(self, username: str, password: str, client: str | None = None, station_token=None) -> dict:
         """Failures count per account (the user when it exists, so user name and e-mail share one
-        count; otherwise the name typed) and per client address; see auth.AttemptLimiter."""
+        count; otherwise the name typed) and per client address; see auth.AttemptLimiter.
+        `station_token` (sent by the desktop, never typed) ties the session to the station it runs on."""
         who = username.strip().lower()[:254] if isinstance(username, str) else None
         with self.db.tx() as c:
             u = c.execute("SELECT * FROM users WHERE username = %s OR email = %s", (who, who)).fetchone() if who else None
@@ -283,9 +302,10 @@ class Core:
         self.limits.success(keys[0], keys[1], account)
         with self.db.tx() as c:
             token, h = auth.new_token()
-            c.execute("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (%s, %s, now() + %s)",
-                      (h, u["id"], SESSION_TTL))
-        return {"token": token, "user": _public_user(u), "expires_in_s": int(SESSION_TTL.total_seconds())}
+            station = self._session_station(c, station_token)
+            c.execute("INSERT INTO sessions (token_hash, user_id, expires_at, station_id) VALUES (%s, %s, now() + %s, %s)",
+                      (h, u["id"], SESSION_TTL, station))
+        return {"token": token, "user": _public_user(u), "expires_in_s": int(SESSION_TTL.total_seconds()), "station_id": station}
 
     # ------------------------------------------------------------ identity (provider subject -> team member)
     def _verified(self, access_token) -> identity.Identity:
@@ -405,7 +425,7 @@ class Core:
         if not token:
             raise err(401, "AUTH-REQUIRED")
         with self.db.tx() as c:
-            u = c.execute("""SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id
+            u = c.execute("""SELECT u.*, s.station_id AS session_station_id FROM sessions s JOIN users u ON u.id = s.user_id
                              WHERE s.token_hash = %s AND NOT s.revoked AND s.expires_at > now() AND u.active""",
                           (auth.token_hash(token),)).fetchone()
         if not u:
@@ -427,8 +447,40 @@ class Core:
     def list_users(self, actor: dict) -> list[dict]:
         self.require_admin(actor)
         with self.db.tx() as c:
-            rows = c.execute("""SELECT u.*, l.full_name, COALESCE(u.email, l.email) AS email FROM users u LEFT JOIN identity_links l ON l.user_id = u.id ORDER BY u.id""")
+            rows = c.execute("""SELECT u.*, l.full_name, COALESCE(u.email, l.email) AS email FROM users u LEFT JOIN identity_links l ON l.user_id = u.id
+                                WHERE u.deleted_at IS NULL ORDER BY u.id""")
             return [{**_public_user(u), "full_name": u["full_name"], "email": u["email"]} for u in rows]
+
+    def create_account(self, actor: dict, full_name, email, password) -> dict:
+        """Configuracao > Equipe > + Nova Conta: an active operator who can sign in at once with this e-mail
+        and password. The internal user name comes from the e-mail; the e-mail of a deleted account stays reserved."""
+        self.require_admin(actor)
+        full_name, email = self._account_fields(full_name, email, password)
+        try:
+            with self.db.tx() as c:
+                prior = c.execute("SELECT deleted_at FROM users WHERE email = %s", (email,)).fetchone()
+                if prior:
+                    raise err(409, "ACCOUNT-EMAIL-RESERVED" if prior["deleted_at"] else "ACCOUNT-EXISTS")
+                u = c.execute("""INSERT INTO users (username, display, pw_hash, role, active, email)
+                                 VALUES (%s, %s, %s, 'operator', true, %s) RETURNING *""",
+                              (self._new_username(c, email), full_name, auth.hash_password(password), email)).fetchone()
+        except psycopg.errors.UniqueViolation:  # the same e-mail or user name created at the same moment
+            raise err(409, "ACCOUNT-EXISTS") from None
+        return {**_public_user(u), "email": u["email"]}
+
+    def delete_user(self, actor: dict, user_id: int) -> dict:
+        """Logical and final: only an inactive account, read again under its row lock (a reactivation from another
+        screen waits for this, or this sees it). The row stays for the history; access and sessions end."""
+        self.require_admin(actor)
+        with self.db.tx() as c:
+            u = c.execute("SELECT * FROM users WHERE id = %s AND deleted_at IS NULL FOR UPDATE", (user_id,)).fetchone()
+            if not u:
+                raise err(404, "NOT-FOUND", what_missing="user")
+            if u["active"]:
+                raise err(409, "ACCOUNT-ACTIVE")
+            c.execute("UPDATE users SET deleted_at = now() WHERE id = %s", (user_id,))
+            c.execute("UPDATE sessions SET revoked = true WHERE user_id = %s", (user_id,))
+        return {"deleted": True}
 
     def create_user(self, actor: dict, username: str, display: str, password: str, role: str) -> dict:
         self.require_admin(actor)
@@ -453,8 +505,8 @@ class Core:
         if password is not None:
             _check_password(password)
         with self.db.tx() as c:
-            u = c.execute("SELECT * FROM users WHERE id = %s FOR UPDATE", (user_id,)).fetchone()
-            if not u:
+            u = c.execute("SELECT * FROM users WHERE id = %s AND deleted_at IS NULL FOR UPDATE", (user_id,)).fetchone()
+            if not u:  # a deleted account is never reactivated
                 raise err(404, "NOT-FOUND", what_missing="user")
             new_role = role or u["role"]
             new_active = u["active"] if active is None else bool(active)
@@ -484,13 +536,28 @@ class Core:
             raise err(409, "CONFLICT", reason="a station with this name already exists") from None
         return {"station": s, "runner_token": token}
 
+    ONLINE_S = 45  # a station is online while its last heartbeat is this recent (and it is not revoked)
+
     def list_stations(self, actor: dict) -> list[dict]:
+        """Inventory without deleted stations. `online` is connectivity only (not readiness); a revoked station is
+        never online, whatever its last heartbeat. `current`: the station this session signed in from."""
         with self.db.tx() as c:
             rows = c.execute("""SELECT id, name, is_host, platform, categories, runner_version, session_state, session_reason,
                                        browsers, last_seen_at, revoked_at IS NOT NULL AS revoked,
-                                       (last_seen_at > now() - interval '45 seconds') AS online
-                                FROM stations ORDER BY id""").fetchall()
-        return [_jsonable(r) for r in rows]
+                                       (revoked_at IS NULL AND coalesce(last_seen_at > now() - make_interval(secs => %s), false)) AS online,
+                                       id = %s AS current
+                                FROM stations WHERE deleted_at IS NULL ORDER BY id""",
+                             (self.ONLINE_S, actor.get("session_station_id"))).fetchall()
+        return [{**_jsonable(r), "current": bool(r["current"])} for r in rows]
+
+    @staticmethod
+    def _other_station(actor: dict, station_id: int) -> None:
+        """Revoking or deleting needs a session tied to its station, so the station in use cannot be the target:
+        a session without that proof (omitted or forged) is refused rather than trusted."""
+        if actor.get("session_station_id") is None:
+            raise err(409, "STATION-SESSION-UNBOUND")
+        if actor["session_station_id"] == station_id:
+            raise err(409, "STATION-IN-USE")
 
     def station_apps(self, actor: dict, station_id: int) -> dict:
         """What this station's Runner reported it can launch; apart from the list, which is read often."""
@@ -500,10 +567,25 @@ class Core:
             raise err(404, "NOT-FOUND", what_missing="station")
         return {"apps": s["apps"]}
 
+    def remove_station(self, actor: dict, station_id: int) -> dict:
+        """Logical deletion of a revoked station: it leaves the inventory; executions and schedules keep their link
+        (a schedule on it keeps skipping, as for any revoked station). Its name becomes free again."""
+        self.require_admin(actor)
+        self._other_station(actor, station_id)
+        with self.db.tx() as c:
+            s = c.execute("SELECT revoked_at FROM stations WHERE id = %s AND deleted_at IS NULL FOR UPDATE", (station_id,)).fetchone()
+            if not s:
+                raise err(404, "NOT-FOUND", what_missing="station")
+            if s["revoked_at"] is None:
+                raise err(409, "STATION-NOT-REVOKED")
+            c.execute("UPDATE stations SET deleted_at = now() WHERE id = %s", (station_id,))
+        return {"deleted": True}
+
     def revoke_station(self, actor: dict, station_id: int) -> None:
         self.require_admin(actor)
+        self._other_station(actor, station_id)
         with self.db.tx() as c:
-            if not c.execute("UPDATE stations SET revoked_at = now() WHERE id = %s AND revoked_at IS NULL RETURNING id",
+            if not c.execute("UPDATE stations SET revoked_at = now() WHERE id = %s AND revoked_at IS NULL AND deleted_at IS NULL RETURNING id",
                              (station_id,)).fetchone():
                 raise err(404, "NOT-FOUND", what_missing="station")
             # Queued jobs of a revoked station never run.
@@ -716,18 +798,34 @@ class Core:
             raise err(404, "NOT-FOUND", what_missing="routine")
         return [_jsonable(r) for r in rows]
 
-    def archive_routine(self, actor: dict, routine_id: int) -> None:
+    def archive_routine(self, actor: dict, routine_id: int) -> dict:
+        """Deleting a routine (Rotina > Lista): archived, and taken out of every process in the same transaction,
+        the other steps keeping their order and continuation (TEAM-ACCOUNTS-20261108 item 6). Versions, running
+        executions (their snapshot) and the history stay. A process left empty or starting with a follow-up is
+        saved, and refused when it is run (PROCESS-START-INVALID)."""
         self.require_admin(actor)
         with self.db.tx() as c:
+            # Processes first, then the routine: the order every process edit uses (process row, then _items).
+            ids = [r["process_id"] for r in c.execute("SELECT DISTINCT process_id FROM process_items WHERE routine_id = %s ORDER BY 1",
+                                                      (routine_id,)).fetchall()]
+            procs = c.execute("SELECT id, name FROM processes WHERE id = ANY(%s) AND NOT archived ORDER BY id FOR UPDATE",
+                              (ids,)).fetchall() if ids else []
             if not c.execute("SELECT 1 FROM routines WHERE id = %s AND NOT archived FOR UPDATE", (routine_id,)).fetchone():
                 raise err(404, "NOT-FOUND", what_missing="routine")
             self._refuse_ready_made(c, routine_id)
-            # The row lock orders this with a process linking the routine (_items): a process never loses a step.
-            linked = c.execute("""SELECT p.name FROM process_items i JOIN processes p ON p.id = i.process_id
-                                  WHERE i.routine_id = %s AND NOT p.archived ORDER BY p.id LIMIT 1""", (routine_id,)).fetchone()
-            if linked:
-                raise err(409, "ROUTINE-IN-USE", process=linked["name"])
+            now = {r["process_id"] for r in c.execute("""SELECT i.process_id FROM process_items i JOIN processes p ON p.id = i.process_id
+                                                         WHERE i.routine_id = %s AND NOT p.archived""", (routine_id,)).fetchall()}
+            if not now <= {p["id"] for p in procs}:  # linked by another screen between the two reads
+                raise err(409, "CONFLICT", reason="a process changed at the same time; try again")
+            for p in procs:
+                links = [{"routine_id": r["routine_id"], "continue_next": r["continue_next"]} for r in c.execute(
+                    "SELECT routine_id, continue_next FROM process_items WHERE process_id = %s ORDER BY position", (p["id"],)).fetchall()
+                    if r["routine_id"] != routine_id]
+                self._write_items(c, p["id"], links)
+                c.execute("UPDATE processes SET updated_at = now() WHERE id = %s", (p["id"],))
             c.execute("UPDATE routines SET archived = true WHERE id = %s", (routine_id,))
+            self._drop_stale_changes(c, None, actor["id"])
+        return {"archived": True, "processes": [p["name"] for p in procs]}
 
     # ------------------------------------------------------------ jobs
     def create_job(self, actor: dict, request_id: str, version_id: int, station_id: int, inputs: dict,
@@ -982,6 +1080,28 @@ class Core:
         return out
 
     @staticmethod
+    def _write_items(c, process_id: int, links: list[dict]) -> None:
+        """Replaces the links of a process, numbered 1..n in the given order."""
+        c.execute("DELETE FROM process_items WHERE process_id = %s", (process_id,))
+        for i, it in enumerate(links, 1):
+            c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, %s, %s, %s)",
+                      (process_id, i, it["routine_id"], it["continue_next"]))
+
+    @staticmethod
+    def _drop_stale_changes(c, process_id: int | None, actor_id: int) -> None:
+        """A pending replacement of step 1 that no longer fits (step 1 changed, or the new routine was deleted) is
+        cancelled in the same transaction, never applied to another composition. None: every process."""
+        rows = c.execute("""SELECT q.id FROM step_change_requests q JOIN routines n ON n.id = q.new_routine_id
+                            WHERE q.status = 'pending' AND (%(p)s::bigint IS NULL OR q.process_id = %(p)s)
+                              AND (n.archived OR q.old_routine_id IS DISTINCT FROM
+                                   (SELECT routine_id FROM process_items WHERE process_id = q.process_id AND position = 1))
+                            FOR UPDATE OF q""", {"p": process_id}).fetchall()
+        for q in rows:
+            c.execute("UPDATE step_change_requests SET status = 'cancelled', decided_by = %s, decided_at = now() WHERE id = %s",
+                      (actor_id, q["id"]))
+            c.execute("DELETE FROM notifications WHERE change_id = %s", (q["id"],))
+
+    @staticmethod
     def _first_step_starts(c, links: list[dict]) -> None:
         """A follow-up needs a previous step."""
         if links and c.execute("""SELECT 1 FROM routine_versions WHERE routine_id = %s AND kind = 'followup'
@@ -1000,15 +1120,15 @@ class Core:
         name = self._process_name(name)
         with self.db.tx() as c:
             links = self._items(c, items)
-            self._first_step_starts(c, links)
             p = c.execute("INSERT INTO processes (name, created_by) VALUES (%s, %s) RETURNING id", (name, actor["id"])).fetchone()
-            for i, it in enumerate(links, 1):
-                c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, %s, %s, %s)",
-                          (p["id"], i, it["routine_id"], it["continue_next"]))
+            self._write_items(c, p["id"], links)
         return self.get_process(actor, p["id"])
 
     def update_process(self, actor: dict, process_id: int, name, items) -> dict:
-        """Replaces name and links; running executions keep their snapshot."""
+        """Replaces name and links; running executions keep their snapshot. Any link may be removed, step 1
+        included, and the process may end empty (TEAM-ACCOUNTS-20261108 item 5); a composition that cannot
+        start is saved and refused when run. Approval is still needed to put another routine ahead of the
+        current step 1 while it stays in the process (Substituir etapa 1), unless that step 1 is a follow-up."""
         self.require_admin(actor)
         name = self._process_name(name)
         with self.db.tx() as c:
@@ -1018,15 +1138,16 @@ class Core:
             if row["system_key"]:
                 raise err(400, "VALIDATION", reason="the ready-made process cannot be changed")
             links = self._items(c, items)
-            self._first_step_starts(c, links)
-            first = c.execute("SELECT routine_id FROM process_items WHERE process_id = %s AND position = 1", (process_id,)).fetchone()
-            if first and (not links or links[0]["routine_id"] != first["routine_id"]):
+            first = c.execute("""SELECT i.routine_id, v.kind FROM process_items i JOIN LATERAL (SELECT kind FROM routine_versions
+                                 WHERE routine_id = i.routine_id ORDER BY version DESC LIMIT 1) v ON true
+                                 WHERE i.process_id = %s AND i.position = 1""", (process_id,)).fetchone()
+            # A follow-up left first is not a start to protect: putting a routine ahead of it is the fix.
+            kept = first and first["kind"] != "followup" and any(it["routine_id"] == first["routine_id"] for it in links)
+            if kept and links[0]["routine_id"] != first["routine_id"]:
                 raise err(409, "STEP1-NEEDS-APPROVAL")
             c.execute("UPDATE processes SET name = %s, updated_at = now() WHERE id = %s", (name, process_id))
-            c.execute("DELETE FROM process_items WHERE process_id = %s", (process_id,))
-            for i, it in enumerate(links, 1):
-                c.execute("INSERT INTO process_items (process_id, position, routine_id, continue_next) VALUES (%s, %s, %s, %s)",
-                          (process_id, i, it["routine_id"], it["continue_next"]))
+            self._write_items(c, process_id, links)
+            self._drop_stale_changes(c, process_id, actor["id"])
         return self.get_process(actor, process_id)
 
     def integrate_routine(self, actor: dict, process_id: int, routine_id) -> dict:
@@ -1126,7 +1247,8 @@ class Core:
                 raise err(409, "ROUTINE-NOT-ISOLATED", cid, routine=rows[0]["name"])
         else:
             # FOR SHARE: a replacement of step 1 waits for this start, or this start sees the new step.
-            if not c.execute("SELECT id FROM processes WHERE id = %s AND NOT archived FOR SHARE", (process_id,)).fetchone():
+            proc = c.execute("SELECT id, name FROM processes WHERE id = %s AND NOT archived FOR SHARE", (process_id,)).fetchone()
+            if not proc:
                 raise err(404, "NOT-FOUND", cid, what_missing="process")
             rows = c.execute("""SELECT i.position, r.id AS routine_id, v.id AS routine_version_id, r.name, i.continue_next,
                                        v.kind, v.config, v.platform, r.category, r.archived
@@ -1134,8 +1256,12 @@ class Core:
                                 JOIN LATERAL (SELECT * FROM routine_versions WHERE routine_id = r.id
                                               ORDER BY version DESC LIMIT 1) v ON true
                                 WHERE i.process_id = %s ORDER BY i.position""", (process_id,)).fetchall()
+            # A composition saved without a valid start never runs, not even partly (item 5); a follow-up needs the
+            # context of a step before it and is never promoted to the first one.
             if not rows:
-                raise err(400, "VALIDATION", cid, reason="the process has no linked routine")
+                raise err(409, "PROCESS-START-INVALID", cid, process=proc["name"], reason="no linked routine")
+            if rows[0]["kind"] == "followup":
+                raise err(409, "PROCESS-START-INVALID", cid, process=proc["name"], reason="step 1 is a follow-up")
             if any(r["archived"] or r["kind"] not in PROCESS_KINDS for r in rows):
                 raise err(400, "VALIDATION", cid, reason="the process links a routine that cannot run")
         for r in rows:  # every step must be able to run on the chosen station; a review runs on none
@@ -1453,7 +1579,7 @@ class Core:
                 e = self._create_execution_in(c, owner, request_id, s["station_id"], s["process_id"], None, cid)
         except ApiError as x:
             code = x.diagnostic.error_code
-            pause = code in ("NOT-FOUND", "VALIDATION")  # process archived, without step 1, or not runnable
+            pause = code in ("NOT-FOUND", "VALIDATION", "PROCESS-START-INVALID")  # archived, no valid step 1, or not runnable
             return skip("process_unavailable" if pause else "station_incompatible" if code == "STATION-INCOMPATIBLE" else code.lower(),
                         diagnostic=x.diagnostic.to_dict(), pause=pause)
         if not self._schedule_run(c, s, "started", None, execution_id=e["id"]):

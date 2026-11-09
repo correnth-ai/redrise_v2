@@ -76,6 +76,8 @@ export interface Station {
   id: number; name: string; is_host: boolean; platform: string | null; categories: string[]; runner_version: string | null;
   session_state: string | null; session_reason: string | null; last_seen_at: string | null; revoked: boolean;
   online: boolean; browsers: DiscoveredBrowser[] | null;
+  /** The station this sign-in session runs on (proved by its own credential at login). */
+  current?: boolean;
 }
 
 export interface Storage {

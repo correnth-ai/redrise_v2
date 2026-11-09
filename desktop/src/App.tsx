@@ -13,6 +13,7 @@ import { NotificationsBell } from "@/components/notifications-bell";
 import { PageHeader } from "@/components/page-header";
 import { TopBar } from "@/components/window-chrome";
 import { AccessPage, WelcomePage } from "@/features/auth";
+import { AccountWizard } from "@/features/account-wizard";
 import { AppPage, StationsPage, TeamPage } from "@/features/configuracoes";
 import { EmpresaPage } from "@/features/empresa";
 import { ActivityPage, HistoryPage, KanbanPage } from "@/features/fluxos";
@@ -156,6 +157,7 @@ function Page({ route }: { route: Route }) {
     case "processo/historico": return <HistoryPage key={`${route.id ?? ""}-${route.days ?? ""}`} focus={route.id} days={route.days} />;
     case "processo/kanban": return <KanbanPage key={String(route.process ?? "")} process={route.process} />;
     case "configuracao/equipe": return <TeamPage />;
+    case "configuracao/nova-conta": return <AccountWizard />;
     case "configuracao/estacao": return <StationsPage />;
     case "configuracao/aplicativo": return <AppPage />;
     default: return <EmpresaPage />;

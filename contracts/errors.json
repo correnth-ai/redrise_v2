@@ -1335,6 +1335,85 @@
       "pending": "The final state of the window is unknown.",
       "next": "Check the Notepad before running again.",
       "details": "Close not confirmed ({reason}). Not repeated automatically."
+    },
+    "ACCOUNT-ACTIVE": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "An active account cannot be deleted.",
+      "completed": "The request was refused; the account was not changed.",
+      "pending": "The account stays in the team with its access.",
+      "next": "Deactivate the account first, then delete it.",
+      "details": "Only an inactive account can be deleted; the state is read again when deleting."
+    },
+    "ACCOUNT-EMAIL-RESERVED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "This e-mail belonged to a deleted account.",
+      "completed": "The request was refused. No account was created.",
+      "pending": "The e-mail stays reserved and is not linked to the history of the deleted account.",
+      "next": "Use another e-mail for the new account.",
+      "details": "E-mails of deleted accounts stay reserved in this version."
+    },
+    "STATION-IN-USE": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "This is the station this session is using.",
+      "completed": "The request was refused; the station was not changed.",
+      "pending": "The station stays connected.",
+      "next": "Revoke or delete it from another station of the team.",
+      "details": "The station of the current session is identified by its own credential at sign-in."
+    },
+    "STATION-SESSION-UNBOUND": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE",
+        "RR-UI"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "This session is not tied to a station of the team.",
+      "completed": "The request was refused; no station was changed.",
+      "pending": "Revoking and deleting stations stay unavailable in this session.",
+      "next": "Sign out and sign in again in the RedRise app of a connected station.",
+      "details": "Without the proof of the station in use, the Core cannot protect it from being revoked."
+    },
+    "STATION-NOT-REVOKED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "Only a revoked station can be deleted.",
+      "completed": "The request was refused; the station was not changed.",
+      "pending": "The station stays in the list.",
+      "next": "Revoke the station first, then delete it.",
+      "details": "The state is read again when deleting."
+    },
+    "PROCESS-START-INVALID": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The process {process} cannot start as it is composed.",
+      "completed": "The request was refused before anything was started.",
+      "pending": "Nothing was run.",
+      "next": "Edit the process so that step 1 is a routine that starts it (not a follow-up), then run it again.",
+      "details": "Reason: {reason}. A follow-up needs the context of a step before it."
     }
   }
 }

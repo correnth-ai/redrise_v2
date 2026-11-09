@@ -20,6 +20,7 @@ class ReviewTest(unittest.TestCase):
     setUpClass = classmethod(Harness.setUpClass.__func__)
     tearDownClass = classmethod(Harness.tearDownClass.__func__)
     client, expect, admin, station = Harness.client, Harness.expect, classmethod(Harness.admin.__func__), Harness.station
+    bound_admin = classmethod(Harness.bound_admin.__func__)
 
     # ---------------------------------------------------------------- helpers
     def member(self, name):
@@ -72,7 +73,10 @@ class ReviewTest(unittest.TestCase):
         self.expect("VALIDATION", lambda: self.review_step(pid, 9, uid), 400)
         self.expect("VALIDATION", lambda: self.review_step(pid, 1, 999999), 400)  # only an active member
         self.expect("VALIDATION", lambda: self.admin().call("POST", "/api/v1/routines", {"name": "x", "category": "windows", "version": {"kind": "followup", "config": {"action": "review", "assignee_id": uid}}}), 400)
-        self.expect("VALIDATION", lambda: self.admin().call("PUT", f"/api/v1/processes/{pid}", {"name": "x", "items": [{"routine_id": rv, "continue_next": True}]}), 400)
+        # TEAM-ACCOUNTS-20261108 item 5: a follow-up left first is saved, and refused when run (never promoted).
+        sid, _, _ = self.station("rv-first")
+        self.admin().call("PUT", f"/api/v1/processes/{pid}", {"name": "x", "items": [{"routine_id": rv, "continue_next": True}]})
+        self.expect("PROCESS-START-INVALID", lambda: self.start(sid, pid), 409)
         ready_made = next(x for x in self.admin().call("GET", "/api/v1/processes") if x["system_key"])
         self.expect("VALIDATION", lambda: self.review_step(ready_made["id"], 1, uid), 400)
         row = next(r for r in self.admin().call("GET", "/api/v1/routines") if r["id"] == rv)
@@ -268,7 +272,7 @@ class ReviewTest(unittest.TestCase):
         self.admin().call("POST", f"/api/v1/processes/{pid}/items", {"routine_id": self.app_routine()})
         eid = self.start(sid, pid)
         self.run_step(r, hb)
-        self.admin().call("DELETE", f"/api/v1/stations/{sid}")
+        self.bound_admin().call("DELETE", f"/api/v1/stations/{sid}")
         u.call("POST", f"/api/v1/reviews/{self.pending_of(u, eid)['id']}/approve")
         e = self.execution(eid)
         self.assertEqual((e["state"], e["outcome"]), ("finished", "refused"))

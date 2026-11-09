@@ -3,6 +3,7 @@
 // run form of template/recorded routines (POST /jobs, idempotent request id)
 // and the technical job history with detail and Cancel.
 import { useEffect, useRef, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DiagnosticBox, ErrorView } from "@/components/diagnostic";
+import { IconAction } from "@/components/icon-action";
 import { StateBadge } from "@/components/blocks";
 import { JOB_STATE } from "@/data/status";
 import { api, AppError, call, type Diagnostic } from "@/lib/api";
@@ -217,17 +219,21 @@ export function JobsSection() {
   }, [src, changeTick]);
   if (src.mode !== "real") return null;
   const openJob = async (id: string) => { setError(null); try { setDetail(await api("GET", `/api/v1/jobs/${id}`)); } catch (e) { setError(e); } };
+  // Only the eye of a row shows or hides its details (a read, never a request to run); the rest of the row does nothing.
+  const toggle = (id: string) => (detail?.id === id ? setDetail(null) : void openJob(id));
   return (
     <Card className="shadow-none"><CardHeader><CardTitle>Execuções técnicas</CardTitle>
       <CardDescription>Cada rotina executada gera um registro técnico, inclusive as de modelo e gravação.</CardDescription></CardHeader>
       <CardContent className="space-y-3"><ErrorView error={error} />
         <div className="max-h-80 overflow-auto rounded-md border"><Table>
-          <TableHeader><TableRow><TableHead>Quando</TableHead><TableHead>Rotina</TableHead><TableHead>Estação</TableHead><TableHead>Estado</TableHead><TableHead>Por</TableHead></TableRow></TableHeader>
-          <TableBody>{(jobs ?? []).map((j) => (
-            <TableRow key={j.id} className="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" tabIndex={0} onClick={() => openJob(j.id)}
-              onKeyDown={(k) => { if (k.key === "Enter" || k.key === " ") { k.preventDefault(); void openJob(j.id); } }}><TableCell>{when(j.created_at)}</TableCell><TableCell>{j.routine_name} v{j.version}</TableCell>
-              <TableCell>{j.station_name}</TableCell><TableCell><StateBadge state={j.state} />{j.waiting_reason && <small className="ml-1 text-muted-foreground">{tv(j.waiting_reason)}</small>}</TableCell><TableCell>{j.requested_by}</TableCell></TableRow>
-          ))}</TableBody></Table></div>
+          <TableHeader><TableRow><TableHead>Quando</TableHead><TableHead>Rotina</TableHead><TableHead>Estação</TableHead><TableHead>Estado</TableHead><TableHead>Por</TableHead><TableHead className="text-right">Detalhes</TableHead></TableRow></TableHeader>
+          <TableBody>{(jobs ?? []).map((j) => {
+            const open = detail?.id === j.id;
+            return (
+            <TableRow key={j.id} data-state={open ? "selected" : undefined}><TableCell>{when(j.created_at)}</TableCell><TableCell>{j.routine_name} v{j.version}</TableCell>
+              <TableCell>{j.station_name}</TableCell><TableCell><StateBadge state={j.state} />{j.waiting_reason && <small className="ml-1 text-muted-foreground">{tv(j.waiting_reason)}</small>}</TableCell><TableCell>{j.requested_by}</TableCell>
+              <TableCell className="text-right"><IconAction label={open ? "Ocultar detalhes" : "Mostrar detalhes"} expanded={open} onClick={() => toggle(j.id)}>{open ? <Eye /> : <EyeOff />}</IconAction></TableCell></TableRow>);
+          })}</TableBody></Table></div>
         {detail && <div className="rounded-md border p-3 text-sm">
           <p className="font-medium">{detail.routine_name} v{detail.version} <StateBadge state={detail.state} /></p>
           <p className="text-muted-foreground">Estação {detail.station_name} · pedida por {detail.requested_by} · {when(detail.created_at)}</p>

@@ -78,12 +78,9 @@ class BrowserProcessTest(unittest.TestCase):
         rid, _ = self.browser_routine(SITE, "Livre")
         linked, _ = self.browser_routine(SITE, "Em uso")
         proc = self.process([(linked, False)], "Processo em uso")
-        e = self.expect("ROUTINE-IN-USE", lambda: a.call("DELETE", f"/api/v1/routines/{linked}"), 409)
-        self.assertEqual(e.diagnostic.params["process"], "Processo em uso")
-        self.assertIn(linked, [r["id"] for r in a.call("GET", "/api/v1/routines")])
-        change = a.call("POST", f"/api/v1/processes/{proc['id']}/step1", {"routine_id": rid})
-        self.client(self.other_admin()).call("POST", f"/api/v1/step-changes/{change['id']}/approve")
-        a.call("DELETE", f"/api/v1/routines/{linked}")  # out of the process: it can go
+        # TEAM-ACCOUNTS-20261108 item 6: a linked routine is deleted too, and leaves its process in the same transaction.
+        self.assertEqual(a.call("DELETE", f"/api/v1/routines/{linked}")["processes"], ["Processo em uso"])
+        self.assertEqual(a.call("GET", f"/api/v1/processes/{proc['id']}")["items"], [])
         self.assertNotIn(linked, [r["id"] for r in a.call("GET", "/api/v1/routines")])
         self.expect("NOT-FOUND", lambda: a.call("DELETE", f"/api/v1/routines/{linked}"), 404)  # never twice
         self.expect("NOT-FOUND", lambda: a.call("POST", "/api/v1/processes", {"name": "Com excluida", "items": [{"routine_id": linked, "continue_next": False}]}), 404)

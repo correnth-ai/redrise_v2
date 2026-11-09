@@ -52,10 +52,13 @@ ROUTES = [
     ("GET", r"/api/v1/users", "users", "user"),
     ("POST", r"/api/v1/users", "user_create", "user"),
     ("PATCH", r"/api/v1/users/(\d+)", "user_update", "user"),
+    ("DELETE", r"/api/v1/users/(\d+)", "user_delete", "user"),
+    ("POST", r"/api/v1/accounts", "account_create", "user"),
     ("GET", r"/api/v1/stations", "stations", "user"),
     ("POST", r"/api/v1/stations", "station_create", "user"),
     ("GET", r"/api/v1/stations/(\d+)/apps", "station_apps", "user"),
     ("DELETE", r"/api/v1/stations/(\d+)", "station_revoke", "user"),
+    ("POST", r"/api/v1/stations/(\d+)/remove", "station_remove", "user"),
     ("GET", r"/api/v1/templates", "templates", "user"),
     ("GET", r"/api/v1/routines", "routines", "user"),
     ("POST", r"/api/v1/routines", "routine_create", "user"),
@@ -117,7 +120,7 @@ class Handlers:
         return self.core.register(b.get("full_name"), b.get("email"), b.get("password"), client=client)
 
     def login(self, b, who, cid, client=None):
-        return self.core.login(b.get("username"), b.get("password"), client=client)
+        return self.core.login(b.get("username"), b.get("password"), client=client, station_token=b.get("station_token"))
 
     def identity_session(self, b, who, cid):
         return self.core.identity_session(b.get("access_token"), b.get("remember"), b.get("device"), b.get("device_id"))
@@ -150,6 +153,12 @@ class Handlers:
     def user_update(self, b, who, cid, uid):
         return self.core.update_user(who, int(uid), b.get("role"), b.get("active"), b.get("password"))
 
+    def user_delete(self, b, who, cid, uid):
+        return self.core.delete_user(who, int(uid))
+
+    def account_create(self, b, who, cid):
+        return self.core.create_account(who, b.get("full_name"), b.get("email"), b.get("password"))
+
     def stations(self, b, who, cid):
         return self.core.list_stations(who)
 
@@ -162,6 +171,9 @@ class Handlers:
     def station_revoke(self, b, who, cid, sid):
         self.core.revoke_station(who, int(sid))
         return {"ok": True}
+
+    def station_remove(self, b, who, cid, sid):
+        return self.core.remove_station(who, int(sid))
 
     def templates(self, b, who, cid):
         return [{k: t.get(k) for k in ("id", "version", "title", "purpose", "category", "inputs", "preconditions")}
@@ -180,8 +192,7 @@ class Handlers:
         return self.core.add_version(who, int(rid), b)
 
     def routine_archive(self, b, who, cid, rid):
-        self.core.archive_routine(who, int(rid))
-        return {"ok": True}
+        return {"ok": True, **self.core.archive_routine(who, int(rid))}
 
     def routine_prepare(self, b, who, cid, rid):
         return self.core.prepare_routine(who, int(rid), b.get("request_id"), b.get("station_id"), cid)
