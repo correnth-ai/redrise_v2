@@ -1,0 +1,41 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "TEAM-ACCOUNTS-20261108",
+  "install": "install-beta29",
+  "scenarios": {
+    "account": {
+      "passed": true,
+      "created": 1,
+      "role": "operator",
+      "row": [
+        "pessoa.prova.2ca8",
+        "Operador",
+        "Ativa"
+      ],
+      "own_login": "operator",
+      "after_logout": "AUTH-REQUIRED",
+      "login_again": true
+    },
+    "jobs": {
+      "passed": false,
+      "stopped": "Stop: the app window did not come to the front: no input sent"
+    },
+    "restart": {
+      "passed": true,
+      "closed_by_red": true,
+      "operator_signed_in": true,
+      "no_admin_actions": true,
+      "data_kept": true
+    }
+  },
+  "core": "0.3.8",
+  "clicks_lost": [],
+  "seconds": 195,
+  "only": [
+    "account",
+    "jobs",
+    "restart"
+  ],
+  "passed": false
+}

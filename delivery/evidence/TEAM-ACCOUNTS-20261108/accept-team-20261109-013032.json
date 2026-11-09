@@ -1,0 +1,21 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "TEAM-ACCOUNTS-20261108",
+  "install": "install-beta29",
+  "scenarios": {
+    "routines": {
+      "passed": true,
+      "cancel_kept": true,
+      "shared_out_of_both": true,
+      "selection_deleted": true
+    }
+  },
+  "core": "0.3.8",
+  "clicks_lost": [],
+  "seconds": 80,
+  "only": [
+    "routines"
+  ],
+  "passed": true
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "redrise.release/1",
+  "version": "0.1.0-beta.29",
+  "notes": "Contas da equipe (+ Nova Conta, excluir conta inativa), estações com Status e exclusão, remoção de vínculos e exclusão de rotinas, ajustes visuais.",
+  "published_at": "2026-11-09T04:33:35+00:00",
+  "installer": {
+    "file": "RedRise-Setup-0.1.0-beta.29.exe",
+    "size": 310659553,
+    "sha256": "6dedaf96867d6b67066743a74fab54e47683cb7d69e9475e75626d78405aa6e7"
+  }
+}

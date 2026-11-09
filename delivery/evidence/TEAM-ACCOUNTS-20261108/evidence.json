@@ -1,0 +1,338 @@
+{
+  "step": "TEAM-ACCOUNTS-20261108 (items 1-7, 9, 11; delivery item 10; item 8 MediaFire deferred)",
+  "status": "delivered to the local channel and the real install; sign-in on the real team pending the user",
+  "date": "2026-11-09",
+  "authorization": [
+    "User order relayed by the session that started this one (2026-11-08): items 1-7, 9 and 11 and the delivery of item 10 authorized; item 8 (MediaFire, public distribution) deferred and not blocking. After passing tests: commit and integrate into local main, build and validate the next Beta, prepare the local update channel, update the installed app through the update mechanism, update documentation. No push, upload or publication."
+  ],
+  "source": {
+    "repository": "D:/Correnth/products/redrise-v2/repos/app",
+    "branch": "main (local), fast-forwarded from work branch team-accounts-20261108",
+    "base": "991ebc5",
+    "commits": {
+      "ddd42e2": "S5 SCHEDULE-PROCESS as found uncommitted in the tree (installed as 0.1.0-beta.28), kept as its own commit",
+      "880662e": "TEAM-ACCOUNTS code, tests and rule docs; source of the 0.1.0-beta.29 installer",
+      "d8682b8": "practical proof and rollback check aware of deleted accounts",
+      "fa9347b": "proof selectors, --only reruns, ui.ps1 never clicks outside the window"
+    },
+    "shipped_code_identical_between": [
+      "880662e",
+      "fa9347b"
+    ],
+    "pushed": false
+  },
+  "decisions": "Work order TEAM-ACCOUNTS-20261108 section 9, recorded before implementation.",
+  "candidate": {
+    "version": "0.1.0-beta.29",
+    "installer": "C:/Users/raulv/RedRise-v2-dev/release/0.1.0-beta.29/RedRise-Setup-0.1.0-beta.29.exe",
+    "installer_sha256": "6dedaf96867d6b67066743a74fab54e47683cb7d69e9475e75626d78405aa6e7",
+    "payload_sha256": "23e73f9f43d1e1e46a2702730c17d0616778b120db50ea44cea09579df34bb22",
+    "desktop_exe_sha256": "c51b511cbf471421806c308f5e9924f9d72d8f125d43706f1dbc4117ac51e6ff",
+    "files": 3755,
+    "versions": {
+      "desktop": "0.1.0-beta.29",
+      "core": "0.3.8",
+      "runner": "0.3.11 (unchanged)"
+    },
+    "layout_vs_beta28": "one new file (core/redrise_core/migrations/011_team_accounts.sql); content changes only in RedRise.exe, core __init__/api/service, contracts/errors.json, manifest.json and the Engine binary; 4 more files differ only by line endings (the earlier build came from a working copy with CRLF in them)",
+    "engine": {
+      "sha256": "575ad6a137e4450d1c0973f38dd213c3ff03f1cdc6cc474b751782208cc8359f",
+      "previous_sha256": "b4f13d237db2b75d7107c046e8868738400f483e11bb0a76493a891237fd7ca9",
+      "note": "Engine sources unchanged since d653a8a; rebuilt with CARGO_TARGET_DIR on C: from the canonical source path before build-release (rustc 1.98.1). Not bit-identical to the 2026-11-03 build; the gate's Boas-vindas runs exercised it."
+    }
+  },
+  "checks": [
+    {
+      "type": "core_contract",
+      "command": "cd tests/core && <lab python> -B -m unittest <module> (each alone; isolated PostgreSQL on C:)",
+      "observed": "test_team_accounts 13 OK (new); test_core 14, test_step_change 9, test_schedules 11, test_browser_processes 17, test_identity 23, test_review 11, test_nova_rotina 14, test_changes 7, test_limits 20, test_summary 3, test_cancel 7, test_agent 6, test_notify_followup 4, test_report_followup 4: all OK (the last ten modules rerun on main after integration)",
+      "changed_expectations": "test_step_change test_01 (removing step 1 needs no approval), test_browser_processes test_01b (a linked routine is deleted, leaving its process), test_review test_01 (a follow-up first is saved and refused when run), test_nova_rotina test_02 (PROCESS-START-INVALID instead of VALIDATION), test_core test_08 and test_review test_09 (revoking needs a session tied to a station): rules changed by this work order"
+    },
+    {
+      "type": "ui_component",
+      "command": "npm run typecheck; npx vitest run (on C:, build/ui-dev)",
+      "observed": "typecheck clean; 81 tests in 12 files: 64 existing and 17 new (team-accounts.test.tsx 10, usage-adjustments.test.tsx 7)"
+    },
+    {
+      "type": "contracts",
+      "command": "tests/contracts: unittest test_diagnostics",
+      "observed": "17 OK (catalog ASCII; the mask covers the 6 new codes with the same placeholders)"
+    },
+    {
+      "type": "base",
+      "command": "node scripts/validate-base.mjs [--check-sources]",
+      "observed": "346 and 368 checks passed, on the work branch and again on main after integration"
+    },
+    {
+      "type": "visual_demo",
+      "command": "vite --mode demo in the built-in browser",
+      "observed": "sidebar hierarchy and the pinned Acoes column (normal, hover, selected, horizontal scroll) in light and dark"
+    },
+    {
+      "type": "gate",
+      "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.29",
+      "observed": "passed: isolated install, health 3755 files with integrity, Boas-vindas idle and load 3/3 each, uninstall",
+      "record": "verification.json"
+    },
+    {
+      "type": "baseline",
+      "command": "rollback_check.py --baseline-with install-beta28 on the lab data before upgrading",
+      "record": "team-baseline.json"
+    },
+    {
+      "type": "practical_e2e",
+      "command": "accept_team.py on lab-test/install-beta29: isolated instance driven and closed by its own process id; the user's app untouched",
+      "runs": [
+        {
+          "report": "accept-team-20261109-005430.json",
+          "passed_scenarios": [
+            "migration",
+            "app",
+            "window"
+          ],
+          "note": "other scenarios stopped on script selectors (table cells are DataItem; sidebar button name)"
+        },
+        {
+          "report": "accept-team-20261109-010830.json",
+          "passed_scenarios": [
+            "account",
+            "delete",
+            "stations",
+            "links",
+            "app",
+            "visual",
+            "window"
+          ],
+          "note": "routines, jobs and restart stopped on script issues"
+        },
+        {
+          "report": "lab-test/team-proof3.log (no report: the run crashed in its cleanup)",
+          "passed_scenarios": [
+            "routines"
+          ],
+          "note": "a click on an off-screen cell landed on the taskbar and opened Windows Search; the driver now scrolls into view and refuses clicks outside the window"
+        },
+        {
+          "report": "accept-team-20261109-011925.json",
+          "passed_scenarios": [
+            "account"
+          ],
+          "note": "Windows Search still had the foreground: jobs and restart sent no input"
+        },
+        {
+          "report": "accept-team-20261109-012514.json",
+          "passed_scenarios": [
+            "account",
+            "restart"
+          ]
+        },
+        {
+          "report": "accept-team-20261109-012802.json",
+          "passed_scenarios": [
+            "jobs"
+          ]
+        },
+        {
+          "report": "accept-team-20261109-013032.json",
+          "passed_scenarios": [
+            "routines"
+          ]
+        }
+      ],
+      "all_scenarios_passed_on_the_same_installed_candidate": true,
+      "product_changes_between_runs": "none (only the proof script and the lab UI driver)",
+      "highlights": {
+        "migration": "every table the beta.28 baseline counted kept its count; migration 011 the only new one; backup written before migrating",
+        "account": "+ Nova Conta in Meu perfil; empty name and bad e-mail refused before going on; mismatched confirmation refused and nothing saved; exactly one active operator; its own login by e-mail, logout (session then refused) and login again",
+        "delete": "Cancelar kept the account; Excluir conta removed it after the Core; list read again without it; login AUTH-INVALID; reactivation NOT-FOUND; e-mail reuse ACCOUNT-EMAIL-RESERVED",
+        "stations": "Esta estacao marked and its Revogar unavailable; a synthetic station went Online -> Offline 52.0 s after its last heartbeat (limit 55 s) and Online again 11.1 s after a new one; a session without station proof refused (STATION-SESSION-UNBOUND); revoked through the screen, then deleted",
+        "links": "Cancelar kept the composition; step 1 removed and saved without approval; the only routine removed: empty process saved and refused when run (PROCESS-START-INVALID); routines stay in the list",
+        "routines": "Cancelar kept it; a routine in two processes deleted and taken out of both; a mixed selection (standalone and linked) deleted",
+        "jobs": "a click on the row opened nothing; only the eye showed and hid details, one at a time; no job or execution created",
+        "app": "no browser block; Sobre inside the server card; storage right below",
+        "visual": "Lista with a selected row and the sidebar in light and dark, sidebar collapsed (screenshots)",
+        "window": "left to right Maximizar, Minimizar, Fechar (green, yellow, red); maximize, restore and minimize confirmed on the native window; Fechar closed the instance (restart)",
+        "restart": "closed by the red control, reopened, the new operator signed in through the screen, no administrator action offered; record counts unchanged"
+      }
+    },
+    {
+      "type": "rollback_isolated_copy",
+      "command": "rollback_check.py --new install-beta29 --old install-beta28 on a copy",
+      "records": [
+        "team-rollback.json",
+        "team-rollback2.json"
+      ],
+      "observed": "Core 0.3.7 opens the migrated copy with every table and API count equal; with one deleted account (second record) the older Core lists it as inactive (users = new + deleted); backup and restore into a separate database equal"
+    }
+  ],
+  "rollback_note": "Migration 011 only adds columns, checks, an index and a trigger. Core 0.3.7 runs on it (proved on a copy): it ignores deleted_at (lists deleted accounts as inactive and deleted stations as revoked; reactivating a deleted account fails on users_deleted_inactive) and the session station link. Returning the schema to before 011 means restoring pre-migration-20261109-013602.dump on the real install, losing what came after.",
+  "channel": {
+    "signed": true,
+    "where": "local release channel C:/Users/raulv/RedRise-v2-dev/channel (latest.json, latest.json.sig, installer)",
+    "manifest": "channel-latest.json",
+    "signature_check": "valid against desktop/src-tauri/channel-public-key.b64 (the key compiled into the app)",
+    "signed_by": "packaging/release/release_channel.py sign (key used in-process from the OS vault, never displayed)",
+    "previous_latest": "0.1.0-beta.28",
+    "served": "site/serve_local.py on 127.0.0.1:47880 only during the update, then stopped",
+    "published": false
+  },
+  "real_install": {
+    "status": "updated through the in-app update",
+    "at": "2026-11-09T01:35-03:00",
+    "from": "0.1.0-beta.28",
+    "to": "0.1.0-beta.29",
+    "how": "with the computer idle, the open app window (signed in) was reloaded so the app checked the channel; it showed the verified offer (Atualizacao 0.1.0-beta.29); Pode atualizar was invoked through UI Automation; the app downloaded and checked the installer, handed over and reopened by itself at 01:35:48",
+    "observed": [
+      "Install record: installed 0.1.0-beta.29, 3755 files, previous version kept (@redrise.previous = 0.1.0-beta.28), data folder untouched (real-last-install.json).",
+      "Manifest: app_version 0.1.0-beta.29.",
+      "Status endpoint: core 0.3.8, team initialized.",
+      "Core log: backup before migration pre-migration-20261109-013602.dump (90051 bytes); no ERROR, FATAL or Traceback in core.log or postgres.log after the update.",
+      "The reopened window shows the login screen with the new window controls (shots/real-depois-update.png)."
+    ],
+    "not_checked": [
+      "Signing in on the real team and its data through the app: needs the team's credentials, which this session does not use. Pending the user.",
+      "Migration 011 not read from the real database (needs credentials); inferred from the backup line, the status 0.3.8 and the absence of errors."
+    ],
+    "found_before_update": "The real host's own station was already revoked before this update: its Runner heartbeats were refused (401) since before it (5050 refusals logged before, the last accepted one at core.log line 602389). The work order says not to recover it automatically. While it stays revoked, sign-ins on the real app are not tied to a station (revoking or deleting stations answers STATION-SESSION-UNBOUND) and the real team has no connected station to run on, until this computer joins the team again.",
+    "rollback": "uninstall.exe --rollback restores the program (0.1.0-beta.28 kept); the data stay migrated, which 0.3.7 reads (proved on the lab copy)."
+  },
+  "not_done": [
+    "Item 8 (MediaFire, public distribution): deferred by the user.",
+    "Push to the remote: not authorized.",
+    "Independent review: not assigned."
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/accept-team-20261109-005430.json",
+      "sha256": "3669ac5381627f0fdaced0fd14f31a28429804b2558f2ec0d0549c3dfb3858b1"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/accept-team-20261109-010830.json",
+      "sha256": "2b6f2d3f38ad1e672645a438ca20a823689625b5e617133a26a85299b7246faf"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/accept-team-20261109-011925.json",
+      "sha256": "094e628a61ba748d2a8e23060bfbe0a2d465c276e02afb3c9fc57ba4df56f823"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/accept-team-20261109-012514.json",
+      "sha256": "dd595378bac423a5636ebe8764d0462d84621a30c9fd6b27ab23c199c7b2a7e6"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/accept-team-20261109-012802.json",
+      "sha256": "4997bdde2b02ae657afcdd26f76e429d1284f32037902a76d64817590512a60c"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/accept-team-20261109-013032.json",
+      "sha256": "3ca12df1e5e36cf60cc844ca0ef87cfab4bc15ecaabde9928c065f8bbdd6b0b9"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/channel-latest.json",
+      "sha256": "3d2ddff6dd64a9b853258029d6e5629930de4fe586496128ba0914ee72a77cdd"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/pack.json",
+      "sha256": "b871de6a101df4fb56962efbd3e882997ace03838fde36ef4fc04e6c4479720d"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/real-last-install.json",
+      "sha256": "b3d9eeb5e84d9a9d7d46ec322fe91e71f09084ece7e69c86dfe732d93b32f4a4"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-aplicativo.png",
+      "sha256": "a52d75028886ccf556ff4841fa27efb8894e28b3d9c1a8bc985bbaf97e044336"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-composicao-sem-etapa-1.png",
+      "sha256": "506df04bf9c18cb4254f43d41ef7d54f041baa0b4294edd282e087be91c72062"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-equipe-conta-criada.png",
+      "sha256": "cf37d1132434ba6a39273851c8d8233f343d3f0f262eed445ea37dd184ebeb79"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-equipe-inativas.png",
+      "sha256": "feee83c9fd6cd7d4cb67dae39b917c35d91ecd686a6d9682231b786c0ae982cc"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-equipe-nova-conta.png",
+      "sha256": "dff6ee68c10bf5528a40c607435fde8647895f52a8ef6e1a85a3c3023863e6fe"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-estacao-status.png",
+      "sha256": "d3e69515ec3b35c91ecf89f86b67a51270e91b6b95021f1ec77affdaf998ead3"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-excluir-conta-dialogo.png",
+      "sha256": "e384924c803c292a2e9923ba9e716a128af0ddd5558245ee6a0e23c34e82d3a3"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-excluir-rotina-vinculada.png",
+      "sha256": "3c940fd7c9eecc8aa256f0b2913be4d36d4c44f04043aefa4c63df7cec43bb99"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-execucao-tecnica-detalhes.png",
+      "sha256": "070483660f851b777b745622437b2b90ebcfe20bec79514a4cf99b18f2fec69a"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-janela-maximizada.png",
+      "sha256": "b43589828ca2d63d5acdadfe27519e575e5e3a6d351c5e79c384fbcedb082d1e"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-lista-acoes-claro.png",
+      "sha256": "2f26ac2b21374aacfe23309b3b8b34d5c8d1933dfe0ca486bb2f5ebe74b74013"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-lista-acoes-escuro.png",
+      "sha256": "52beab582fa856385f7dacfd514cfa912baccb0936ac2cfa61f73fb2afab79a2"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-nova-conta-confirmar.png",
+      "sha256": "de46237c04ac86777411457ee9a08b57439230fdf70329ac43b908d0457c39c3"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-operador-logado.png",
+      "sha256": "5dfc81ad6cd50eef3caa90010eb8646243aa2f56de11eec7169e9890a7e0df03"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-processo-vazio.png",
+      "sha256": "c38df4b39aca574baf3a5c648e84a2e479d8e1454d24ce7d3dc119eda5240707"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-sidebar-claro.png",
+      "sha256": "8500dbce4e6a81baa5c5c7ec633d66ce29a09f942fcb49afbb7ec65737b86764"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-sidebar-escuro.png",
+      "sha256": "42292c0943cb4f0970d5e7a0f7f6464c4a54d9f9e272a4eb3f52d581bc3d5c3f"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/inst-sidebar-recolhida.png",
+      "sha256": "bc7e06936dbdc039e145c6661fb2d06617848121307e25311af5d8f927f71425"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/real-depois-update.png",
+      "sha256": "0990059b57ad6a6453b496a2ce7dac52ffc31341158f64ad45cc6bfed15a878c"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/shots/real-oferta-beta29.png",
+      "sha256": "d92d076b03fa6eb13ee18b472b76a47e1eb328c33f69956cc4966b692a06f06f"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/team-baseline.json",
+      "sha256": "aed892cf7401a9ac0d1c7f88f875f5c3ac54e1435a0cd3450af56bc375469460"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/team-rollback.json",
+      "sha256": "ba8f5ec3bae66e2108cbc5ef3d3a01197393ebe5608277f88dc6ab594cf9233c"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/team-rollback2.json",
+      "sha256": "6dfbdb1d9af7f895c17f25fd2ae6ffa4a01895f20b8fadad17bd4d855c801dbf"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/verification.json",
+      "sha256": "cf7991a72eb527941029471e4c01fbbb4a22c8062b1e8a254284e79716716f9f"
+    }
+  ]
+}

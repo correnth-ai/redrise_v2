@@ -1,0 +1,89 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "TEAM-ACCOUNTS-20261108",
+  "install": "install-beta29",
+  "scenarios": {
+    "migration": {
+      "passed": true,
+      "baseline_from": "install-beta28",
+      "tables": {
+        "processes": 30,
+        "routines": 62,
+        "routine_versions": 62,
+        "executions": 54,
+        "jobs": 135,
+        "users": 5,
+        "schema_migrations": 11,
+        "schedules": 2,
+        "schedule_runs": 2,
+        "notifications": 10
+      },
+      "baseline_tables": {
+        "processes": 30,
+        "routines": 62,
+        "routine_versions": 62,
+        "executions": 54,
+        "jobs": 135,
+        "users": 5,
+        "schema_migrations": 10,
+        "schedules": 2,
+        "schedule_runs": 2,
+        "notifications": 10
+      },
+      "changed": {},
+      "backup_before_migration": "pre-migration-20261109-004906.dump"
+    },
+    "account": {
+      "passed": false,
+      "stopped": "Stop: not on screen: ('Nome completo', 'Etapas do cadastro'); screen: ListItem|RedRiseversão 0.1.0-beta.29| / Button|RedRise versão 0.1.0-beta.29| / ListItem|EmpresaProcessoAçãoHistóricoKanbanRotinaListaAtividade| / Button|Empresa| / ListItem|ProcessoAçãoHistóricoKanban| / Button|Processo| / ListItem|Ação| / Hyperlink|Ação| / ListItem|Histórico| / Hyperlink|Histórico| / ListItem|Kanban| / Hyperlink|Kanban| / ListItem|RotinaListaAtividade| / Button|Rotina| / ListItem|Lista| / Hyperlink|Lista| / ListItem|Atividade| / Hyperlink|Atividade| / ListItem|ConfiguraçãoEquipeEstaçãoAplicativo| / Button|Configuração| / ListItem|Equipe| / Hyperlink|Equipe| / ListItem|Estação| / Hyperlink|Estação| / ListItem|Aplicativo| / Hyperlink|Aplicativo| / ListItem|Admin de Teste (administrador)Sair| / Text|Admin de Teste| / Text| (| / Text|administrador| / Text|)| / Button|Sair| / Button|Recolher ou expandir o menu| / Button|Recolher ou expandir o menu| / Text|Nova Conta| / Butto"
+    },
+    "delete": {
+      "passed": false,
+      "stopped": "Stop: row not on screen: inativa.mantida.91e0@exemplo.test"
+    },
+    "stations": {
+      "passed": false,
+      "stopped": "Stop: row not on screen: estacao-teste"
+    },
+    "links": {
+      "passed": false,
+      "stopped": "Stop: no Editar composição in the row of Prova dois 91e0"
+    },
+    "routines": {
+      "passed": false,
+      "stopped": "Stop: no Excluir in the row of Prova compartilhada 91e0"
+    },
+    "jobs": {
+      "passed": false,
+      "stopped": "StopIteration: "
+    },
+    "app": {
+      "passed": true,
+      "browser_block": false
+    },
+    "visual": {
+      "passed": false,
+      "stopped": "Stop: could not invoke Toggle Sidebar: not found: 'Toggle Sidebar' [Button] #0 (count 0)\nNo C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\tools\\proof-team\\boas-vindas\\ui.ps1:57 caractere:32\n+ ... e $Index) { throw \"not found: '$n' [$Type] #$Index (count $($els.Coun ...\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+    },
+    "window": {
+      "passed": true,
+      "order_left_to_right": [
+        "Maximizar",
+        "Minimizar",
+        "Fechar"
+      ],
+      "maximized": true,
+      "restored": true,
+      "minimized": true
+    },
+    "restart": {
+      "passed": false,
+      "stopped": "AttributeError: 'Lab' object has no attribute 'new_account'"
+    }
+  },
+  "core": "0.3.8",
+  "clicks_lost": [],
+  "seconds": 330,
+  "passed": false
+}

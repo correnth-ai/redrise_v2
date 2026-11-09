@@ -1,7 +1,7 @@
 # Work Order — ajustes de uso e entrega do Beta Windows
 
 - **ID:** TEAM-ACCOUNTS-20261108.
-- **Data:** 08/11/2026. **Estado:** preparada para handoff ao agente engenheiro; implementação não iniciada nesta sessão. A submissão do prompt de execução pelo usuário inicia a construção no próximo agente.
+- **Data:** 08/11/2026. **Estado em 09/11/2026:** executada; ver seção 10 (registro de execução). **Estado no planejamento (histórico):** preparada para handoff ao agente engenheiro; implementação não iniciada nesta sessão. A submissão do prompt de execução pelo usuário inicia a construção no próximo agente.
 - **Pedido:** manter uma única Work Order com os itens 1 a 11: contas, ajustes visuais, detalhes de atividade, estações, remoção de vínculos, exclusão de rotinas, Aplicativo, MediaFire, sidebar, entrega do Beta e controles de janela. ID e arquivo preservados para continuidade. O item 11 deve ser entregue antes do encerramento do item 10.
 - **Autorização de entrega registrada:** o item 10 determina, após implementação e testes aprovados, commit, integração à branch principal, nova versão Beta, update do app e reconciliação documental. **Distribuição pelo MediaFire adiada por ordem posterior do usuário; item 8 fora da execução e dos gates desta entrega.** Esta rodada prepara o handoff; não executa essas operações. Não solicitar novamente autorização já fornecida para essas etapas quando a construção for iniciada; push remoto não foi explicitamente solicitado.
 - **Produto / repositório:** `product:redrise-v2` / `repo:redrise-v2`.
@@ -220,3 +220,11 @@ Propostas da seção 2 e itens 4–6, fechados assim:
 10. **Exclusão de rotinas (item 6):** arquivamento existente, agora atômico com a retirada da rotina de todos os processos (posições renumeradas, continuações preservadas, mesmas regras do item 5). Rotinas do processo pronto Boas-vindas continuam protegidas. Seleção múltipla segue sequencial, com relatório do que foi excluído e do que falhou. `ROUTINE-IN-USE` deixa de ser emitido.
 
 Write-set efetivo: o da seção 6 mais `desktop/src/features/account-wizard.tsx` (novo), `desktop/src/state.tsx` não muda, `desktop/src-tauri/src/{lib,vault}.rs` e `Cargo.toml` (feature `Win32_Security_Credentials` do `windows-sys` já usado; sem crate nova), `core/redrise_core/migrations/011_team_accounts.sql`, `tests/core/test_team_accounts.py`, testes de UI correspondentes e uma prova prática em `proofs/team-accounts/`.
+
+## 10. Registro de execução (08–09/11/2026)
+
+- **Estado:** itens 1–7, 9 e 11 implementados e comprovados; item 10 executado até o update da instalação real; item 8 adiado. Detalhes: [checkpoint](../checkpoints/TEAM-ACCOUNTS-20261108.md) e [evidência](../evidence/TEAM-ACCOUNTS-20261108/evidence.json).
+- **Commits (main local, sem push):** `ddd42e2` S5 registrada à parte; `880662e` esta WO (fonte do instalador); `d8682b8`, `fa9347b` prova prática; mais o commit documental que traz este registro.
+- **Versão:** 0.1.0-beta.29 (Core 0.3.8, Runner 0.3.11 inalterado), instalador SHA256 `6dedaf96867d6b67066743a74fab54e47683cb7d69e9475e75626d78405aa6e7`; gate aprovado; prova prática com os 11 cenários aprovados; rollback para a beta.28 numa cópia aprovado.
+- **Canal e instalação real:** `latest.json` assinado para a beta.29; a instalação real foi atualizada pelo update do app (beta.28 → beta.29) em 09/11 01:35, com backup antes da migração e Core 0.3.8.
+- **Completion gate:** atendido exceto pela verificação de login e dados na equipe real, que depende das credenciais do usuário (pendente). Encontrado antes do update e fora desta WO: a estação do servidor real já estava revogada; não foi recuperada (seção 8, item 4).

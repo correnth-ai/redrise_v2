@@ -1,0 +1,118 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "TEAM-ACCOUNTS-20261108",
+  "install": "install-beta29",
+  "scenarios": {
+    "account": {
+      "passed": true,
+      "created": 1,
+      "role": "operator",
+      "row": [
+        "pessoa.prova.feb2",
+        "Operador",
+        "Ativa"
+      ],
+      "own_login": "operator",
+      "after_logout": "AUTH-REQUIRED",
+      "login_again": true
+    },
+    "delete": {
+      "passed": true,
+      "cancel_kept": true,
+      "deleted_listed_on_screen": false,
+      "deleted_listed_api": false,
+      "login": "AUTH-INVALID",
+      "reactivate": "NOT-FOUND",
+      "email_reuse": "ACCOUNT-EMAIL-RESERVED"
+    },
+    "stations": {
+      "passed": true,
+      "host_marked_esta_estacao": true,
+      "host_row": [
+        "servidor + estação",
+        "windows-x86_64",
+        "Online",
+        "pronta",
+        "Microsoft Edge 157.0.4341.42 · não homologado",
+        "Em uso por esta sessão Revogar"
+      ],
+      "host_revoke_refused": true,
+      "online_shown": true,
+      "offline_after_s": 52.0,
+      "online_again_after_s": 11.1,
+      "limit_s": 55,
+      "unbound_session": "STATION-SESSION-UNBOUND",
+      "revoked_row": [
+        "estação",
+        "windows-x86_64",
+        "Offline",
+        "revogada",
+        "não informado (executor anterior)"
+      ],
+      "deleted": true
+    },
+    "links": {
+      "passed": true,
+      "cancel_kept": true,
+      "step1_removed_without_approval": true,
+      "empty_saved": true,
+      "empty_run": "PROCESS-START-INVALID",
+      "routines_kept_in_list": true
+    },
+    "routines": {
+      "passed": false,
+      "stopped": "Stop: not on screen: ('2 selecionadas', 'Excluir 2'); screen: ListItem|RedRiseversão 0.1.0-beta.29| / Button|RedRise versão 0.1.0-beta.29| / ListItem|EmpresaProcessoAçãoHistóricoKanbanRotinaListaAtividade| / Button|Empresa| / ListItem|ProcessoAçãoHistóricoKanban| / Button|Processo| / ListItem|Ação| / Hyperlink|Ação| / ListItem|Histórico| / Hyperlink|Histórico| / ListItem|Kanban| / Hyperlink|Kanban| / ListItem|RotinaListaAtividade| / Button|Rotina| / ListItem|Lista| / Hyperlink|Lista| / ListItem|Atividade| / Hyperlink|Atividade| / ListItem|ConfiguraçãoEquipeEstaçãoAplicativo| / Button|Configuração| / ListItem|Equipe| / Hyperlink|Equipe| / ListItem|Estação| / Hyperlink|Estação| / ListItem|Aplicativo| / Hyperlink|Aplicativo| / ListItem|Admin de Teste (administrador)Sair| / Text|Admin de Teste| / Text| (| / Text|administrador| / Text|)| / Button|Sair| / Button|Recolher ou expandir o menu| / Button|Recolher ou expandir o menu| / Text|Rotina > Lista| / B"
+    },
+    "jobs": {
+      "passed": false,
+      "stopped": "Stop: could not invoke Mostrar detalhes #0: Exceção ao chamar \"GetCurrentPattern\" com \"1\" argumento(s): \"Padrão sem-suporte.\"\nNo C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\tools\\proof-team\\boas-vindas\\ui.ps1:86 caractere:15\n+ ...     catch { $e.GetCurrentPattern([System.Windows.Automation.TogglePat ...\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    },
+    "app": {
+      "passed": true,
+      "browser_block": false
+    },
+    "visual": {
+      "passed": true,
+      "shots": [
+        "lista-acoes-claro",
+        "sidebar-claro",
+        "lista-acoes-escuro",
+        "sidebar-escuro",
+        "sidebar-recolhida"
+      ],
+      "note": "visual: judged on the screenshots"
+    },
+    "window": {
+      "passed": true,
+      "order_left_to_right": [
+        "Maximizar",
+        "Minimizar",
+        "Fechar"
+      ],
+      "maximized": true,
+      "restored": true,
+      "minimized": true
+    },
+    "restart": {
+      "passed": false,
+      "stopped": "Stop: not on screen: ('Sair',); screen: Text|Preencha este campo. | / Button|Ativar modo claro| / Button|Maximizar| / Button|Minimizar| / Button|Fechar| / Text|RedRise| / Text|Bem-vindo de volta| / Text|Entre com a sua conta RedRise| / Text|E-mail ou usuário| / Edit|E-mail ou usuário|pessoa.prova.feb2@exemplo.test / Text|Senha| / Edit|Senha| / Button|Entrar| / Text|Não tem uma conta?| / Button|Criar conta|"
+    }
+  },
+  "core": "0.3.8",
+  "clicks_lost": [],
+  "seconds": 593,
+  "only": [
+    "account",
+    "delete",
+    "stations",
+    "links",
+    "routines",
+    "jobs",
+    "app",
+    "visual",
+    "window",
+    "restart"
+  ],
+  "passed": false
+}

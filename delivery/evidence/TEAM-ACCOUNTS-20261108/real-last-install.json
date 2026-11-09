@@ -1,0 +1,12 @@
+{
+  "at": 1794198948,
+  "ok": true,
+  "result": {
+    "data_root_untouched": "C:\\Users\\raulv\\AppData\\Local\\RedRise",
+    "files": 3755,
+    "install_root": "C:\\Users\\raulv\\AppData\\Local\\Programs\\@redrise",
+    "installed": "0.1.0-beta.29",
+    "previous_kept": true,
+    "shortcut": "C:\\Users\\raulv\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\RedRise.lnk"
+  }
+}
