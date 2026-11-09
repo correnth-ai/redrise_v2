@@ -171,8 +171,11 @@ def main() -> None:
         stop_core(p, stop)
         dump.unlink(missing_ok=True)
     skip = ("core", "executions_366d", "users")
+    # A Core before 0.3.8 knows no deleted_at and lists deleted accounts as inactive; 0.3.8 and later leave them out.
+    old_lists_deleted = tuple(int(x) for x in str(report["old"]["core"]).split(".")[:3]) < (0, 3, 8)
+    report["old_lists_deleted_accounts"] = old_lists_deleted
     same_api = ({k: v for k, v in report["new"].items() if k not in skip} == {k: v for k, v in report["old"].items() if k not in skip}
-                and report["old"]["users"] == report["new"]["users"] + report["deleted_users"])  # the older Core also lists deleted accounts
+                and report["old"]["users"] == report["new"]["users"] + (report["deleted_users"] if old_lists_deleted else 0))
     report["passed"] = (same_api and report["new_tables"] == report["old_tables"] and report["backup"]["exit"] == 0
                         and report.get("restore", {}).get("exit") == 0 and report.get("restored_tables") == report.get("live_tables"))
     a.out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

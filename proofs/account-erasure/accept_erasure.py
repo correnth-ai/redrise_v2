@@ -63,7 +63,7 @@ class Lab(accept_team.Lab):
         self.page("Equipe")
         self.wait(mail)
         self.invoke_at("Excluir conta", self.button_in_row(mail, "Excluir conta", stop_at="@"))
-        self.wait("o e-mail fica livre para uma conta nova", timeout=10)
+        self.wait(mail, "apagada e n", timeout=10)  # the dialog text reaches UI Automation cut at about 80 characters
         self.shot("excluir-conta-email-livre")
         self.invoke_last("Excluir conta")
         self.gone(mail)
