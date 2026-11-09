@@ -1,0 +1,178 @@
+{
+  "step": "ACCOUNT-ERASURE-20261109 (a deleted account is erased; its e-mail can open a new account)",
+  "status": "delivered to the local channel and the real install; pushed to origin/main",
+  "date": "2026-11-09",
+  "authorization": [
+    "User in chat, 2026-11-09, with a screenshot of + Nova Conta refused with ACCOUNT-EMAIL-RESERVED: 'Quando excluimos uma conta, ela deve ser de fato excluida dos registros, constando apenas no log/historico... mas deve ser possivel criar uma nova conta com o e-mail de uma que foi excluida... Precisamos atualizar isso e fazer um update, comit/push etc. e atualizar tudo'."
+  ],
+  "source": {
+    "repository": "D:/Correnth/products/redrise-v2/repos/app",
+    "base": "4245527",
+    "commits": {
+      "237f015": "Core 0.3.9, migration 012, UI text, catalog and mask, tests, proof; source of the 0.1.0-beta.30 installer",
+      "fd3ba8d": "proof chain, dialog text check, rollback check aware of Core 0.3.8; P05-D17 and APP-RULES"
+    },
+    "shipped_code_identical_between": [
+      "237f015",
+      "fd3ba8d"
+    ]
+  },
+  "decision": "Erase instead of hard delete: executions, jobs, reviews, schedules and routines reference users(id), so the row stays with display and username only (history); e-mail, password (pw_hash '!'), identity link and remembered devices are removed; a new account never reuses the old username. Recorded as P05-D17; replaces decision 4 of TEAM-ACCOUNTS-20261108 section 9.",
+  "candidate": {
+    "version": "0.1.0-beta.30",
+    "installer_sha256": "2a9ecac27d210e08f471b9e58c12fae028ad95cb79a39dee9e53c6e0b07ca469",
+    "payload_sha256": "6ee118208ecb22188163f12fe0b35a968c5ed06dab7640fb52dd7b1fc0e5b636",
+    "engine_sha256": "fc87b5e921736b98ece34c3ce8b385f43dfd4712f1bd85dc3848587a451ae71a",
+    "engine_note": "engine source unchanged since 0.1.0-beta.29 (575ad6...); the release build is not byte-reproducible, recompiled from the canonical path before build-release",
+    "versions": {
+      "core": "0.3.9",
+      "runner": "0.3.11"
+    }
+  },
+  "checks": [
+    {
+      "type": "core_contract",
+      "command": "cd tests/core && <lab python> -B -m unittest <module> (each alone; isolated PostgreSQL on C:)",
+      "observed": "test_team_accounts 15 OK (test_03 erased row, test_03b e-mail reused by an unrelated account, test_03c migration 012 over an account deleted by the old rule; each test now starts with a fresh attempt limiter); test_identity 23, test_core 14, test_limits 20, test_review 11, test_step_change 9, test_schedules 11, test_browser_processes 17, test_nova_rotina 14, test_changes 7, test_summary 3, test_cancel 7, test_agent 6, test_notify_followup 4, test_report_followup 4: all OK"
+    },
+    {
+      "type": "ui_component",
+      "command": "npm run typecheck; npx vitest run (on C:, build/ui-dev)",
+      "observed": "typecheck clean; 81 tests in 12 files passed (the dialog states that the e-mail becomes free; a refused e-mail is ACCOUNT-EXISTS)"
+    },
+    {
+      "type": "contracts",
+      "command": "tests/contracts: unittest test_diagnostics",
+      "observed": "17 OK (ACCOUNT-EMAIL-RESERVED removed from the catalog and the mask together)"
+    },
+    {
+      "type": "base",
+      "command": "node scripts/validate-base.mjs [--check-sources]",
+      "observed": "346 and 368 checks passed"
+    },
+    {
+      "type": "gate",
+      "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.30",
+      "observed": "passed",
+      "record": "verification.json"
+    },
+    {
+      "type": "baseline",
+      "command": "rollback_check.py --baseline-with install-beta29 on the lab data before upgrading",
+      "record": "erase-baseline.json"
+    },
+    {
+      "type": "practical_e2e",
+      "command": "proofs/account-erasure/chain-erasure.ps1 (Explorer shortcut) on lab-test/install-beta30; isolated instance driven and closed by its own process id",
+      "runs": [
+        {
+          "report": "accept-erasure-20261109-085313.json",
+          "passed_scenarios": "migration",
+          "note": "reuse stopped on the proof's wait: the dialog text reaches UI Automation cut at about 80 characters (the screenshot of that run shows the new text); the wait now looks for the start of the sentence. An earlier start of the chain (08:50) stopped before any report because PowerShell turned the proof's stderr into a terminating error; the chain now runs native steps with Continue and checks each result"
+        },
+        {
+          "report": "accept-team-20261109-085610.json",
+          "passed_scenarios": "account delete",
+          "note": "TEAM-ACCOUNTS scenarios on the new candidate; delete now expects the e-mail reuse to be accepted"
+        },
+        {
+          "report": "accept-erasure-20261109-085842.json",
+          "passed_scenarios": "reuse"
+        }
+      ],
+      "highlights": {
+        "migration": "every table the beta.29 baseline counted kept its count; 012_account_erasure.sql the only new migration; backup before migrating; the 1 account deleted by beta.29 erased (deleted_not_erased 0)",
+        "reuse": "the user's case through the screen: Excluir conta dialog says the e-mail and password are removed and the e-mail becomes free; + Nova Conta with the same e-mail went through the four steps with no refusal; a new active operator with another id and user name (.2) signs in with its own password; the old password is refused; the old row has no e-mail or password and keeps the display name for the history",
+        "team": "+ Nova Conta, own login, logout and login again; delete with Cancelar kept, list without it, login AUTH-INVALID, reactivation NOT-FOUND, e-mail reuse accepted"
+      }
+    },
+    {
+      "type": "rollback_isolated_copy",
+      "command": "rollback_check.py --new install-beta30 --old install-beta29 on a copy",
+      "record": "erase-rollback.json",
+      "observed": "Core 0.3.8 opens the copy migrated by 0.3.9 with every table and API count equal (it also leaves deleted accounts out: users 16/16, 2 deleted); backup and restore into a separate database equal"
+    }
+  ],
+  "rollback_note": "Migration 012 changes no schema; it clears data of deleted accounts. Core 0.3.8 runs on it (proved on a copy). An account deleted by 0.3.8 after a rollback would keep its e-mail reserved until the next update erases it. Erased e-mails and passwords come back only by restoring pre-migration-20261109-090216.dump on the real install, losing what came after.",
+  "channel": {
+    "latest": "channel-latest.json",
+    "signed": "2026-11-09T11:59:44Z, Ed25519, signature checked against the key compiled into the app",
+    "previous_latest": "0.1.0-beta.29",
+    "site": "site/serve_local.py on 127.0.0.1:47880 during the update only, stopped afterwards"
+  },
+  "real_install": {
+    "update": "2026-11-09 09:00:45 Pode atualizar in the real app (offer after a reload; computer idle); restarted 09:01:56",
+    "result": [
+      "Install record: installed 0.1.0-beta.30, 3756 files, previous version kept, data folder untouched (real-last-install.json).",
+      "Core answers 0.3.9 (GET /api/v1/status); backup before migration pre-migration-20261109-090216.dump; no refused request in core.log after the restart.",
+      "Runner status ready, no error; heartbeats accepted (station servidor-lab-2).",
+      "The reopened window shows the login screen (shots/real-depois-update.png)."
+    ],
+    "not_verified": [
+      "Signing in on the real team and creating the account again with the e-mail of the account deleted there (the case of the user's screenshot): needs the team's credentials; pending the user.",
+      "Migration 012 not read from the real database (needs credentials); inferred from the backup line and Core 0.3.9 without errors."
+    ]
+  },
+  "not_done": [
+    "Item 8 of TEAM-ACCOUNTS (MediaFire, public distribution): still deferred.",
+    "Independent review: not assigned."
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/accept-erasure-20261109-085313.json",
+      "sha256": "1066ea70e12c43be43dfd38e12545dcd4f74615bfa0518dd1d871591e91ff6d2"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/accept-erasure-20261109-085842.json",
+      "sha256": "3d1126e9fe09782ca280eea74c62c38be6e124705e2392f3ce4ae4415970e50e"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/accept-team-20261109-085610.json",
+      "sha256": "353f14c33e66b102c4e21d0edf710f7fca741e79d7475f924a8aa27863a44d45"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/channel-latest.json",
+      "sha256": "5e8f20f3446a381950af31e5491380a144d15d032b96470d9e68ffe8dd210e02"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/erase-baseline.json",
+      "sha256": "b4ac1f3b8d0f0c2603baf2fa617b316d2d798a0df5d062295acb5b29b8152c20"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/erase-rollback.json",
+      "sha256": "45f8194236bdc0d6018fd708e3c941a52ff2e5392b816f1a34a9c0759b446cce"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/pack.json",
+      "sha256": "3eae7fe90ee6484027f29c204ffddbdfe2d794124f194ba7d7cb32cf93b5fb21"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/real-last-install.json",
+      "sha256": "24e86dcc69738f370954ed270fbaae644096ab4336ceb1e313c05b3335e7a593"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/shots/lab-excluir-conta-dialogo.png",
+      "sha256": "8c6e66a19264746ff4b98c034a9407b4e26d0f8c922374077e080069771c5964"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/shots/lab-excluir-conta-email-livre.png",
+      "sha256": "33ab8ee01d07a4df4ce6f39de601fc217a099d6ed6011ccc35c6b4974a0f29b6"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/shots/lab-nova-conta-email-reusado.png",
+      "sha256": "835774c338682472ff475489af98ee79f546a05ec10eda60d6d5a811d6919067"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/shots/real-depois-update.png",
+      "sha256": "1a33e842761c730c9543459e29258d9fa771c840663d52c80fdc0917622224d4"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/shots/real-oferta-beta30.png",
+      "sha256": "69fb77fa440dc7043311faa2dbf03a4a1cf5df8ae8a27fe5b7f7e41edb7e9429"
+    },
+    {
+      "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/verification.json",
+      "sha256": "9c1cbb488e554bbbd0ea98fcdbf750fce91ff7c91d4c2bbada9c82001403dc99"
+    }
+  ]
+}

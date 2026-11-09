@@ -1,0 +1,38 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "TEAM-ACCOUNTS-20261108",
+  "install": "install-beta30",
+  "scenarios": {
+    "account": {
+      "passed": true,
+      "created": 1,
+      "role": "operator",
+      "row": [
+        "pessoa.prova.cfde",
+        "Operador",
+        "Ativa"
+      ],
+      "own_login": "operator",
+      "after_logout": "AUTH-REQUIRED",
+      "login_again": true
+    },
+    "delete": {
+      "passed": true,
+      "cancel_kept": true,
+      "deleted_listed_on_screen": false,
+      "deleted_listed_api": false,
+      "login": "AUTH-INVALID",
+      "reactivate": "NOT-FOUND",
+      "email_reuse": "accepted"
+    }
+  },
+  "core": "0.3.9",
+  "clicks_lost": [],
+  "seconds": 170,
+  "only": [
+    "account",
+    "delete"
+  ],
+  "passed": true
+}

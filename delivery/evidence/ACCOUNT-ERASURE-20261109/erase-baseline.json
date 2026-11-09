@@ -1,0 +1,26 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "baseline_before_upgrade",
+  "install": "install-beta29",
+  "api": {
+    "core": "0.3.8",
+    "processes": 42,
+    "routines": 85,
+    "executions_366d": 54,
+    "executions_listed": 54,
+    "users": 12,
+    "notifications": 10
+  },
+  "tables": {
+    "processes": 42,
+    "routines": 92,
+    "routine_versions": 92,
+    "executions": 54,
+    "jobs": 135,
+    "users": 13,
+    "schema_migrations": 11,
+    "schedules": 2,
+    "schedule_runs": 2,
+    "notifications": 10
+  }
+}

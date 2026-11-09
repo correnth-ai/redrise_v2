@@ -1,0 +1,35 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "ACCOUNT-ERASURE-20261109",
+  "install": "install-beta30",
+  "scenarios": {
+    "reuse": {
+      "passed": true,
+      "refused_on_screen": false,
+      "created": 1,
+      "new_is_another_account": true,
+      "new_username_differs": true,
+      "row": [
+        "conta.reusada.21a6.2",
+        "Operador",
+        "Ativa"
+      ],
+      "own_login": true,
+      "old_password": "AUTH-INVALID",
+      "old_row": {
+        "email_erased": true,
+        "password_erased": true,
+        "deleted": true,
+        "display_kept_for_history": true
+      }
+    }
+  },
+  "core": "0.3.9",
+  "clicks_lost": [],
+  "seconds": 91,
+  "only": [
+    "reuse"
+  ],
+  "passed": true
+}

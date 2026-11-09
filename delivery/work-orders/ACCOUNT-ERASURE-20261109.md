@@ -28,4 +28,6 @@
 
 ## 4. Registro de execução
 
+- **09/11/2026:** executada. 0.1.0-beta.30 (Core 0.3.9) passou nos testes, no gate, na prova prática e no rollback; canal local assinado; instalação real atualizada pelo update do app. Entrar na equipe real e recriar a conta com o e-mail da excluída fica com o usuário.
+
 Ver o checkpoint [ACCOUNT-ERASURE-20261109](../checkpoints/ACCOUNT-ERASURE-20261109.md) e a evidência `delivery/evidence/ACCOUNT-ERASURE-20261109/evidence.json`.

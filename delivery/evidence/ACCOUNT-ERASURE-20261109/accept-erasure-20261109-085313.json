@@ -1,0 +1,50 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "ACCOUNT-ERASURE-20261109",
+  "install": "install-beta30",
+  "scenarios": {
+    "migration": {
+      "passed": true,
+      "baseline_from": "install-beta29",
+      "tables": {
+        "processes": 42,
+        "routines": 92,
+        "routine_versions": 92,
+        "executions": 54,
+        "jobs": 135,
+        "users": 13,
+        "schema_migrations": 12,
+        "schedules": 2,
+        "schedule_runs": 2,
+        "notifications": 10
+      },
+      "baseline_tables": {
+        "processes": 42,
+        "routines": 92,
+        "routine_versions": 92,
+        "executions": 54,
+        "jobs": 135,
+        "users": 13,
+        "schema_migrations": 11,
+        "schedules": 2,
+        "schedule_runs": 2,
+        "notifications": 10
+      },
+      "changed": {},
+      "backup_before_migration": "pre-migration-20261109-085044.dump",
+      "newest_migration": "012_account_erasure.sql",
+      "deleted_accounts": 1,
+      "deleted_not_erased": 0
+    },
+    "reuse": {
+      "passed": false,
+      "stopped": "Stop: not on screen: ('o e-mail fica livre para uma conta nova',); screen: Text|Excluir conta| / Text|A conta Conta Reusada a053 (conta.reusada.a053@exemplo.test) é apagada e não pode ser reat| / Button|Cancelar| / Button|Excluir conta| / Button|Fechar|"
+    }
+  },
+  "core": "0.3.9",
+  "clicks_lost": [],
+  "seconds": 66,
+  "only": null,
+  "passed": false
+}

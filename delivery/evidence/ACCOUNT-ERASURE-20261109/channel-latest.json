@@ -1,0 +1,11 @@
+{
+  "schema": "redrise.release/1",
+  "version": "0.1.0-beta.30",
+  "notes": "Conta excluída é apagada: o e-mail fica livre para uma conta nova; o nome continua só no histórico.",
+  "published_at": "2026-11-09T11:59:44+00:00",
+  "installer": {
+    "file": "RedRise-Setup-0.1.0-beta.30.exe",
+    "size": 310656554,
+    "sha256": "2a9ecac27d210e08f471b9e58c12fae028ad95cb79a39dee9e53c6e0b07ca469"
+  }
+}
