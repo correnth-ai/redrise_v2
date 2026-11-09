@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-09",
+  "authorization": "user, in chat: 'Sim, religar' (rejoin the revoked station of the real server)",
+  "method": "redrise_runner join with the host's own loopback code (rr1:127.0.0.1:47800:<fingerprint>, --is-host), the same mechanism the setup uses; the user typed a team administrator's user and password in their own terminal; the password went to the Runner through stdin only and was not read, shown or saved by this session",
+  "before": {
+    "station_id": 1,
+    "station_name": "servidor-lab",
+    "state": "revoked before the beta.29 update",
+    "runner_status": "AUTH-REQUIRED",
+    "heartbeats": "401"
+  },
+  "joined_at_local": "2026-11-09T07:20:01-03:00",
+  "after": {
+    "station_id": 2,
+    "station_name": "servidor-lab-2",
+    "host": "127.0.0.1",
+    "port": 47800,
+    "fingerprint": "2f6db61da6cab60ad8b9837461fc288e19fe1930430aa020f5bbf3c680e3be27"
+  },
+  "name_note": "'servidor-lab' is still held by the revoked station 1 (names are unique among stations not deleted)",
+  "backup": "%LOCALAPPDATA%/RedRise/agent/connection.json.before-rejoin-20261109-015956 (station 1 connection, kept on the machine)",
+  "app_restart": "the user closed and reopened RedRise at 07:20:14 so the Runner loads the new station credential",
+  "checks": {
+    "core_log": "last refused heartbeat at core.log line 619530; from line 619532 on, 25 heartbeats -> 200 and none refused (read at line 619605); the Runner also claimed work (POST /api/v1/runner/claim -> 200)",
+    "runner_status": "agent/status.json at 07:21:48: core_reachable true, session ready, no last_error",
+    "connection_json": "station_id 2, station_name servidor-lab-2, same host, port and fingerprint"
+  },
+  "not_done": [
+    "The revoked station 1 'servidor-lab' was not deleted: deleting it is the administrator's choice in Configuracao > Estacao (trash icon), now possible because sign-ins are tied to station 2.",
+    "The station screen and the team data were not read by this session (needs the team's credentials); the user signs in and checks."
+  ]
+}

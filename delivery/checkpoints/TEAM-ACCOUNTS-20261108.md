@@ -25,4 +25,5 @@
 
 - **Usuário:** entrar no app real e conferir a equipe (esta sessão não usa as credenciais da equipe real).
 - **Encontrado antes do update:** a estação do próprio servidor real já estava revogada (heartbeats recusados desde antes). A WO manda não recuperar automaticamente; enquanto ela estiver revogada, a sessão não fica ligada a uma estação e não há estação conectada para executar na equipe real, até este computador entrar de novo na equipe.
+- **Estação do servidor religada (09/11, por ordem do usuário):** este computador entrou de novo na equipe como a estação 2 `servidor-lab-2` pelo `redrise_runner join` (mesmo mecanismo do setup; usuário e senha digitados pelo próprio usuário). Depois de reabrir o app, os heartbeats voltaram a ser aceitos (200) e o executor está sem erro. A estação revogada 1 `servidor-lab` continua no inventário até um administrador excluí-la pela lixeira ([evidência](../evidence/TEAM-ACCOUNTS-20261108/real-station-rejoin.json)).
 - Revisão independente não designada. Item 8 adiado. Nada publicado.

@@ -194,7 +194,8 @@
       "Migration 011 not read from the real database (needs credentials); inferred from the backup line, the status 0.3.8 and the absence of errors."
     ],
     "found_before_update": "The real host's own station was already revoked before this update: its Runner heartbeats were refused (401) since before it (5050 refusals logged before, the last accepted one at core.log line 602389). The work order says not to recover it automatically. While it stays revoked, sign-ins on the real app are not tied to a station (revoking or deleting stations answers STATION-SESSION-UNBOUND) and the real team has no connected station to run on, until this computer joins the team again.",
-    "rollback": "uninstall.exe --rollback restores the program (0.1.0-beta.28 kept); the data stay migrated, which 0.3.7 reads (proved on the lab copy)."
+    "rollback": "uninstall.exe --rollback restores the program (0.1.0-beta.28 kept); the data stay migrated, which 0.3.7 reads (proved on the lab copy).",
+    "station_rejoined": "2026-11-09, by user order: this computer joined its team again as station 2 'servidor-lab-2' through redrise_runner join (the setup's own mechanism, credentials typed by the user); after reopening the app the Runner heartbeats are accepted (200) and its status has no error. The revoked station 1 stays in the inventory until an administrator deletes it (real-station-rejoin.json)."
   },
   "not_done": [
     "Item 8 (MediaFire, public distribution): deferred by the user.",
@@ -333,6 +334,10 @@
     {
       "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/verification.json",
       "sha256": "cf7991a72eb527941029471e4c01fbbb4a22c8062b1e8a254284e79716716f9f"
+    },
+    {
+      "path": "delivery/evidence/TEAM-ACCOUNTS-20261108/real-station-rejoin.json",
+      "sha256": "cee7fe3dd3a6bdf2d22f29ac5ce65489d2c3b7ba3f9a81e69603846f9a00eea4"
     }
   ]
 }
