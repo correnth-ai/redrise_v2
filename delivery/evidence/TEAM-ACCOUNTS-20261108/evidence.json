@@ -19,7 +19,24 @@
       "880662e",
       "fa9347b"
     ],
-    "pushed": false
+    "pushed": true,
+    "push": {
+      "date": "2026-11-09",
+      "authorization": "user, in chat, after the station rejoin: 'OK, aprovado. Pode fazer push.'",
+      "remote": "https://github.com/correnth-ai/redrise_v2.git",
+      "range": "f78d229..cd2d146",
+      "commits": [
+        "991ebc5",
+        "ddd42e2",
+        "880662e",
+        "d8682b8",
+        "fa9347b",
+        "486d68e",
+        "cd2d146"
+      ],
+      "pre_push_scan": "no secret-like files (.env, keys, dumps, credentials) or key patterns in the 155 changed files",
+      "verified": "after fetch, origin/main == main == cd2d146"
+    }
   },
   "decisions": "Work order TEAM-ACCOUNTS-20261108 section 9, recorded before implementation.",
   "candidate": {
@@ -199,7 +216,6 @@
   },
   "not_done": [
     "Item 8 (MediaFire, public distribution): deferred by the user.",
-    "Push to the remote: not authorized.",
     "Independent review: not assigned."
   ],
   "artifacts": [

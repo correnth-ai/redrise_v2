@@ -17,7 +17,7 @@
 
 ## Entrega
 
-- Commits na `main` local: `ddd42e2` (S5), `880662e` (esta WO, fonte do instalador), `d8682b8` e `fa9347b` (prova). Sem push.
+- Commits na `main` local: `ddd42e2` (S5), `880662e` (esta WO, fonte do instalador), `d8682b8` e `fa9347b` (prova). Push para `origin/main` em 09/11, por ordem do usuário (`f78d229..cd2d146`, mais este registro).
 - Instalador `C:\Users\raulv\RedRise-v2-dev\release\0.1.0-beta.29\RedRise-Setup-0.1.0-beta.29.exe`, SHA256 `6dedaf96867d6b67066743a74fab54e47683cb7d69e9475e75626d78405aa6e7`, assinado no canal local (antes beta.28).
 - Instalação real atualizada pelo update do próprio app em 09/11 01:35: 0.1.0-beta.28 → 0.1.0-beta.29, anterior guardada, backup `pre-migration-20261109-013602.dump`, Core 0.3.8, sem erros nos logs; app reaberto na tela de login.
 
