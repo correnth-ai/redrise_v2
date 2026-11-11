@@ -119,9 +119,36 @@
       "notes": [
         "The first station attempt ended on a full C: drive (os error 112): the wizard showed its error page and kept the previous install; this run's own disposable lab folders were then removed.",
         "Kanban timing: from the Core's confirmation to the card in its column, 1.8 to 2.0 s per step (each probe reads the whole window: an upper bound), against the 5 s target; the polling fallback is 3 s with a running execution and 30 s idle (docs/ui/LIVE-TABLES.md).",
-        "Feed outage and lost connection were proved at component level (cards kept, stale notice); natively the window was hidden and shown again.",
-        "Station: an integrated local test with two isolated installs on this computer; not a second physical machine, LAN or VPN."
+        "Station: an integrated local test with two isolated installs on this computer; not a second physical machine, LAN or VPN.",
+        "Review path, history beyond the general list and the team server lost and back: proved natively later the same day (practical_e2e_kanban_more)."
       ]
+    },
+    {
+      "type": "practical_e2e_kanban_more",
+      "date": "2026-11-11",
+      "command": "chain-wo.ps1 -From proof -Only kanban_more (accept_wo.py s_kanban_more) on lab-test/install-beta31, started after 180 s idle",
+      "observed": "passed: a step awaiting review in Aguardando with Aguardando revisão in its summary, approved by the responsible in another session and moved to Conferida (execution finished verified, sequence_end); 105 newer executions of another process left this execution out of the 100-row general list and its cards stayed on the board; the lab Core stopped through core.stop (the app's clean stop): the board kept every card under the stale notice, the app started the Core again from Configuração › Aplicativo, the notice went away, the session stayed signed in and a new execution showed in 1.97 s",
+      "seconds_to_screen": {
+        "started -> Aguardando": 2.0,
+        "awaiting review -> Aguardando": 2.11,
+        "step 1 verified -> Conferida": 2.0,
+        "approved -> Conferida": 2.08,
+        "after the server came back: started -> Aguardando": 1.97
+      },
+      "max_live_s": 2.11,
+      "server_lost": {
+        "how": "core.stop (the app's clean stop)",
+        "core_down_s": 3.06,
+        "stale_notice_s": 25.33,
+        "cards_kept": true,
+        "back_after_s": 37.8,
+        "back_by": "Configuração › Aplicativo (host_start)",
+        "notice_gone": true,
+        "still_signed_in": true
+      },
+      "note": "the stale notice came 25 s after the Core stopped: with nothing running the board reads every 30 s (docs/ui/LIVE-TABLES.md); a failure of the change feed alone, with reads still answering, cannot be produced from outside the product and stays covered by the component tests and the polling",
+      "record": "accept-wo-20261111-185040.json",
+      "product_changed": false
     },
     {
       "type": "rollback_isolated_copy",
@@ -177,6 +204,10 @@
     {
       "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/accept-wo-20261111-101443.json",
       "sha256": "24cfaf877bfb42506aee69e3b66923dd73f9a63a26313d3c7b47d65e150922a0"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/accept-wo-20261111-185040.json",
+      "sha256": "8246aacad85e0aabd71969be0ee5993de770e8235333bcc36ecfeeed27c3d9a6"
     },
     {
       "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/channel-latest.json",
@@ -243,6 +274,10 @@
       "sha256": "4fc7b7bb989294bec8dc9c923439d9b828c1fc7f68795a22a2301257601433f1"
     },
     {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-aguardando-revisao.png",
+      "sha256": "9ef6d84bb61efb9f27ac49010c0c14b1193e29a43da254b699afb66e45808b86"
+    },
+    {
       "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-atencao-nao-executada.png",
       "sha256": "4294c5f3f23bdeb1523d99b22ecf0195bc89ec7a22ac4795764236be8f8e9c1d"
     },
@@ -269,6 +304,18 @@
     {
       "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-resumo.png",
       "sha256": "25e2f31ccd782797df8dd15918afde349ad82a2c010cccbd165be82dd3be59d5"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-revisao-aprovada.png",
+      "sha256": "1e86c75720529f55adf952053e6b490df014f2c2cfd2837264c21e2b38b21370"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-sem-servidor.png",
+      "sha256": "386d993ef3fad5a70fe9fd7270c6e6602f01f01117acd79423b32ea1f288aad5"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-servidor-de-volta.png",
+      "sha256": "0024341b2bb2b615f07af9ca21da4b243ebf5cf78cba679a4672160c7b7526c6"
     },
     {
       "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-primeira-abertura-estacao.png",
@@ -345,9 +392,11 @@
     "open": [
       "Sign-in on the real team, its data and the four items there: needs the team's credentials (blocked, pending the user).",
       "Independent review of the installer integration: no reviewer assigned (the work order asks for it before accepting the candidate).",
-      "Kanban, native coverage is partial: the review path (a step awaiting review) was not exercised in the lab window; feed outage, lost connection and a history larger than the general list were proved at Core and component level only; counters at component level.",
       "Station on a second physical machine/LAN: not part of this proof (two isolated installs on one computer).",
       "Artifacts were built from the candidate tree 7523f04 (not on main); it differs from 2bb2b02 only in proof files that are not shipped."
+    ],
+    "closed": [
+      "Kanban native coverage: review path, history beyond the general list, server lost and back (accept-wo-20261111-185040.json)."
     ]
   }
 }

@@ -1,0 +1,60 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "PROCESS-LIST-INSTALLER-20261110",
+  "install": "install-beta31",
+  "setup": "RedRise-Setup-0.1.0-beta.31.exe",
+  "scenarios": {
+    "kanban_more": {
+      "passed": true,
+      "seconds_to_screen": {
+        "started -> Aguardando": 2.0,
+        "awaiting review -> Aguardando": 2.11,
+        "step 1 verified -> Conferida": 2.0,
+        "approved -> Conferida": 2.08,
+        "after the server came back: started -> Aguardando": 1.97
+      },
+      "target_s": 5.0,
+      "max_live_s": 2.11,
+      "review": {
+        "paused_state": "waiting_review",
+        "step_state": "awaiting_review",
+        "summary_shows": "Aguardando revisão",
+        "approved_by": "the responsible (another session)",
+        "final": [
+          "finished",
+          "verified",
+          "sequence_end"
+        ]
+      },
+      "history": {
+        "general_list": 100,
+        "execution_in_general_list": false,
+        "cards_on_board": true,
+        "newer_executions_inserted": 105
+      },
+      "server_lost": {
+        "how": "core.stop (the app's clean stop)",
+        "core_down_s": 3.06,
+        "stale_notice_s": 25.33,
+        "cards_kept": true,
+        "back_after_s": 37.8,
+        "back_by": "Configuração › Aplicativo (host_start)",
+        "notice_gone": true,
+        "still_signed_in": true
+      },
+      "executions": [
+        "bcc4425d-0383-4f01-95df-d4706a4fbeda",
+        "b30812aa-035a-4a92-9c6a-86fa1dbee5c7"
+      ],
+      "not_native": "a failure of the change feed alone (with reads still answering) is not producible from outside the product; covered by component tests and the 3 s/30 s polling"
+    }
+  },
+  "core": "0.3.10",
+  "clicks_lost": [],
+  "seconds": 143,
+  "only": [
+    "kanban_more"
+  ],
+  "passed": true
+}

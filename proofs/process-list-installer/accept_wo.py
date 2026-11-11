@@ -17,6 +17,8 @@ never touched. Passwords and tokens are read or generated in memory and never pr
  kanban       Processo › Kanban observed in the app while another session and a simulated Runner start and advance
               executions: columns, Conferida, counters, person and station, the open summary kept on its execution,
               Saber mais, a newer execution of the same process, the window hidden and shown again; time to update.
+ kanban_more  the same board on a step awaiting review approved by its responsible, a history larger than the general list,
+              and the lab team server stopped (core.stop) and started again by the app: cards kept under the stale notice.
  layout       Kanban and Processo › Ação in light and dark, maximized and narrow (screenshots, horizontal scroll).
  wizard_*     the installer wizard (InstallRS) in isolated roots: server and station, the choice required, cancel before
               installing, cancel while installing (previous install kept), an already configured computer (no role
@@ -364,6 +366,123 @@ class Lab(accept_team.Lab):
                 "observer": "the lab app window (admin session)", "actor": "another session (operator) and a simulated Runner, same Core",
                 "executions": [e1["id"], e2["id"], e3["id"]], "cancelled_execution": {"outcome": ex3["outcome"], "end_reason": ex3["end_reason"]}}
 
+    def s_kanban_more(self) -> dict:
+        """The Kanban paths the first native run left to Core and component tests: a step awaiting review and its approval,
+        a history larger than the general list, and the team server lost and back (cards kept under the stale notice)."""
+        s = self.api.call("POST", "/api/v1/stations", {"name": f"Estação Revisão {self.seq}"})
+        sid = s["station"]["id"]
+        runner = self.client(s["runner_token"], by="RR-RUNNER")
+        runner.call("POST", "/api/v1/runner/heartbeat", HB)
+        op_mail, op_pw = f"revisora.kanban.{self.seq}@exemplo.test", secrets.token_urlsafe(12)
+        self.api.call("POST", "/api/v1/accounts", {"full_name": f"Revisora Kanban {self.seq}", "email": op_mail, "password": op_pw})
+
+        def login():
+            return self.client(self.client().call("POST", "/api/v1/login", {"username": op_mail, "password": op_pw})["token"])
+        other = login()
+        uid = other.call("GET", "/api/v1/me")["id"]
+        pname = f"Revisão {self.seq}"
+        pid = self.api.call("POST", "/api/v1/processes", {"name": pname, "items": []})["id"]
+        self.api.call("POST", "/api/v1/routines", {"name": f"Gerar relatório {self.seq}", "category": "windows", "link": {"process_id": pid},
+                      "version": {"kind": "app_open", "config": {"target": {"kind": "app", "app_id": "Calc!App", "name": "Calculadora"}, "isolated": True}}})
+        self.api.call("POST", "/api/v1/routines", {"name": f"Conferir relatório {self.seq}", "category": "windows",
+                      "version": {"kind": "followup", "config": {"action": "review", "assignee_id": uid}},
+                      "link": {"process_id": pid, "after_position": 1}})
+        a, b = f"1. Gerar relatório {self.seq}", f"2. Conferir relatório {self.seq}"
+        times: dict[str, float] = {}
+
+        def run_step1():
+            job = runner.call("POST", "/api/v1/runner/claim", HB)["job"]
+            if not job:
+                raise Stop("nothing to claim")
+            runner.call("POST", f"/api/v1/runner/jobs/{job['job_id']}/start", {"lease_id": job["lease_id"]})
+            runner.call("POST", f"/api/v1/runner/jobs/{job['job_id']}/result", {"lease_id": job["lease_id"], "result": {
+                "schema": "redrise.job-result/1", "state": "verified", "verified": True, "details": {"context": {"arquivo": "relatorio.xlsx"}}}})
+
+        self.guard()
+        self.page("Kanban")
+        self.wait("Aguardando", "Conferida", timeout=30)
+        # 1. Review: the paused step waits in Aguardando with its own state; the responsible's approval moves it to Conferida.
+        e1 = other.call("POST", "/api/v1/executions", {"request_id": uuid.uuid4().hex, "station_id": sid, "process_id": pid})
+        times["started -> Aguardando"] = self.until(a, "Aguardando")
+        run_step1()
+        times["awaiting review -> Aguardando"] = self.until(b, "Aguardando")
+        times["step 1 verified -> Conferida"] = self.until(a, "Conferida")
+        paused = self.api.call("GET", f"/api/v1/executions/{e1['id']}")
+        self.invoke(f"{b}*")
+        self.wait("Saber mais", "Aguardando revisão", timeout=15)
+        review_label = self.has("Aguardando revisão")
+        self.shot("kanban-aguardando-revisao")
+        self.ui("-Do", "keys", "-Value", "{ESC}")
+        q = next(x for x in other.call("GET", "/api/v1/reviews") if x["execution_id"] == e1["id"])
+        other.call("POST", f"/api/v1/reviews/{q['id']}/approve")
+        times["approved -> Conferida"] = self.until(b, "Conferida")
+        done = self.api.call("GET", f"/api/v1/executions/{e1['id']}")
+        self.shot("kanban-revisao-aprovada")
+        # 2. A history larger than the general list: 105 newer executions of another process push this one out of it.
+        vol = self.api.call("POST", "/api/v1/processes", {"name": f"Volume {self.seq}", "items": []})["id"]
+        me = self.api.call("GET", "/api/v1/me")["id"]
+        self.sql("""INSERT INTO executions (request_id, process_id, station_id, requested_by, snapshot, state, outcome, correlation_id, created_at, finished_at)
+                    SELECT 'vol-' || g || '-' || %s, %s, %s, %s, '[]', 'finished', 'verified', 'synthetic', now() + (g || ' ms')::interval, now() + (g || ' ms')::interval
+                    FROM generate_series(1, 105) g""", (uuid.uuid4().hex, vol, self.station, me))
+        general = self.api.call("GET", "/api/v1/executions")
+        out_of_list = all(x["id"] != e1["id"] for x in general)
+        self.page("Ação")
+        self.page("Kanban")
+        self.wait("Aguardando", "Conferida", timeout=30)
+        still_on_board = self.where(b) == "Conferida" and self.where(a) == "Conferida"
+        # 3. The team server lost (clean stop through its stop file, as the app does) and back (the app starts it again).
+        stop = self.lab / "data" / "host" / "core.stop"
+        t0 = time.monotonic()
+        stop.write_bytes(b"stop")
+        end = time.monotonic() + 60
+        while time.monotonic() < end:
+            try:
+                self.api.call("GET", "/api/v1/status")
+                time.sleep(1)
+            except Exception:  # refused, reset or timed out: the server is not answering
+                break
+        else:
+            raise Stop("the lab Core did not stop")
+        core_down_s = round(time.monotonic() - t0, 2)
+        self.wait("Os dados podem estar desatualizados", timeout=75)
+        notice_s = round(time.monotonic() - t0, 2)
+        kept = self.where(a) == "Conferida" and self.where(b) == "Conferida"
+        self.shot("kanban-sem-servidor")
+        self.page("Aplicativo")  # Configuração › Aplicativo starts the team server of this computer when it is not running
+        end = time.monotonic() + 180
+        while time.monotonic() < end:
+            try:
+                self.api.call("GET", "/api/v1/status")
+                break
+            except Exception:  # refused, reset or timed out: the server is not answering
+                time.sleep(2)
+        else:
+            raise Stop("the lab Core did not come back")
+        back_s = round(time.monotonic() - t0, 2)
+        runner.call("POST", "/api/v1/runner/heartbeat", HB)
+        self.page("Kanban")
+        self.gone("Os dados podem estar desatualizados", timeout=60)
+        signed_in = self.has("Sair")
+        e2 = other.call("POST", "/api/v1/executions", {"request_id": uuid.uuid4().hex, "station_id": sid, "process_id": pid})
+        times["after the server came back: started -> Aguardando"] = self.until(a, "Aguardando")
+        self.shot("kanban-servidor-de-volta")
+        queued = self.api.call("GET", f"/api/v1/executions/{e2['id']}")["steps"][0]["job_id"]
+        self.api.call("POST", f"/api/v1/jobs/{queued}/cancel")
+        live = list(times.values())
+        ok = (paused["state"] == "waiting_review" and paused["steps"][1]["state"] == "awaiting_review" and review_label
+              and done["state"] == "finished" and done["outcome"] == "verified" and len(general) == 100 and out_of_list and still_on_board
+              and kept and signed_in and max(live) <= 5.0)
+        return {"passed": ok, "seconds_to_screen": times, "target_s": 5.0, "max_live_s": max(live),
+                "review": {"paused_state": paused["state"], "step_state": paused["steps"][1]["state"], "summary_shows": "Aguardando revisão" if review_label else None,
+                           "approved_by": "the responsible (another session)", "final": [done["state"], done["outcome"], done.get("end_reason")]},
+                "history": {"general_list": len(general), "execution_in_general_list": not out_of_list, "cards_on_board": still_on_board,
+                            "newer_executions_inserted": 105},
+                "server_lost": {"how": "core.stop (the app's clean stop)", "core_down_s": core_down_s, "stale_notice_s": notice_s,
+                                "cards_kept": kept, "back_after_s": back_s, "back_by": "Configuração › Aplicativo (host_start)",
+                                "notice_gone": True, "still_signed_in": signed_in},
+                "executions": [e1["id"], e2["id"]],
+                "not_native": "a failure of the change feed alone (with reads still answering) is not producible from outside the product; covered by component tests and the 3 s/30 s polling"}
+
     def s_layout(self) -> dict:
         self.guard()
         shots = []
@@ -592,7 +711,7 @@ class Lab(accept_team.Lab):
                 "scope": "integrated local test: two isolated installs on this computer; not a second physical machine, LAN or VPN"}
 
 
-SCENARIOS = ("migration", "processes", "own_account", "kanban", "layout", "wizard_server", "wizard_cancel", "wizard_existing", "wizard_station")
+SCENARIOS = ("migration", "processes", "own_account", "kanban", "kanban_more", "layout", "wizard_server", "wizard_cancel", "wizard_existing", "wizard_station")
 
 
 def main() -> None:
