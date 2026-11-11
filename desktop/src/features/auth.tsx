@@ -140,7 +140,11 @@ function Brand({ title, children }: { title: string; children?: React.ReactNode 
   );
 }
 
-export function WelcomePage({ onDone, onCreated }: { onDone: () => void; onCreated: (joinCode: string) => void }) {
+/** Role chosen in the installer wizard (PROCESS-LIST-INSTALLER-20261110 item 2), or null: an install made without the
+ *  wizard (update, older installer) still offers both. The choice grants nothing; the app consumes it once set up. */
+export type SetupRole = "server" | "station" | null;
+
+export function WelcomePage({ onDone, onCreated, role = null }: { onDone: () => void; onCreated: (joinCode: string) => void; role?: SetupRole }) {
   const [h, setH] = useState({ team: "", station: "servidor", username: "", display: "", password: "", password2: "", port: "47800" });
   const [j, setJ] = useState({ code: "", station: "", username: "", password: "" });
   const [error, setError] = useState<unknown>(null);
@@ -149,11 +153,17 @@ export function WelcomePage({ onDone, onCreated }: { onDone: () => void; onCreat
   const F = ({ id, label: text, hint, ...p }: { id: string; label: string; hint?: string } & React.ComponentProps<"input">) => (
     <Field><FieldLabel htmlFor={id}>{text}</FieldLabel><Input id={id} {...p} />{hint && <FieldDescription>{hint}</FieldDescription>}</Field>
   );
+  const server = role !== "station", station = role !== "server";
   return (
-    <div className="mx-auto max-w-5xl space-y-6 overflow-auto p-6">
-      <Brand title="Boas-vindas à RedRise" />
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-none"><CardHeader><CardTitle>Criar equipe neste computador</CardTitle>
+    <div className={`mx-auto space-y-6 overflow-auto p-6 ${role ? "max-w-xl" : "max-w-5xl"}`}>
+      <Brand title="Boas-vindas à RedRise">
+        {role && <p className="text-sm text-muted-foreground" role="status">
+          {role === "server" ? "Escolhido na instalação: servidor da equipe. Configure a equipe e o primeiro administrador."
+            : "Escolhido na instalação: estação de operação. Conecte este computador ao servidor de uma equipe existente; depois, cada pessoa entra com a própria conta."}
+        </p>}
+      </Brand>
+      <div className={`grid gap-6 ${role ? "" : "md:grid-cols-2"}`}>
+        {server && <Card className="shadow-none"><CardHeader><CardTitle>Criar equipe neste computador</CardTitle>
           <CardDescription>Este computador será o servidor da equipe (dados compartilhados) e também poderá executar rotinas.</CardDescription></CardHeader>
           <CardContent><form onSubmit={(e) => { e.preventDefault(); if (h.password !== h.password2) { setError("As senhas não conferem."); return; }
             void run(async () => {
@@ -171,8 +181,8 @@ export function WelcomePage({ onDone, onCreated }: { onDone: () => void; onCreat
               {F({ id: "h-port", label: "Porta na rede local", type: "number", min: 1024, max: 65535, value: h.port, onChange: (e) => setH({ ...h, port: e.target.value }),
                 hint: "Outras estações conectam por esta porta. O Windows pode pedir permissão de rede; nada é alterado sem sua confirmação." })}
               <Button type="submit" disabled={busy}>Criar equipe</Button>
-            </FieldGroup></form></CardContent></Card>
-        <Card className="shadow-none"><CardHeader><CardTitle>Conectar a uma equipe</CardTitle>
+            </FieldGroup></form></CardContent></Card>}
+        {station && <Card className="shadow-none"><CardHeader><CardTitle>Conectar a uma equipe</CardTitle>
           <CardDescription>Use o código exibido em Configuração › Aplicativo no servidor da equipe. Um administrador entra uma vez para registrar esta estação.</CardDescription></CardHeader>
           <CardContent><form onSubmit={(e) => { e.preventDefault(); void run(async () => {
             await call("station_join", { code: j.code, username: j.username, password: j.password, stationName: j.station }); onDone();
@@ -183,8 +193,11 @@ export function WelcomePage({ onDone, onCreated }: { onDone: () => void; onCreat
               {F({ id: "j-user", label: "Usuário administrador", required: true, value: j.username, onChange: (e) => setJ({ ...j, username: e.target.value }) })}
               {F({ id: "j-pw", label: "Senha", type: "password", required: true, value: j.password, onChange: (e) => setJ({ ...j, password: e.target.value }) })}
               <Button type="submit" disabled={busy}>Conectar</Button>
-            </FieldGroup></form></CardContent></Card>
+            </FieldGroup></form></CardContent></Card>}
       </div>
+      {/* A station that cannot reach its server stays a station: the connection is pending and can be tried again;
+          no local server is created as a fallback. */}
+      {error != null && role === "station" && <p role="status" className="text-sm">Conexão pendente: confira o código da equipe e se o servidor está ligado com o RedRise aberto, e tente de novo.</p>}
       <ErrorView error={error} />
     </div>
   );

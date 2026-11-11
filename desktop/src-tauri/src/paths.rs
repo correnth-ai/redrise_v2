@@ -98,6 +98,21 @@ impl Paths {
         read_json(&self.data_root.join("agent").join("status.json"))
     }
 
+    /// Role chosen in the installer wizard for a computer not set up yet (`install/setup-intent.json`, schema
+    /// redrise.setup-intent/1, server|station). Not a secret and grants nothing: it only picks the first-open flow.
+    pub fn setup_intent(&self) -> Option<String> {
+        let v = read_json(&self.data_root.join("install").join("setup-intent.json"))?;
+        let role = v.get("role")?.as_str()?;
+        (v.get("schema").and_then(Value::as_str) == Some("redrise.setup-intent/1") && matches!(role, "server" | "station"))
+            .then(|| role.to_string())
+    }
+
+    /// Once the configuration is done, the intent is consumed (kept beside, renamed): reopening never asks again.
+    pub fn consume_setup_intent(&self) {
+        let dir = self.data_root.join("install");
+        let _ = std::fs::rename(dir.join("setup-intent.json"), dir.join("setup-intent.consumed.json"));
+    }
+
     pub fn manifest_sha256(&self) -> Option<String> {
         std::fs::read(self.install_root.join("manifest.json")).ok().map(|b| format!("{:x}", Sha256::digest(&b)))
     }

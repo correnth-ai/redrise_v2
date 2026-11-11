@@ -42,7 +42,9 @@ export interface Routine {
 export interface ProcessItem { position: number; routine_id: number; routine_name: string; continue_next: boolean;
   kind: string; config: RoutineConfig | null }
 export interface Process { id: number; name: string; system_key?: string | null; pending_change?: string | null; created_at: string; updated_at: string; items: ProcessItem[];
-  last_execution: { id: string; state: string; outcome: string | null; end_reason: string | null; created_at: string } | null }
+  last_execution: { id: string; state: string; outcome: string | null; end_reason: string | null; created_at: string } | null;
+  /** End of the most recent execution finished as `verified`, over the whole history (Core 0.3.10); null: never. */
+  last_success_at?: string | null }
 
 export type JobState = "awaiting_review" | "queued" | "claimed" | "running" | "completed_unverified" | "verified" | "failed" | "uncertain" |
   "refused" | "cancelled" | "error";

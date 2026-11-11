@@ -240,7 +240,11 @@ class TeamAccountsTest(Harness, unittest.TestCase):
         self.assertEqual(out["started"], 0)
         row = next(s for s in a.call("GET", "/api/v1/schedules") if s["id"] == sched["id"])
         self.assertEqual((row["enabled"], row["paused_reason"]), (False, "owner_not_allowed"))  # never runs in the deleted owner's name
-        self.expect("CONFLICT", lambda: a.call("PATCH", f"/api/v1/users/{a.call('GET', '/api/v1/me')['id']}", {"active": False}), 409)  # last active admin
+        me = a.call("GET", "/api/v1/me")["id"]
+        # Since PROCESS-LIST-INSTALLER-20261110 nobody deactivates their own account; the last active administrator
+        # is still protected against losing the role.
+        self.expect("ACCOUNT-SELF-DEACTIVATE", lambda: a.call("PATCH", f"/api/v1/users/{me}", {"active": False}), 409)
+        self.expect("CONFLICT", lambda: a.call("PATCH", f"/api/v1/users/{me}", {"role": "operator"}), 409)  # last active admin
 
     # ---------------------------------------------------------------- 4. stations
     def test_06_the_station_in_use_is_protected_and_identified_by_proof(self):

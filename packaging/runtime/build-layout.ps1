@@ -142,6 +142,20 @@ try {
 } finally { Pop-Location }
 $crates | ConvertTo-Json -Depth 3 | Set-Content -Encoding utf8 (Join-Path $Out 'licenses\engine-crates.json')
 
+# ---- The installer stub (the setup's wizard; uninstall.exe in this folder is the same stub): its crates and the MIT
+# notice of InstallRS (PROCESS-LIST-INSTALLER-20261110), copied from the exact crate cargo resolved for the lockfile.
+Push-Location (Join-Path $repo 'installer')
+try {
+  $icrates = & cargo tree -p redrise-setup -e normal --prefix none --format '{p}|{l}' --locked --target x86_64-pc-windows-msvc |
+    ForEach-Object { ($_ -replace ' \(\*\)', '') -replace ' \([A-Za-z]:\\[^)]*\)', '' } | Sort-Object -Unique |
+    ForEach-Object { $n, $l = $_ -split '\|', 2; [ordered]@{ crate = $n.Trim(); license = $l.Trim() } }
+  $irs = (& cargo metadata --format-version 1 --locked --filter-platform x86_64-pc-windows-msvc | ConvertFrom-Json).packages |
+    Where-Object { $_.name -eq 'installrs' } | Select-Object -First 1
+} finally { Pop-Location }
+$icrates | ConvertTo-Json -Depth 3 | Set-Content -Encoding utf8 (Join-Path $Out 'licenses\installer-crates.json')
+if (-not $irs) { throw 'installrs not found in the installer lockfile' }
+Copy-Item -LiteralPath (Join-Path (Split-Path -Parent $irs.manifest_path) 'LICENSE.txt') -Destination (Join-Path $Out "licenses\installrs-$($irs.version)-LICENSE.txt")
+
 if ($IdentityConfig -and (Test-Path -LiteralPath $IdentityConfig)) { Copy-Item -LiteralPath $IdentityConfig -Destination (Join-Path $Out 'identity.json') }
 
 # ---- manifest (written last)

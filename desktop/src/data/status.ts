@@ -37,8 +37,11 @@ export const TONE_CLASS: Record<Tone, string> = {
 
 /** Kanban column of a step. "Atenção" keeps failed/uncertain/unverified distinct via their badge. */
 export type Column = "waiting" | "running" | "verified" | "attention" | "not_run";
+/** Left to right on the board (PROCESS-LIST-INSTALLER-20261110 item 4.1). */
+export const COLUMNS: Column[] = ["waiting", "running", "attention", "not_run", "verified"];
+/** Board labels only: the canonical result stays `verified` ("Verificada" elsewhere). */
 export const COLUMN_LABEL: Record<Column, string> = {
-  waiting: "Aguardando", running: "Em andamento", verified: "Verificada", attention: "Atenção", not_run: "Não executada",
+  waiting: "Aguardando", running: "Em andamento", verified: "Conferida", attention: "Atenção", not_run: "Não executada",
 };
 export function column(e: Execution, s: ExecutionStep): Column {
   if (s.state === null) return e.state === "finished" ? "not_run" : "waiting";

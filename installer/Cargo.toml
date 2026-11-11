@@ -1,10 +1,11 @@
 [package]
 name = "redrise-setup"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "RedRise per-user installer: self-contained payload, verified, atomic swap with rollback"
+description = "RedRise per-user installer: InstallRS wizard over a self-contained payload, verified, atomic swap with rollback"
 license = "LicenseRef-RedRise-Proprietary"
 publish = false
+build = "build.rs"
 
 [dependencies]
 zip = { version = "2", default-features = false, features = ["deflate"] }
@@ -12,6 +13,13 @@ sha2 = "0.10"
 serde_json = "1"
 mslnk = "0.1"
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Com", "Win32_System_Registry", "Win32_Security", "Win32_System_Console", "Win32_System_Threading", "Win32_System_Diagnostics_ToolHelp"] }
+# Wizard only (user decision, PROCESS-LIST-INSTALLER-20261110 item 2): pinned; no compression features, no file
+# operations of its own are used. Extraction, verification, swap, registry and rollback stay in this crate.
+installrs = { version = "=0.1.1", default-features = false, features = ["gui-win32"] }
+anyhow = "1"
+
+[build-dependencies]
+winresource = "0.1"
 
 [profile.release]
 opt-level = "s"

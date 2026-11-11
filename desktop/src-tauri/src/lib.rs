@@ -51,6 +51,8 @@ fn app_info(app: State<App>) -> Res {
         "host_configured": p.host_config().is_some(),
         "host": p.host_config(),
         "connection": p.connection(),
+        // Chosen in the installer for this computer while it is not set up (server|station), or null.
+        "setup_intent": if p.connection().is_none() { p.setup_intent() } else { None },
         "core_running": s.core_running(),
         "agent_running": s.agent_running(),
         "agent_status": p.agent_status(),
@@ -69,6 +71,7 @@ fn host_create(app: State<App>, port: u16, team: String, username: String, displ
     // The host computer is also a station (D05: the host can execute too).
     local::join(p, &code, &username, &password, &station_name, true, Some("127.0.0.1"))?;
     app.procs.lock().unwrap().start_agent(p)?;
+    p.consume_setup_intent();
     Ok(json!({"join_code": code}))
 }
 
@@ -82,6 +85,7 @@ fn host_start(app: State<App>) -> Res {
 fn station_join(app: State<App>, code: String, username: String, password: String, station_name: String) -> Res {
     let out = local::join(&app.paths, &code, &username, &password, &station_name, false, None)?;
     app.procs.lock().unwrap().start_agent(&app.paths)?;
+    app.paths.consume_setup_intent();
     Ok(out)
 }
 

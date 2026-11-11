@@ -2,7 +2,7 @@
 // tabbed filters, search, filter menu, row selection, sorting from the column
 // menu, moving and hiding columns from the header, and pagination. It only
 // presents the rows it receives; actions come from the screen that uses it.
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, Columns3, EyeOff, ListFilter, RotateCcw, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,11 @@ export interface DataTableProps<T> {
   selectionActions?: (rows: T[], clear: () => void) => React.ReactNode;
   onRowOpen?: (row: T) => void;
   toolbar?: React.ReactNode;
+  /** Child rows shown right under a row (e.g. the routines of an expanded process). They stay on their parent's page
+   *  and never count in the pagination; return null to show none. */
+  childRows?: (row: T) => React.ReactNode;
+  /** Shows "Limpar filtros" while a filter or a search is active. */
+  clearable?: boolean;
 }
 
 // Row actions stay reachable in a narrow window: the other columns scroll under them. The pinned cell is opaque
@@ -64,7 +69,7 @@ function readLayout(key: string | undefined, ids: string[]): ColumnLayout {
 }
 
 export function DataTable<T>({ label, rows, columns, rowKey, rowLabel, tabs, initialTab, filters, searchPlaceholder = "Buscar…", empty = "Nenhum registro.",
-  pageSizes = [10, 25, 50], storageKey, selectable, selectionActions, onRowOpen, toolbar }: DataTableProps<T>) {
+  pageSizes = [10, 25, 50], storageKey, selectable, selectionActions, onRowOpen, toolbar, childRows, clearable }: DataTableProps<T>) {
   const movable = columns.filter((c) => !c.fixed);
   const ids = movable.map((c) => c.id);
   const [stored, setStored] = useState<ColumnLayout>(() => readLayout(storageKey, ids));
@@ -151,6 +156,9 @@ export function DataTable<T>({ label, rows, columns, rowKey, rowLabel, tabs, ini
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+          {clearable && (activeFilters > 0 || query.trim() !== "") && (
+            <Button size="sm" variant="ghost" onClick={() => { setPicked({}); setQuery(""); toFirst(); }}><X aria-hidden /> Limpar filtros</Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button size="sm" variant="outline"><Columns3 aria-hidden /> Colunas</Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -201,8 +209,10 @@ export function DataTable<T>({ label, rows, columns, rowKey, rowLabel, tabs, ini
             {rows !== null && !view.rows.length && <TableRow><TableCell colSpan={span} className="text-muted-foreground">{all.length ? "Nenhum registro corresponde à busca e aos filtros." : empty}</TableCell></TableRow>}
             {view.rows.map((r) => {
               const key = rowKey(r);
+              const children = childRows?.(r);
               return (
-                <TableRow key={key} data-state={selected.has(key) ? "selected" : undefined}
+                <Fragment key={key}>
+                <TableRow data-state={selected.has(key) ? "selected" : undefined}
                   className={cn("group/row", onRowOpen && "cursor-pointer")} tabIndex={onRowOpen ? 0 : undefined}
                   onClick={onRowOpen ? () => onRowOpen(r) : undefined}
                   onKeyDown={onRowOpen ? (k) => { if (k.target === k.currentTarget && (k.key === "Enter" || k.key === " ")) { k.preventDefault(); onRowOpen(r); } } : undefined}>
@@ -215,6 +225,8 @@ export function DataTable<T>({ label, rows, columns, rowKey, rowLabel, tabs, ini
                     <TableCell key={c.id} className={cn(c.className, c.fixed && PINNED)} onClick={c.fixed ? (e) => e.stopPropagation() : undefined}>{c.cell(r)}</TableCell>
                   ))}
                 </TableRow>
+                {children && <TableRow className="hover:bg-transparent"><TableCell colSpan={span} className="p-0">{children}</TableCell></TableRow>}
+                </Fragment>
               );
             })}
           </TableBody>

@@ -74,7 +74,7 @@ export function TeamPage() {
 interface Account { id: number; username: string; display: string; full_name: string | null; email: string | null; role: string; active: boolean }
 
 function TeamAdmin() {
-  const { changeTick } = useStore();
+  const { changeTick, me } = useStore();
   const users = useAsync<Account[]>(() => api("GET", "/api/v1/users"), [changeTick]);
   const [error, setError] = useState<unknown>(null);
   const [remove, setRemove] = useState<Account | null>(null);
@@ -90,7 +90,12 @@ function TeamAdmin() {
           <TableRow key={u.id}><TableCell className="font-medium">{u.full_name ?? u.display}</TableCell><TableCell>{u.email ?? "—"}</TableCell><TableCell>{u.username}</TableCell>
             <TableCell>{u.role === "admin" ? "Administrador" : "Operador"}</TableCell><TableCell>{u.active ? "Ativa" : "Inativa"}</TableCell>
             <TableCell className="text-right"><span className="inline-flex items-center justify-end gap-1">
-              <Button size="sm" variant="outline" disabled={action.busy} onClick={() => act(() => api("PATCH", `/api/v1/users/${u.id}`, { active: !u.active }))}>{u.active ? "Desativar" : "Reativar"}</Button>
+              {/* The signed-in account (by the session's id, never by a name) cannot deactivate itself: the button stays
+                  visible but unavailable, with the reason, and sends nothing (the Core refuses it too: ACCOUNT-SELF-DEACTIVATE). */}
+              {u.id === me.id && u.active
+                ? <span className="inline-flex items-center gap-2"><span id={`acc-${u.id}-why`} className="text-xs text-muted-foreground">Você não pode desativar sua própria conta</span>
+                    <Button size="sm" variant="outline" disabled aria-describedby={`acc-${u.id}-why`}>Desativar</Button></span>
+                : <Button size="sm" variant="outline" disabled={action.busy} onClick={() => act(() => api("PATCH", `/api/v1/users/${u.id}`, { active: !u.active }))}>{u.active ? "Desativar" : "Reativar"}</Button>}
               {!u.active && <IconAction label="Excluir conta" disabled={action.busy} onClick={() => { setError(null); setRemove(u); }}><Trash2 /></IconAction>}
             </span></TableCell></TableRow>
         ))}</TableBody></Table></div>

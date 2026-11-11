@@ -1,7 +1,7 @@
 // Fluxos: follow executions and history. Every view (stats, grid, Kanban,
 // timeline, log, feed, table) derives from the same execution records; the
 // Kanban is read-only (no drag-and-drop, no manual verification).
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, CircleAlert, Hourglass, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,10 @@ import { DataTable, type DataColumn } from "@/components/data-table";
 import { ErrorView } from "@/components/diagnostic";
 import { ActivityFeed, activityOf, ExecutionBadge, ExecutionLog, ExecutionReports, StateBadge, Timeline } from "@/components/blocks";
 import { JobsSection } from "@/features/legacy";
-import { COLUMN_LABEL, column, END_REASON, executionLabel, groupOf, title, type Column } from "@/data/status";
-import type { Execution } from "@/data/types";
+import { COLUMN_LABEL, COLUMNS, column, END_REASON, executionLabel, groupOf, JOB_STATE, title } from "@/data/status";
+import type { Execution, ExecutionStep } from "@/data/types";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { userText } from "@/lib/locale";
 import { useStore } from "@/state";
 import { when } from "@/lib/utils";
 
@@ -41,52 +43,141 @@ export function ActivityPage() {
   );
 }
 
+/** The board's cards: the most recent execution of every process (read for the board, whatever its age, so the general
+ *  list's limit never hides a process) plus the standalone routines among the recent executions. A newer execution in the
+ *  store wins over an older read; the cards are steps, identified by execution id and position. */
+export function boardExecutions(latest: Execution[] | null, recent: Execution[] | null): Execution[] {
+  const byKey = new Map<string, Execution>();
+  const keep = (e: Execution) => {
+    const k = e.process_id ? `p${e.process_id}` : `r${e.id}`;
+    const cur = byKey.get(k);
+    if (!cur || e.created_at > cur.created_at || (e.created_at === cur.created_at && e.id === cur.id)) byKey.set(k, e);
+  };
+  for (const e of latest ?? []) keep(e);
+  for (const e of recent ?? []) keep(e);
+  return [...byKey.values()].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : a.id.localeCompare(b.id)));
+}
+
+const STEP_STATE = (e: Execution, s: ExecutionStep) => s.state === null ? (e.state === "finished" ? "Não executada" : "Aguardando a etapa anterior") : JOB_STATE[s.state] ?? s.state;
+
 export function KanbanPage({ process }: { process?: number }) {
-  const { executions, processes, go } = useStore();
+  const { executions, processes, go, src, error } = useStore();
   const [proc, setProc] = useState(process ? String(process) : "all");
-  const cols: Column[] = ["waiting", "running", "verified", "attention", "not_run"];
-  // Latest execution per process: its steps are the cards (executed and not executed).
-  const shown = useMemo(() => {
-    const latest = new Map<string, Execution>();
-    for (const e of executions ?? []) {
-      const k = e.process_id ? `p${e.process_id}` : `r${e.id}`;
-      if (!latest.has(k)) latest.set(k, e);
-    }
-    return [...latest.values()].filter((e) => proc === "all" || String(e.process_id) === proc);
-  }, [executions, proc]);
+  const [latest, setLatest] = useState<Execution[] | null>(null);
+  const [latestError, setLatestError] = useState<unknown>(null);
+  const [open, setOpen] = useState<{ id: string; position: number } | null>(null);
+  const reads = useRef(0);
+  useEffect(() => {
+    // Read again with every store read (change feed or periodic): the board follows the Core without F5. An older answer
+    // never overwrites a newer one; a failure keeps the cards on screen, marked as possibly out of date.
+    const mine = ++reads.current;
+    src.latestExecutions().then((r) => { if (mine === reads.current) { setLatest(r); setLatestError(null); } },
+      (e) => { if (mine === reads.current) setLatestError(e); });
+  }, [src, executions]);
+  const shown = useMemo(() => boardExecutions(latest, executions).filter((e) => proc === "all" || String(e.process_id) === proc), [latest, executions, proc]);
+  const stale = !!(error || latestError);
   return (
     <div className="space-y-4">
-      <div className="flex items-end gap-2">
+      <div className="flex flex-wrap items-end gap-2">
         <div className="space-y-1"><Label htmlFor="k-proc" className="text-xs">Processo</Label>
           <Select value={proc} onValueChange={setProc}>
             <SelectTrigger id="k-proc" size="sm" className="w-64"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos os processos</SelectItem>{(processes ?? []).map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
           </Select></div>
-        <p className="pb-1 text-xs text-muted-foreground">Mostra a execução mais recente de cada processo. Somente leitura.</p>
+        <p className="pb-1 text-xs text-muted-foreground">Mostra a execução mais recente de cada processo e atualiza sozinho. Somente leitura.</p>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-2">
-        {cols.map((c) => {
-          const cards = shown.flatMap((e) => e.steps.filter((s) => column(e, s) === c).map((s) => ({ e, s })));
-          return (
-            <section key={c} aria-label={COLUMN_LABEL[c]} className="w-60 shrink-0 rounded-lg border bg-muted/40 p-2">
-              <h3 className="mb-2 flex items-center justify-between px-1 text-sm font-medium">{COLUMN_LABEL[c]}<span className="text-xs tabular-nums text-muted-foreground">{cards.length}</span></h3>
-              <ul className="space-y-2">
-                {cards.map(({ e, s }) => (
-                  <li key={`${e.id}-${s.position}`}>
-                    <button type="button" onClick={() => go({ menu: "processo", page: "historico", id: e.id })}
-                      className="w-full rounded-md border bg-card p-2 text-left text-sm shadow-2xs outline-none hover:border-muted-foreground focus-visible:ring-2 focus-visible:ring-ring">
-                      <p className="font-medium">{s.position}. {s.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{title(e)}</p>
-                      {s.state && c === "attention" && <div className="mt-1"><StateBadge state={s.state} /></div>}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          );
-        })}
+      {stale && <div role="status" className="space-y-2 rounded-md border border-warn/40 bg-warn-soft px-3 py-2 text-sm text-warn">
+        <p>Os dados podem estar desatualizados: não foi possível ler o servidor agora. O quadro mostra a última leitura e tenta de novo sozinho.</p>
+        <ErrorView error={latestError ?? error} />
+      </div>}
+      {/* Five columns share the width; under ~11rem each, the board scrolls sideways instead of cutting cards. */}
+      <div role="region" aria-label="Quadro de etapas" tabIndex={0} className="overflow-x-auto rounded-md pb-2 outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <div className="grid grid-cols-[repeat(5,minmax(11rem,1fr))] gap-3">
+          {COLUMNS.map((c) => {
+            const cards = shown.flatMap((e) => e.steps.filter((s) => column(e, s) === c).map((s) => ({ e, s })));
+            return (
+              <section key={c} aria-label={COLUMN_LABEL[c]} className="min-w-0 rounded-lg border bg-muted/40 p-2">
+                <h3 className="mb-2 flex items-center justify-between gap-2 px-1 text-sm font-medium">{COLUMN_LABEL[c]}<span className="text-xs tabular-nums text-muted-foreground">{cards.length}</span></h3>
+                <ul className="space-y-2">
+                  {cards.map(({ e, s }) => (
+                    <li key={`${e.id}-${s.position}`}>
+                      <button type="button" data-card={`${e.id}-${s.position}`} onClick={() => setOpen({ id: e.id, position: s.position })}
+                        className="w-full rounded-md border bg-card p-2 text-left text-sm shadow-2xs outline-none hover:border-muted-foreground focus-visible:ring-2 focus-visible:ring-ring">
+                        <p className="break-words font-medium">{s.position}. {s.name}</p>
+                        <p className="break-words text-xs text-muted-foreground">{title(e)}</p>
+                        <p className="break-words text-xs text-muted-foreground">{e.station_name} · {e.requested_by}</p>
+                        {s.state && c === "attention" && <div className="mt-1"><StateBadge state={s.state} /></div>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
       </div>
+      <StepSummary target={open} board={shown} onClose={() => setOpen(null)}
+        onMore={(id) => { setOpen(null); go({ menu: "processo", page: "historico", id }); }} />
     </div>
+  );
+}
+
+/** Summary of one card over the board: the same execution and step while open, followed with the current data. A newer
+ *  execution of the process replacing the cards never swaps it; the execution is then read by its id. Reading only. */
+function StepSummary({ target, board, onClose, onMore }: { target: { id: string; position: number } | null; board: Execution[];
+  onClose: () => void; onMore: (id: string) => void }) {
+  const { src, executions } = useStore();
+  const [fetched, setFetched] = useState<Execution | null>(null);
+  const [gone, setGone] = useState<unknown>(null);
+  const last = useRef(target); // the card to focus again once closed (the target is cleared before that)
+  if (target) last.current = target;
+  const onBoard = target ? board.find((e) => e.id === target.id) ?? null : null;
+  useEffect(() => {
+    setFetched(null); setGone(null);
+  }, [target?.id]);
+  useEffect(() => {
+    if (!target || onBoard) return;
+    let on = true; // off the board: read it by its id with each store read
+    src.execution(target.id).then((e) => { if (on) { setFetched(e); setGone(null); } }, (err) => { if (on) setGone(err); });
+    return () => { on = false; };
+  }, [target, onBoard, src, executions]);
+  const e = onBoard ?? (fetched?.id === target?.id ? fetched : null);
+  const s = e?.steps.find((x) => x.position === target?.position) ?? null;
+  const reason = e && s ? (s.state === null && e.state === "finished" ? (e.end_reason ? END_REASON[e.end_reason] ?? e.end_reason : null)
+    : s.review && s.state === "awaiting_review" ? `Aguardando revisão de ${s.review.assignee_name}` : s.diagnostic ? userText(s.diagnostic, "what") : s.error_code ? s.error_code : null) : null;
+  return (
+    <Dialog open={target !== null} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent onCloseAutoFocus={(ev) => {
+        const t = last.current;
+        const card = t && document.querySelector<HTMLElement>(`[data-card="${t.id}-${t.position}"]`);
+        if (card) { ev.preventDefault(); card.focus(); } // back to the card, while it is still on the board
+      }}>
+        <DialogHeader>
+          <DialogTitle>{s ? `${s.position}. ${s.name}` : "Etapa"}</DialogTitle>
+          <DialogDescription>{e ? title(e) : "Resumo da etapa"}</DialogDescription>
+        </DialogHeader>
+        {!e || !s ? (gone ? <div className="space-y-2 text-sm"><p>Esta etapa não está mais disponível.</p><ErrorView error={gone} /></div>
+          : <p className="text-sm text-muted-foreground">Carregando…</p>) : (
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+            <dt className="text-muted-foreground">Etapa</dt><dd>{s.position} de {e.steps.length}</dd>
+            <dt className="text-muted-foreground">Situação</dt><dd className="flex flex-wrap items-center gap-2">{s.state ? <StateBadge state={s.state} /> : STEP_STATE(e, s)}
+              <span className="text-xs text-muted-foreground">({COLUMN_LABEL[column(e, s)]})</span></dd>
+            <dt className="text-muted-foreground">Execução</dt><dd><ExecutionBadge e={e} /></dd>
+            <dt className="text-muted-foreground">Estação</dt><dd>{e.station_name}</dd>
+            <dt className="text-muted-foreground">Pedida por</dt><dd>{e.requested_by}</dd>
+            <dt className="text-muted-foreground">Início da execução</dt><dd>{when(e.created_at)}</dd>
+            {s.started_at && <><dt className="text-muted-foreground">Início da etapa</dt><dd>{when(s.started_at)}</dd></>}
+            {s.finished_at && <><dt className="text-muted-foreground">Fim da etapa</dt><dd>{when(s.finished_at)}</dd></>}
+            {e.finished_at && <><dt className="text-muted-foreground">Fim da execução</dt><dd>{when(e.finished_at)}</dd></>}
+            {reason && <><dt className="text-muted-foreground">Motivo</dt><dd>{reason}</dd></>}
+          </dl>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <Button disabled={!e} onClick={() => e && onMore(e.id)}>Saber mais</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -119,7 +210,16 @@ export function HistoryPage({ focus, days }: { focus?: string; days?: number }) 
     return () => { on = false; };
   }, [src, days, executions]); // every store read (change feed or periodic) gives a new list: one read here per store read
   const rows = days ? period : executions;
-  const sel = rows?.find((e) => e.id === open) ?? executions?.find((e) => e.id === open) ?? null;
+  // "Saber mais" in the Kanban opens this exact execution, even when it is older than the recent list: read it by its id.
+  const [byId, setById] = useState<Execution | null>(null);
+  const listed = rows?.find((e) => e.id === open) ?? executions?.find((e) => e.id === open) ?? null;
+  useEffect(() => {
+    if (!open || listed || !/^[0-9a-f-]{36}$/.test(open)) return; // only an execution id ("all" and tab names are not)
+    let on = true;
+    src.execution(open).then((e) => { if (on) setById(e); }, () => { if (on) setById(null); });
+    return () => { on = false; };
+  }, [open, listed, src, executions]);
+  const sel = listed ?? (byId?.id === open ? byId : null);
   return (
     <div className="space-y-3">
       {days && <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">

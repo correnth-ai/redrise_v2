@@ -89,8 +89,10 @@ export const demoSource: DataSource = {
   processes: async () => clone(processes.map((x) => ({ ...x, last_execution: (() => {
     const e = executions.find((y) => y.process_id === x.id);
     return e ? { id: e.id, state: e.state, outcome: e.outcome, end_reason: e.end_reason, created_at: e.created_at } : null;
-  })() }))),
+  })(), last_success_at: executions.filter((y) => y.process_id === x.id && y.state === "finished" && y.outcome === "verified" && y.finished_at)
+    .map((y) => y.finished_at!).sort().at(-1) ?? null }))),
   executions: async () => clone(executions),
+  latestExecutions: async () => clone(processes.map((x) => executions.find((y) => y.process_id === x.id)).filter((y): y is Execution => !!y)),
   async executionSummary() { // same groups as the Core, over the demonstration records
     const since = Date.now() - 30 * 86400000;
     const shown = executions.filter((e) => Date.parse(e.created_at) >= since);

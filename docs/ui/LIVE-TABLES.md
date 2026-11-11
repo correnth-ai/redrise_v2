@@ -14,18 +14,18 @@ Work order [UI-ENGINE-BOAS-VINDAS-20261103](../../delivery/work-orders/UI-ENGINE
 | Tela | Fonte | Domínios que atualizam | Regra |
 |---|---|---|---|
 | Rotina › Lista | `routines`, `processes` | routines, processes | Mantém busca, aba, ordenação, página e seleção. Linha excluída sai da seleção. |
-| Processo › Ação, processos | `processes`, `routines` | processes, routines, executions | Composição aberta não é sobrescrita: trabalha na própria cópia até salvar. |
+| Processo › Ação, processos | `processes` (com `last_success_at`, Core 0.3.10), `routines` | processes, routines, executions | Composição aberta não é sobrescrita: trabalha na própria cópia até salvar. Paginada por processo na tela (10/25/50); processos abertos (seta) continuam abertos a cada leitura da mesma visita. |
 | Processo › Ação, contagens | `executions/summary` (30 dias, contado no Core, como a Empresa), `processes`, `reviews` | executions, jobs, reviews | Lê de novo quando a loja lê as execuções; cada bloco abre o Histórico com o mesmo período e situação. Falha mostra o diagnóstico e "—". |
 | Processo › Ação, agendamentos | `schedules` | schedules | Lê de novo a cada mudança anunciada e depois de cada ação; falha mostra o diagnóstico, nunca lista vazia. Próxima ocorrência sempre vinda do Core. |
 | Processo › Ação, execuções recentes | `executions` (as 100 mais recentes) | executions, jobs, reviews | Mesmas regras da tabela; a lista é rotulada como recentes e não serve de total. |
 | Processo › Histórico | `executions` | executions, jobs, reviews | Detalhe aberto segue a mesma execução. |
 | Processo › Histórico com período (aberto por um indicador da Empresa) | `executions?days=30` | executions, jobs, reviews | Lê de novo quando a loja lê as execuções. Mostra o período e a quantidade; acima de 500 avisa que lista as mais recentes. |
-| Processo › Kanban | `executions` | executions, jobs, reviews | Somente leitura. |
+| Processo › Kanban | `executions?latest=process` (a mais recente de cada processo, sem o limite da lista geral) e `executions` (avulsas recentes) | executions, jobs, reviews | Somente leitura. Lê de novo a cada leitura da loja (aviso de mudanças ou leitura periódica: 3 s com execução em andamento, 30 s parada); resposta antiga não sobrescreve a nova; falha mantém os cards com aviso de dados possivelmente desatualizados. Resumo aberto relê a própria execução pelo id. |
 | Marcado para mim | `reviews`, `step-changes` | reviews, step_changes, executions | Pedido aberto muda de estado na tela; o Core decide quem aprova. |
 | Sino | `notifications` | notifications | Contagem e lista. |
 | Rotina › Atividade, linha do tempo e feed | `executions` | executions, jobs | Derivados da mesma execução. |
 | Rotina › Atividade, execuções técnicas | `jobs` | jobs | Lê de novo com o aviso e mantém a leitura periódica própria. |
-| Configuração › Equipe | `users` | users | Lê de novo com o aviso e depois de cada ação; só administrador lê. Linha excluída sai só depois da confirmação do Core; falha mantém a linha e mostra o diagnóstico. |
+| Configuração › Equipe | `users` | users | Lê de novo com o aviso e depois de cada ação; só administrador lê. Linha excluída sai só depois da confirmação do Core; falha mantém a linha e mostra o diagnóstico. A própria conta (pelo id da sessão) tem Desativar indisponível, com o motivo, sem pedido ao Core. |
 | Configuração › Estação | `stations` | stations | Lê de novo com o aviso e a cada 10 s enquanto visível (TEAM-ACCOUNTS-20261108): ficar offline é falta de sinal, que não gera aviso, então Online→Offline aparece em até ~55 s (45 s do Core + 10 s). Leitura que falha mostra Status "Desconhecido" e o diagnóstico, nunca Offline. |
 | Configuração › Aplicativo, espaço usado | `storage` | nenhum | Medida cara: lida ao abrir. |
 | Empresa, indicadores | `executions/summary`, `processes`, `stations`, `reviews` | executions, jobs, reviews, processes, stations | O resumo lê de novo sempre que a loja lê as execuções. Falha mostra o diagnóstico e "—". |

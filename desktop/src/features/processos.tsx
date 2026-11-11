@@ -2,7 +2,7 @@
 // process with table-02 row actions and filters, routine library, routine
 // detail in a side sheet and process composition in dialog-11.
 import { Fragment, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, CalendarClock, Eye, History, Link2, ListChecks, Pencil, Play, Plus, Replace, Trash2, Unlink, UserCheck, Workflow } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, ChevronDown, ChevronRight, Eye, History, Link2, ListChecks, Pencil, Play, Plus, Replace, Trash2, Unlink, UserCheck, Workflow } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,8 @@ import { HISTORY_COLUMNS } from "@/features/fluxos";
 import { AssignedToMe } from "@/features/reviews";
 import type { Process, Routine } from "@/data/types";
 import { useStore } from "@/state";
-import { cn, when } from "@/lib/utils";
+import { cn, fullWhen, shortWhen, when } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const CATEGORY: Record<string, string> = { windows: "Windows", browser: "Navegador", mac: "Mac", linux: "Linux" };
 
@@ -46,84 +47,90 @@ function Loading({ what }: { what: string }) {
 
 const Action = IconAction;
 
-// ---------------------------------------------------------------- table-04 + table-02
+// ---------------------------------------------------------------- Processo › Ação: paginated processes, routines on demand
+/** Situation of the last attempt, for the filter and its column (the same rules as before this table was paginated). */
+const lastState = (p: Process) => !p.last_execution ? "never" : p.last_execution.state === "running" ? "running"
+  : p.last_execution.state === "finished" && p.last_execution.outcome !== "verified" ? "attention" : "other";
+
+/** "Último sucesso": the process's own field from the Core (whole history); never derived from the last attempt. */
+function LastSuccess({ p }: { p: Process }) {
+  if (p.last_success_at === undefined) return <span className="text-muted-foreground" title="O servidor não informou o último sucesso">—</span>;
+  if (p.last_success_at === null) return <span className="text-muted-foreground">Nunca</span>;
+  return <time dateTime={p.last_success_at} title={fullWhen(p.last_success_at)} className="tabular-nums">{shortWhen(p.last_success_at)}</time>;
+}
+
 export function ProcessTable({ compact = false }: { compact?: boolean }) {
   const { processes, routines, run, me } = useStore();
-  const [filterProc, setFilterProc] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
+  // Collapsed on arrival; kept by process id while the data refreshes during this visit (not stored).
+  const [open, setOpen] = useState<Set<number>>(new Set());
   const [compose, setCompose] = useState<Process | "new" | null>(null);
   const [detail, setDetail] = useState<Routine | null>(null);
   const [integrate, setIntegrate] = useState<Process | null>(null);
   const [replace, setReplace] = useState<Process | null>(null);
   const [schedule, setSchedule] = useState<Process | null>(null);
-  if (!processes) return <Loading what="processos" />;
-  const shown = processes.filter((p) => (filterProc === "all" || String(p.id) === filterProc) && (filterStatus === "all" ||
-    (filterStatus === "running" ? p.last_execution?.state === "running" : filterStatus === "attention" ?
-      p.last_execution?.state === "finished" && p.last_execution.outcome !== "verified" : filterStatus === "never" ? !p.last_execution : true)));
+  const toggle = (id: number) => setOpen((cur) => { const next = new Set(cur); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const columns: DataColumn<Process>[] = [
+    { id: "name", header: "Processo", sortValue: (p) => p.name, searchText: (p) => p.name, cell: (p) => {
+      const expanded = open.has(p.id);
+      return <span className="flex items-center gap-1.5">
+        <Tooltip><TooltipTrigger asChild>
+          <Button size="icon" variant="ghost" className="size-7 shrink-0" aria-expanded={expanded} aria-controls={`proc-${p.id}-routines`}
+            aria-label={`${expanded ? "Ocultar" : "Mostrar"} as rotinas de ${p.name}`} onClick={() => toggle(p.id)}>
+            {expanded ? <ChevronDown /> : <ChevronRight />}
+          </Button></TooltipTrigger><TooltipContent>{expanded ? "Ocultar rotinas" : "Mostrar rotinas"}</TooltipContent></Tooltip>
+        <span className="font-semibold">{p.name}</span>
+        {p.items[0]?.kind === "followup" && <Badge variant="outline" className="border-transparent bg-warn-soft font-medium text-warn">Etapa 1 é um follow-up: não executa</Badge>}
+        {p.pending_change && <Badge variant="outline" className="border-transparent bg-info-soft font-medium text-info">Substituição da etapa 1 pendente</Badge>}
+      </span>;
+    } },
+    { id: "routines", header: "Rotinas", className: "text-muted-foreground", sortValue: (p) => p.items.length,
+      cell: (p) => p.items.length ? `${p.items.length} ${p.items.length === 1 ? "rotina" : "rotinas"}` : "sem etapa 1" },
+    { id: "state", header: "Execução", searchText: (p) => p.last_execution ? "" : "nunca executado", cell: (p) => <span className="flex flex-wrap items-center gap-2">
+      {p.last_execution ? <ExecutionBadge e={{ state: p.last_execution.state, outcome: p.last_execution.outcome } as any} /> : <Badge variant="outline">Nunca executado</Badge>}
+      {p.last_execution && <span className="text-xs text-muted-foreground">última: {when(p.last_execution.created_at)}{p.last_execution.end_reason ? ` · ${END_REASON[p.last_execution.end_reason] ?? p.last_execution.end_reason}` : ""}</span>}
+    </span> },
+    { id: "success", header: "Último sucesso", className: "whitespace-nowrap", sortValue: (p) => p.last_success_at ?? null, cell: (p) => <LastSuccess p={p} /> },
+    { id: "actions", header: "Ações", fixed: true, className: "text-right whitespace-nowrap", cell: (p) => <>
+      <Action label={startProblem(p) ?? "Executar processo"} onClick={() => run({ kind: "process", id: p.id })} disabled={!!startProblem(p)}><Play /></Action>
+      {me.role === "admin" && !compact && !!p.items.length && <Action label="Agendar" onClick={() => setSchedule(p)}><CalendarClock /></Action>}
+      {me.role === "admin" && !p.system_key && <Action label="Integrar rotina avulsa" onClick={() => setIntegrate(p)}><Link2 /></Action>}
+      {me.role === "admin" && !p.system_key && !!p.items.length && <Action label={p.pending_change ? "Já há substituição pendente" : p.last_execution && p.last_execution.state !== "finished" ? "Em execução: aguarde terminar" : "Substituir etapa 1"}
+        disabled={!!p.pending_change || (!!p.last_execution && p.last_execution.state !== "finished")} onClick={() => setReplace(p)}><Replace /></Action>}
+      {me.role === "admin" && !p.system_key && <Action label="Editar composição" onClick={() => setCompose(p)}><Pencil /></Action>}
+    </> },
+  ];
+  // The routines of an expanded process, in their order, on the process's own page.
+  const routinesOf = (p: Process) => !open.has(p.id) ? null : (
+    <ul id={`proc-${p.id}-routines`} aria-label={`Rotinas de ${p.name}`} className="divide-y bg-muted/30">
+      {!p.items.length && <li className="px-12 py-2 text-sm text-muted-foreground">Nenhuma rotina: o processo não tem etapa 1.</li>}
+      {p.items.map((it) => {
+        const rt = routines?.find((r) => r.id === it.routine_id);
+        return (
+          <li key={`${p.id}-${it.position}`} className="flex flex-wrap items-center gap-x-6 gap-y-1 py-1.5 pl-12 pr-2 text-sm">
+            <span className="min-w-48 flex-1">{it.position}. {it.routine_name}</span>
+            <span className="w-40 text-muted-foreground">{originLabel(it.kind, it.config)}</span>
+            <span className="w-48">{it.position === p.items.length ? "Fim da sequência" : it.continue_next ? "Continua para a próxima" : "Encerra aqui"}</span>
+            <span className="w-28 text-muted-foreground">Pelo processo</span>
+            <span className="ml-auto">{rt && <Action label="Ver detalhes" onClick={() => setDetail(rt)}><Eye /></Action>}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-end gap-2" role="group" aria-label="Filtros">
-        <div className="space-y-1"><Label htmlFor="f-proc" className="text-xs">Processo</Label>
-          <Select value={filterProc} onValueChange={setFilterProc}>
-            <SelectTrigger id="f-proc" size="sm" className="w-52"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Todos</SelectItem>{processes.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
-          </Select></div>
-        <div className="space-y-1"><Label htmlFor="f-status" className="text-xs">Última execução</Label>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger id="f-status" size="sm" className="w-52"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem><SelectItem value="running">Em andamento</SelectItem>
-              <SelectItem value="attention">Precisam de atenção</SelectItem><SelectItem value="never">Nunca executados</SelectItem>
-            </SelectContent>
-          </Select></div>
-        {(filterProc !== "all" || filterStatus !== "all") && <Button size="sm" variant="ghost" onClick={() => { setFilterProc("all"); setFilterStatus("all"); }}>Limpar filtros</Button>}
-        {!compact && me.role === "admin" && <Button size="sm" className="ml-auto" onClick={() => setCompose("new")}><Plus /> Novo processo</Button>}
-      </div>
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>Rotina</TableHead><TableHead>Origem</TableHead><TableHead>Continuação</TableHead><TableHead>Execução</TableHead><TableHead className="text-right">Ações</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {!shown.length && <TableRow><TableCell colSpan={5} className="text-muted-foreground">Nenhum processo corresponde aos filtros.</TableCell></TableRow>}
-            {shown.map((p) => (
-              <Fragment key={p.id}>
-                <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableCell colSpan={3} className="font-semibold">
-                    {p.name} <span className="ml-2 font-normal text-muted-foreground">{p.items.length ? `${p.items.length} rotina(s)` : "sem etapa 1"}</span>
-                    {p.items[0]?.kind === "followup" && <Badge variant="outline" className="ml-2 border-transparent bg-warn-soft font-medium text-warn">Etapa 1 é um follow-up: não executa</Badge>}
-                    {p.pending_change && <Badge variant="outline" className="ml-2 border-transparent bg-info-soft font-medium text-info">Substituição da etapa 1 pendente</Badge>}
-                    {p.last_execution && <span className="ml-3 font-normal text-xs text-muted-foreground">última: {when(p.last_execution.created_at)}{p.last_execution.end_reason ? ` · ${END_REASON[p.last_execution.end_reason] ?? p.last_execution.end_reason}` : ""}</span>}
-                  </TableCell>
-                  <TableCell>{p.last_execution ? <ExecutionBadge e={{ state: p.last_execution.state, outcome: p.last_execution.outcome } as any} /> : <Badge variant="outline">Nunca executado</Badge>}</TableCell>
-                  <TableCell className="text-right">
-                    <Action label={startProblem(p) ?? "Executar processo"} onClick={() => run({ kind: "process", id: p.id })} disabled={!!startProblem(p)}><Play /></Action>
-                    {me.role === "admin" && !compact && !!p.items.length && <Action label="Agendar" onClick={() => setSchedule(p)}><CalendarClock /></Action>}
-                    {me.role === "admin" && !p.system_key && <Action label="Integrar rotina avulsa" onClick={() => setIntegrate(p)}><Link2 /></Action>}
-                    {me.role === "admin" && !p.system_key && !!p.items.length && <Action label={p.pending_change ? "Já há substituição pendente" : p.last_execution && p.last_execution.state !== "finished" ? "Em execução: aguarde terminar" : "Substituir etapa 1"}
-                      disabled={!!p.pending_change || (!!p.last_execution && p.last_execution.state !== "finished")} onClick={() => setReplace(p)}><Replace /></Action>}
-                    {me.role === "admin" && !p.system_key && <Action label="Editar composição" onClick={() => setCompose(p)}><Pencil /></Action>}
-                  </TableCell>
-                </TableRow>
-                {p.items.map((it) => {
-                  const rt = routines?.find((r) => r.id === it.routine_id);
-                  return (
-                    <TableRow key={`${p.id}-${it.position}`}>
-                      <TableCell className="pl-8">{it.position}. {it.routine_name}</TableCell>
-                      <TableCell className="text-muted-foreground">{originLabel(it.kind, it.config)}</TableCell>
-                      <TableCell>{it.position === p.items.length ? "Fim da sequência" : it.continue_next ? "Continua para a próxima" : "Encerra aqui"}</TableCell>
-                      <TableCell>Pelo processo</TableCell>
-                      <TableCell className="text-right">
-                        {rt && <Action label="Ver detalhes" onClick={() => setDetail(rt)}><Eye /></Action>}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </Fragment>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable label="Processos" storageKey={compact ? "processo-acao-compacta" : "processo-acao"} rows={processes} columns={columns}
+        rowKey={(p) => String(p.id)} rowLabel={(p) => p.name} childRows={routinesOf} clearable
+        searchPlaceholder="Buscar processo…" empty="Nenhum processo."
+        filters={[
+          { id: "process", label: "Processo", options: (processes ?? []).map((p) => ({ value: String(p.id), label: p.name, match: (x: Process) => x.id === p.id })) },
+          { id: "last", label: "Última execução", options: [
+            { value: "running", label: "Em andamento", match: (p) => lastState(p) === "running" },
+            { value: "attention", label: "Precisam de atenção", match: (p) => lastState(p) === "attention" },
+            { value: "never", label: "Nunca executados", match: (p) => lastState(p) === "never" },
+          ] },
+        ]}
+        toolbar={!compact && me.role === "admin" ? <Button size="sm" onClick={() => setCompose("new")}><Plus /> Novo processo</Button> : undefined} />
       <ProcessComposer value={compose} onClose={() => setCompose(null)} />
       <IntegrateRoutine process={integrate} onClose={() => setIntegrate(null)} />
       <ReplaceStepOne process={replace} onClose={() => setReplace(null)} />

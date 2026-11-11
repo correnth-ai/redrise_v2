@@ -1336,6 +1336,19 @@
       "next": "Check the Notepad before running again.",
       "details": "Close not confirmed ({reason}). Not repeated automatically."
     },
+    "ACCOUNT-SELF-DEACTIVATE": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "not_useful",
+      "what": "You cannot deactivate the account you are signed in with.",
+      "completed": "The request was refused; the account was not changed.",
+      "pending": "The account stays active.",
+      "next": "Another administrator can deactivate this account, if needed.",
+      "details": "The account of the current session is never deactivated by itself."
+    },
     "ACCOUNT-ACTIVE": {
       "category": "precondition",
       "modules": [

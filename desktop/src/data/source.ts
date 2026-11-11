@@ -15,6 +15,8 @@ export interface DataSource {
   executionSummary(): Promise<ExecutionSummary>;
   /** Executions started in the last `days` days, newest first, up to 500: the rows behind the summary. */
   executionsSince(days: number): Promise<Execution[]>;
+  /** The most recent execution of every process, whatever its age (the Kanban's cards; not capped by the list above). */
+  latestExecutions(): Promise<Execution[]>;
   stations(): Promise<Station[]>;
   storage(): Promise<Storage>;
   apps(stationId: number): Promise<{ apps: StationApp[] | null }>;
@@ -56,6 +58,7 @@ export const realSource: DataSource = {
   executions: () => api("GET", "/api/v1/executions"),
   executionSummary: () => api("GET", "/api/v1/executions/summary"),
   executionsSince: (days) => api("GET", `/api/v1/executions?days=${Math.trunc(days)}`),
+  latestExecutions: () => api("GET", "/api/v1/executions?latest=process"),
   stations: () => api("GET", "/api/v1/stations"),
   async storage() {
     const s: Storage = await api("GET", "/api/v1/storage");

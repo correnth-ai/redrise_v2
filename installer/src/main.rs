@@ -5,8 +5,16 @@
 //! -> extract to a staging folder -> verify every file against the payload
 //! manifest -> atomic swap (previous version kept for recovery) -> Start Menu
 //! shortcut + HKCU uninstall entry. Data under %LOCALAPPDATA%\RedRise is never
-//! touched. Any failure before the swap leaves the existing install unchanged.
+//! touched, except the non-secret setup intent of a new install
+//! (`install/setup-intent.json`, role server|station, consumed by the app).
+//! Any failure or cancellation before the swap leaves the existing install unchanged.
+//!
+//! Opened by a person (no `--quiet`), the InstallRS wizard (`wizard.rs`) shows
+//! the pages and runs `install` with its progress and Cancel; `--quiet` (the
+//! in-app update, tests) keeps the same contract as before, without a window.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+mod wizard;
 
 use std::fs;
 use std::io::{Cursor, Read, Write};
@@ -126,14 +134,55 @@ mod win {
     }
 }
 
-struct Opts {
+#[derive(Clone)]
+pub struct Opts {
     quiet: bool,
     relaunch: bool,
     wait_pid: Option<u32>,
-    root: PathBuf,
-    data: PathBuf,
+    pub root: PathBuf,
+    pub data: PathBuf,
     isolated: bool, // --install-root (tests only)
+    /// Setup intent of a new install: from the wizard, or `--role` (quiet tests). Never a secret.
+    pub role: Option<String>,
+    /// False for an isolated test root without `--data-root`: it never writes into the real data folder.
+    intent_allowed: bool,
 }
+
+pub const INTENT_SCHEMA: &str = "redrise.setup-intent/1";
+pub const ROLES: [&str; 2] = ["server", "station"];
+
+/// This computer already has a team configuration (server or station): its role is kept, never asked again.
+pub fn configured(data: &Path) -> bool {
+    data.join("host").join("host.json").is_file() || data.join("agent").join("connection.json").is_file()
+}
+
+fn intent_path(data: &Path) -> PathBuf {
+    data.join("install").join("setup-intent.json")
+}
+
+/// The role chosen by an earlier run that the app has not consumed yet (installed, setup not finished).
+pub fn read_intent(data: &Path) -> Option<String> {
+    let v: Value = serde_json::from_slice(&fs::read(intent_path(data)).ok()?).ok()?;
+    let role = v["role"].as_str()?;
+    (v["schema"] == INTENT_SCHEMA && ROLES.contains(&role)).then(|| role.to_string())
+}
+
+fn write_intent(data: &Path, role: &str, version: &str) -> Result<(), String> {
+    let p = intent_path(data);
+    fs::create_dir_all(p.parent().unwrap()).map_err(|e| e.to_string())?;
+    let tmp = p.with_extension("json.tmp");
+    let body = json!({"schema": INTENT_SCHEMA, "role": role, "chosen_at": now(), "installer_version": version});
+    fs::write(&tmp, serde_json::to_vec_pretty(&body).unwrap_or_default()).map_err(|e| e.to_string())?;
+    fs::rename(&tmp, &p).map_err(|e| e.to_string())
+}
+
+/// Progress of an install: a status line and a fraction (0..1); `cancelled` is asked before the commit point only.
+pub struct Progress<'a> {
+    pub report: &'a dyn Fn(&str, f64),
+    pub cancelled: &'a dyn Fn() -> bool,
+}
+
+const CANCELLED: &str = "installation cancelled before any change";
 
 fn now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
@@ -149,7 +198,7 @@ fn hex(b: &[u8]) -> String {
 }
 
 /// (stub length, zip bytes) when this exe carries a verified payload.
-fn payload(exe: &[u8]) -> Result<Option<(usize, Vec<u8>)>, String> {
+pub fn payload(exe: &[u8]) -> Result<Option<(usize, Vec<u8>)>, String> {
     if exe.len() < TRAILER || &exe[exe.len() - TRAILER..exe.len() - 40] != MAGIC {
         return Ok(None);
     }
@@ -211,14 +260,22 @@ fn wait_free(root: &Path, wait_pid: Option<u32>) -> Result<(), String> {
     }
 }
 
-fn extract_verified(zip: &[u8], staging: &Path) -> Result<Value, String> {
+fn extract_verified(zip: &[u8], staging: &Path, pr: &Progress) -> Result<Value, String> {
     let mut z = zip::ZipArchive::new(Cursor::new(zip)).map_err(|e| e.to_string())?;
     let mut man = String::new();
     z.by_name("manifest.json").map_err(|e| e.to_string())?.read_to_string(&mut man).map_err(|e| e.to_string())?;
     let manifest: Value = serde_json::from_slice(no_bom(man.as_bytes())).map_err(|e| e.to_string())?;
     let expected: std::collections::HashMap<String, String> = manifest["files"].as_array().ok_or("manifest without files")?
         .iter().map(|f| (f["path"].as_str().unwrap_or("").to_string(), f["sha256"].as_str().unwrap_or("").to_string())).collect();
+    let total = z.len().max(1);
     for i in 0..z.len() {
+        if (pr.cancelled)() {
+            return Err(CANCELLED.into());
+        }
+        if i % 25 == 0 {
+            // 5% .. 90% of the bar: copying and checking the files is most of the work.
+            (pr.report)(&format!("Copiando e conferindo arquivos ({} de {})", i + 1, total), 0.05 + 0.85 * i as f64 / total as f64);
+        }
         let mut e = z.by_index(i).map_err(|e| e.to_string())?;
         let rel = e.enclosed_name().ok_or("invalid path in package")?.to_path_buf();
         let rel_s = rel.to_string_lossy().replace('\\', "/");
@@ -252,12 +309,13 @@ fn shortcut(root: &Path) -> Result<PathBuf, String> {
     Ok(lnk)
 }
 
-fn install(o: &Opts, stub_len: usize, me: &[u8], zip: &[u8]) -> Result<Value, String> {
+pub fn install(o: &Opts, stub_len: usize, me: &[u8], zip: &[u8], pr: &Progress) -> Result<Value, String> {
     let parent = o.root.parent().ok_or("invalid target")?.to_path_buf();
     fs::create_dir_all(&parent).map_err(|e| e.to_string())?;
+    (pr.report)("Verificando se o RedRise está fechado", 0.02);
     wait_free(&o.root, o.wait_pid)?;
     let staging = parent.join(format!("{DIR_NAME}.new-{}", now()));
-    let manifest = match extract_verified(zip, &staging) {
+    let manifest = match extract_verified(zip, &staging, pr) {
         Ok(m) => m,
         Err(e) => {
             let _ = fs::remove_dir_all(&staging);
@@ -265,7 +323,16 @@ fn install(o: &Opts, stub_len: usize, me: &[u8], zip: &[u8]) -> Result<Value, St
         }
     };
     // Uninstaller (stub only, no payload) outside the manifest-verified binaries.
-    fs::write(staging.join("uninstall.exe"), &me[..stub_len]).map_err(|e| e.to_string())?;
+    if let Err(e) = fs::write(staging.join("uninstall.exe"), &me[..stub_len]) {
+        let _ = fs::remove_dir_all(&staging);
+        return Err(e.to_string());
+    }
+    // Last point where Cancelar is honored: from here the swap is completed or rolled back, never left half done.
+    if (pr.cancelled)() {
+        let _ = fs::remove_dir_all(&staging);
+        return Err(CANCELLED.into());
+    }
+    (pr.report)("Trocando a versão instalada", 0.92);
     let previous = parent.join(format!("{DIR_NAME}.previous"));
     let had_previous = o.root.exists();
     if had_previous {
@@ -285,6 +352,7 @@ fn install(o: &Opts, stub_len: usize, me: &[u8], zip: &[u8]) -> Result<Value, St
         return Err(format!("version swap failed; previous version restored: {e}"));
     }
     let version = manifest["app_version"].as_str().unwrap_or("0.0.0").to_string();
+    (pr.report)("Criando o atalho e o registro de desinstalação", 0.96);
     // An isolated test root never touches the real Start Menu entry or uninstall key.
     let lnk = if o.isolated { None } else { Some(shortcut(&o.root).map_err(|e| format!("instalado, mas o atalho falhou: {e}"))?) };
     if !o.isolated {
@@ -294,8 +362,21 @@ fn install(o: &Opts, stub_len: usize, me: &[u8], zip: &[u8]) -> Result<Value, St
                        ("DisplayIcon", &o.root.join(APP_EXE).to_string_lossy())],
                      &[("NoModify", 1), ("NoRepair", 1)])?;
     }
+    // Setup intent: only for a computer without a team configuration. An update or a reinstall keeps the role it has
+    // (server or station) and never asks or converts it. Written after the swap: a cancelled install leaves none.
+    let existing = configured(&o.data);
+    let intent = match (&o.role, existing) {
+        (Some(r), false) if ROLES.contains(&r.as_str()) && o.intent_allowed => {
+            write_intent(&o.data, r, &version).map_err(|e| format!("installed, but the setup intent was not saved: {e}"))?;
+            Some(r.clone())
+        }
+        _ => None,
+    };
+    (pr.report)("Concluído", 1.0);
     Ok(json!({"installed": version, "install_root": o.root, "previous_kept": had_previous, "shortcut": lnk,
-              "files": manifest["file_count"], "data_root_untouched": o.data}))
+              "files": manifest["file_count"], "data_root_untouched": o.data,
+              "configuration": if !o.intent_allowed { "not checked (isolated test root without --data-root)" }
+                               else if existing { "existing (role kept)" } else { "none yet" }, "setup_intent": intent}))
 }
 
 fn uninstall(o: &Opts) -> Result<Value, String> {
@@ -342,7 +423,7 @@ fn rollback(o: &Opts) -> Result<Value, String> {
 
 /// UI mask of the installer dialogs: errors are English (JSON output, logs);
 /// the person sees them in pt-BR. Unknown messages are shown as they are.
-fn pt_error(e: &str) -> String {
+pub fn pt_error(e: &str) -> String {
     const MAP: &[(&str, &str)] = &[
         ("corrupted package: content SHA-256 does not match", "pacote corrompido: SHA-256 do conteúdo não confere"),
         ("RedRise is still running", "o RedRise ainda está em execução"),
@@ -356,11 +437,13 @@ fn pt_error(e: &str) -> String {
         ("version swap failed; previous version restored", "troca de versão falhou; versão anterior restaurada"),
         ("no previous version kept", "não há versão anterior guardada"),
         ("this file does not contain a RedRise package", "este arquivo não contém um pacote do RedRise"),
+        ("installation cancelled before any change", "instalação cancelada antes de qualquer alteração; a instalação anterior, se havia, continua como estava"),
+        ("installed, but the setup intent was not saved", "instalado, mas a escolha servidor/estação não foi gravada"),
     ];
     MAP.iter().fold(e.to_string(), |acc, (en, pt)| acc.replace(en, pt))
 }
 
-fn log_result(o: &Opts, v: &Value) {
+pub fn log_result(o: &Opts, v: &Value) {
     // Isolated tests log next to their own root, never over the real install record.
     let dir = if o.isolated { o.root.parent().map(|p| p.join("install-log")).unwrap_or_default() } else { o.data.join("install") };
     let _ = fs::create_dir_all(&dir);
@@ -411,16 +494,28 @@ fn main() {
         return;
     }
     let lad = win::local_app_data();
+    let isolated = val("--install-root").is_some();
     let o = Opts {
         quiet: has("--quiet"),
         relaunch: has("--relaunch"),
         wait_pid: val("--wait-pid").and_then(|s| s.parse().ok()),
         // --install-root is for isolated tests only; the product default is fixed (U25/U26-INSTALL).
         root: val("--install-root").map(PathBuf::from).unwrap_or_else(|| lad.join("Programs").join(DIR_NAME)),
-        data: lad.join("RedRise"),
-        isolated: val("--install-root").is_some(),
+        // --data-root only with --install-root (lab): the real data folder is never redirected.
+        data: val("--data-root").filter(|_| isolated).map(PathBuf::from).unwrap_or_else(|| lad.join("RedRise")),
+        isolated,
+        role: val("--role").filter(|r| ROLES.contains(&r.as_str())),
+        intent_allowed: !isolated || val("--data-root").is_some(),
     };
     let me = std::env::current_exe().and_then(fs::read).unwrap_or_default();
+    // Opened by a person: the wizard owns the whole run (pages, progress, result, opening the app).
+    if !o.quiet && !has("--uninstall") && !has("--rollback") {
+        if let Ok(Some((stub, zip))) = payload(&me) {
+            let code = wizard::run(o, stub, me, zip);
+            let _ = std::io::stdout().flush();
+            std::process::exit(code);
+        }
+    }
     let result: Result<Value, String> = if has("--uninstall") {
         if o.quiet || win::ask("RedRise", "Remover o RedRise deste usuário? Seus dados e rotinas em %LOCALAPPDATA%\\RedRise são mantidos.") {
             uninstall(&o)
@@ -433,13 +528,8 @@ fn main() {
         match payload(&me) {
             Err(e) => Err(e),
             Ok(None) => Err("this file does not contain a RedRise package".into()),
-            Ok(Some((stub, zip))) => {
-                if o.quiet || win::ask("Instalar RedRise", &format!("Instalar o RedRise para este usuário em\n{}?\n\nNenhuma permissão de administrador é necessária.", o.root.display())) {
-                    install(&o, stub, &me, &zip)
-                } else {
-                    Ok(json!({"cancelled": true}))
-                }
-            }
+            // Quiet (in-app update, tests): no window, the same contract as before the wizard.
+            Ok(Some((stub, zip))) => install(&o, stub, &me, &zip, &Progress { report: &|_, _| {}, cancelled: &|| false }),
         }
     };
     let record = match &result { Ok(v) => json!({"ok": true, "at": now(), "result": v}), Err(e) => json!({"ok": false, "at": now(), "error": e}) };

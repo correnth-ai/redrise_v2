@@ -516,6 +516,9 @@ class Core:
                 raise err(404, "NOT-FOUND", what_missing="user")
             new_role = role or u["role"]
             new_active = u["active"] if active is None else bool(active)
+            if user_id == actor["id"] and u["active"] and not new_active:
+                # Nobody deactivates the account they are signed in with, even with another administrator active.
+                raise err(409, "ACCOUNT-SELF-DEACTIVATE")
             if u["role"] == "admin" and (new_role != "admin" or not new_active):
                 # Lock every admin row: two concurrent demotions cannot both pass the check.
                 c.execute("SELECT id FROM users WHERE role = 'admin' FOR UPDATE")
@@ -1193,12 +1196,20 @@ class Core:
                 """SELECT DISTINCT ON (process_id) process_id, id, state, outcome, end_reason, created_at FROM executions
                    WHERE process_id IS NOT NULL ORDER BY process_id, created_at DESC""").fetchall()}
             changes = {r["process_id"]: str(r["id"]) for r in c.execute("SELECT process_id, id FROM step_change_requests WHERE status = 'pending'").fetchall()}
+            # Last success (PROCESS-LIST-INSTALLER-20261110): the end of the most recent execution of the process that finished
+            # with the canonical result `verified`, over the whole history; a later failure never hides it.
+            success = {r["process_id"]: r["at"] for r in c.execute(
+                """SELECT process_id, max(finished_at) AS at FROM executions
+                   WHERE process_id IS NOT NULL AND state = 'finished' AND outcome = 'verified' AND finished_at IS NOT NULL
+                   GROUP BY process_id""").fetchall()}
         out = []
         for p in procs:
             le = last.get(p["id"])
+            at = success.get(p["id"])
             out.append({**_jsonable(p), "pending_change": changes.get(p["id"]), "items": [_jsonable({k: v for k, v in i.items() if k != "process_id"})
                                                    for i in items if i["process_id"] == p["id"]],
-                        "last_execution": _jsonable({k: v for k, v in le.items() if k != "process_id"}) if le else None})
+                        "last_execution": _jsonable({k: v for k, v in le.items() if k != "process_id"}) if le else None,
+                        "last_success_at": at.isoformat() if at else None})
         return out
 
     def get_process(self, actor: dict, process_id: int) -> dict:
@@ -1647,15 +1658,25 @@ class Core:
         return {"days": n, "since": row["since"].isoformat(), "until": row["until"].isoformat(),
                 "total": int(row["total"]), **{k: int(row[k]) for k in self._GROUPS}}
 
-    def list_executions(self, actor: dict, limit: int = 100, days=None) -> list[dict]:
-        """Most recent first. With `days`, only executions started in that period (the summary's), up to 500."""
-        n = self._days(days)
+    def list_executions(self, actor: dict, limit: int = 100, days=None, latest=None) -> list[dict]:
+        """Most recent first. With `days`, only executions started in that period (the summary's), up to 500.
+        With `latest='process'`, the most recent execution of every process not archived (the Kanban's cards), whatever its
+        age: bounded by the number of processes, not by a page of the general list."""
+        if latest is not None and latest != "process":
+            raise err(400, "VALIDATION", reason="latest must be 'process'")
+        n = None if latest else self._days(days)
         where, args = ("WHERE e.created_at >= now() - make_interval(days => %s)", [n]) if n else ("", [])
         if n:
             limit = 500
         with self.db.tx() as c:
             self._sweep(c)
-            rows = c.execute(f"{self._EXEC_SELECT} {where} ORDER BY e.created_at DESC LIMIT %s", (*args, min(max(limit, 1), 500))).fetchall()
+            if latest:
+                rows = c.execute(f"""{self._EXEC_SELECT} WHERE e.id IN (
+                                         SELECT DISTINCT ON (x.process_id) x.id FROM executions x JOIN processes q ON q.id = x.process_id
+                                         WHERE NOT q.archived ORDER BY x.process_id, x.created_at DESC, x.id DESC)
+                                     ORDER BY e.created_at DESC""").fetchall()
+            else:
+                rows = c.execute(f"{self._EXEC_SELECT} {where} ORDER BY e.created_at DESC LIMIT %s", (*args, min(max(limit, 1), 500))).fetchall()
             ids = [r["id"] for r in rows]
             jobs = c.execute("""SELECT id, execution_id, position, state, verified, diagnostic, diagnostic ->> 'error_code' AS error_code,
                                        started_at, finished_at FROM jobs WHERE execution_id = ANY(%s)""", (ids,)).fetchall() if ids else []

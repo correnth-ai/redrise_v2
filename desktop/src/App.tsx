@@ -12,7 +12,7 @@ import { ErrorView } from "@/components/diagnostic";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { PageHeader } from "@/components/page-header";
 import { TopBar } from "@/components/window-chrome";
-import { AccessPage, WelcomePage } from "@/features/auth";
+import { AccessPage, WelcomePage, type SetupRole } from "@/features/auth";
 import { AccountWizard } from "@/features/account-wizard";
 import { AppPage, StationsPage, TeamPage } from "@/features/configuracoes";
 import { EmpresaPage } from "@/features/empresa";
@@ -27,7 +27,7 @@ import { AppError, api, call, session } from "@/lib/api";
 import { canonical, HOME, PAGE_TITLE, type Route } from "@/routes";
 import { StoreProvider, type RunTarget } from "@/state";
 
-type Phase = { kind: "loading" } | { kind: "welcome" } | { kind: "access" } | { kind: "shell"; me: Me; version: string }
+type Phase = { kind: "loading" } | { kind: "welcome"; role: SetupRole } | { kind: "access" } | { kind: "shell"; me: Me; version: string }
   | { kind: "server-error"; error: unknown } | { kind: "demo-access" };
 
 export function App() {
@@ -45,7 +45,8 @@ export function App() {
     }
     try {
       const info = await call("app_info");
-      if (!info.connection) return setPhase({ kind: "welcome" });
+      // The role chosen in the installer (server|station) picks the first-open flow, without asking again.
+      if (!info.connection) return setPhase({ kind: "welcome", role: info.setup_intent === "server" || info.setup_intent === "station" ? info.setup_intent : null });
       if (!session.token) return setPhase({ kind: "access" });
       try { setPhase({ kind: "shell", me: await api("GET", "/api/v1/me"), version: info.desktop }); }
       catch (e) {
@@ -71,7 +72,7 @@ export function App() {
   const body = (() => {
     switch (phase.kind) {
       case "loading": return <p className="p-6 text-sm text-muted-foreground">Carregando…</p>;
-      case "welcome": return <WelcomePage onDone={boot} onCreated={(code) => {
+      case "welcome": return <WelcomePage role={phase.role} onDone={boot} onCreated={(code) => {
         setFlash(`Equipe criada. Para conectar outras estações, use o código exibido em Configuração › Aplicativo: ${code}`);
         setRoute({ menu: "configuracao", page: "aplicativo" }); void boot();
       }} />;

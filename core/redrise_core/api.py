@@ -241,7 +241,8 @@ class Handlers:
         return self.core.cancel_step_change(who, cid_)
 
     def executions(self, b, who, cid, query=None):
-        return self.core.list_executions(who, days=(query or {}).get("days"))
+        q = query or {}
+        return self.core.list_executions(who, days=q.get("days"), latest=q.get("latest"))
 
     def execution_summary(self, b, who, cid, query=None):
         return self.core.execution_summary(who, (query or {}).get("days"))

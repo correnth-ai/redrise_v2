@@ -1,0 +1,20 @@
+# P10 installer: the wizard (InstallRS) and the setup intent
+
+Work order: [PROCESS-LIST-INSTALLER-20261110](../../delivery/work-orders/PROCESS-LIST-INSTALLER-20261110.md), item 2. Date: 2026-11-11.
+
+## Decision
+
+| ID | Decision | Source |
+| --- | --- | --- |
+| P10-D1 | **InstallRS draws the wizard; the RedRise stub keeps the install.** The user chose InstallRS (`installrs = "=0.1.1"`, MIT, `default-features = false`, feature `gui-win32`; crates.io source checked equal to tag `v0.1.1`, 26 files). It is used as a library: `Installer::new(&[], &[], "")` and `gui::InstallerGui`. Its `installrs build` CLI, `source!` payload embedding and file operations are not used, so there is one owner of the install folder: the existing stub verifies the appended payload (SHA-256), extracts to staging, checks every file against the manifest, swaps atomically (previous version kept), writes the shortcut and the HKCU uninstall entry. | User decision in the work order; `installer/Cargo.toml`, `installer/src/wizard.rs` |
+| P10-D2 | **Pages.** Opened by a person (no `--quiet`): Instalar RedRise -> Como este computador será usado? (Servidor da equipe / Estação de operação, a required choice from a list whose first entry is "Escolha uma opção": nothing is preselected) -> Pronto para instalar (role and destination) -> Instalação (real progress per file; Cancelar is honored until the swap, which is then completed or rolled back) -> RedRise instalado (Abrir o RedRise agora) or the error page. No "Deseja instalar?" box before it. Welcome-type pages carry the texts because a custom page's label is one line. | `installer/src/wizard.rs` |
+| P10-D3 | **Setup intent.** A new install writes `%LOCALAPPDATA%\RedRise\install\setup-intent.json` = `{"schema": "redrise.setup-intent/1", "role": "server" \| "station", "chosen_at", "installer_version"}` after the swap; never a password, token or join code (none is asked by the installer). A computer that already has `host/host.json` or `agent/connection.json` is configured: the role question is skipped ("Pronto para atualizar"), no intent is written, nothing is converted. A role chosen earlier and not set up yet comes back selected. An isolated test root (`--install-root`) writes an intent only with `--data-root`. | `installer/src/main.rs` (`configured`, `read_intent`, `write_intent`) |
+| P10-D4 | **First open.** `app_info.setup_intent` (only while the computer has no connection) picks the first-open flow: server shows only "Criar equipe neste computador", station only "Conectar a uma equipe"; without an intent both stay, as before. Creating the team or joining consumes the intent (renamed `setup-intent.consumed.json`). A station that cannot reach its server shows "Conexão pendente" and can try again; no local server is created as a fallback. The intent grants nothing: the Core still checks the administrator who joins. | `desktop/src-tauri/src/paths.rs`, `lib.rs`, `desktop/src/features/auth.tsx` |
+| P10-D5 | **Compatibility.** `--quiet` (the in-app update, tests), `--relaunch`, `--wait-pid`, `--install-root`, `--rollback`, `--uninstall` and the JSON result keep their contract; quiet runs never show the wizard. New flags for the lab only: `--role server|station` and `--data-root` (with `--install-root`). The manifest of the stub (`installer/redrise-setup.manifest`) declares asInvoker, Common Controls 6 and per-monitor DPI. | `installer/src/main.rs`, `installer/build.rs` |
+| P10-D6 | **Notices.** The installed folder carries `licenses/installrs-0.1.1-LICENSE.txt` (MIT) and `licenses/installer-crates.json` (every normal dependency of the stub and its licence: MIT, Apache-2.0, BSD-3-Clause, Zlib, Unlicense or 0BSD), since `uninstall.exe` there is the same stub. | `packaging/runtime/build-layout.ps1` |
+
+## Limits
+
+- Proved natively on the lab computer (isolated roots, synthetic data); a second physical machine, LAN or VPN is not part of this proof.
+- Changing the role of a configured install is out of scope.
+- Uninstall keeps the per-user confirmation box (unchanged).

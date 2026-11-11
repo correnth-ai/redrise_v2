@@ -777,6 +777,13 @@
       "next": "Entre na conta nesse navegador e execute o processo de novo.",
       "details": "O RedRise nunca entra em contas."
     },
+    "ACCOUNT-SELF-DEACTIVATE": {
+      "what": "Você não pode desativar sua própria conta.",
+      "completed": "O pedido foi recusado; a conta não foi alterada.",
+      "pending": "A conta continua ativa.",
+      "next": "Outro administrador pode desativar esta conta, se for preciso.",
+      "details": "A conta da sessão atual nunca é desativada por ela mesma."
+    },
     "ACCOUNT-ACTIVE": {
       "what": "Conta ativa não pode ser excluída.",
       "completed": "O pedido foi recusado; a conta não foi alterada.",
