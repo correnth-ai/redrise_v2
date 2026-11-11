@@ -1,6 +1,6 @@
 {
   "step": "PROCESS-LIST-INSTALLER-20261110 (items 1-4: process list, InstallRS setup wizard, own account, Kanban)",
-  "status": "delivered to main (pushed to origin/main f836683), the local channel and the real install; sign-in and data check on the real team pending the user",
+  "status": "delivered to main (pushed to origin/main), the local channel and the real install; the real install checked signed in on 2026-11-11 (version, role, data and items 1, 3 and 4)",
   "date": "2026-11-11",
   "predecessor_evidence": {
     "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/evidence.json",
@@ -10,7 +10,8 @@
     "User in chat, 2026-11-11: execute the work order (section 6 prompt), local implementation, tests and lab proofs authorized.",
     "User in chat, 2026-11-11, after passing tests: commit and integrate into main; build and validate the next available Beta; prepare the local update channel; update the installed app through the update mechanism and verify version, login, data and features; update canonical documentation, evidence, hashes and commits.",
     "The work order file was revised by the planning session at 08:17 to also list a push to origin/main; a permission written in a file is not taken as the user's order: the push waits for the user's confirmation in chat.",
-    "User in chat, 2026-11-11, after delivery: pasted the execution prompt (push to origin/main included, no new request for authorization) and asked for a conformance check; the push was then made."
+    "User in chat, 2026-11-11, after delivery: pasted the execution prompt (push to origin/main included, no new request for authorization) and asked for a conformance check; the push was then made.",
+    "User in chat, 2026-11-11: the real app is signed in as admin-lab; this login may be used to proceed with the check."
   ],
   "source": {
     "repository": "D:/Correnth/products/redrise-v2/repos/app",
@@ -170,9 +171,24 @@
       "Core answers 0.3.10, team initialized; no migration in this version; Runner ready, no error, 57 heartbeats accepted and no refused request in the last 200 log lines.",
       "The reopened window shows the login screen (shots/real-depois-update.png)."
     ],
-    "not_verified": [
-      "Sign-in on the real team, its data and the four items there: needs the team's credentials, which this session does not use. Pending the user."
-    ]
+    "checked_signed_in": {
+      "date": "2026-11-11",
+      "how": "UI Automation reads and invokes on the real app window (pid of the installed RedRise.exe), no input sent",
+      "verified": [
+        "Version: the sidebar and Configuração › Aplicativo show 0.1.0-beta.31 (install C:/Users/raulv/AppData/Local/Programs/@redrise, manifest 0abac66b…ec1d).",
+        "Sign-in: the real app was open signed in as Admin Lab (admin.lab, administrador); the user allowed this session to use it on 2026-11-11.",
+        "Role: Servidor da equipe (este computador), station servidor-lab-2, runner ativo, Sessão do Windows disponível, Servidor da equipe conectado.",
+        "Data: 6 routines, 3 processes, 4 executions, 23 jobs, 2 accounts (Admin Lab, Operador Lab), the weekly Boas-vindas schedule (next 16/11/2026 07:31) and executions of 01/11 and 09/11 are all there. No count of the real install was taken before the update, so preservation is shown by these older records, not by an equality of counts.",
+        "Item 1: Processo › Ação lists the 3 processes with 'Mostrando 1 a 3 de 3 linhas', page size 10, Página 1 de 1; routines hidden until the chevron (expanded and collapsed through UI Automation ExpandCollapse); Último sucesso 01/11/2026 18:06 (P1), Nunca (P2, only a failure), 09/11/2026 07:31 (Boas-vindas), each equal to its last verified execution.",
+        "Item 3: Configuração › Equipe shows 'Você não pode desativar sua própria conta' with the own Desativar disabled (UI Automation IsEnabled false); Operador Lab's Desativar enabled.",
+        "Item 4: Kanban columns Aguardando 0, Em andamento 0, Atenção 1, Não executada 1, Conferida 6, in this order; the summary of '3. Fechar e verificar' (Boas-vindas) opened with Etapa 3 de 3, Verificada (Conferida), station, person and times, and closed without leaving the board.",
+        "Item 2 on the real install: the update kept the server role with no wizard and no role question (real-last-install.json); the wizard itself is proved on the lab only."
+      ],
+      "not_done": [
+        "Kanban update between clients on the real team: not exercised, to avoid starting executions on the real team's data (proved on the lab, 1.8 to 2.1 s).",
+        "No data of the real team was changed; navigation only, through UI Automation (no keyboard or mouse input); the app was left on Processo › Ação."
+      ]
+    }
   },
   "disk": "C: reached 0.33 GB free during the proof; this run's own lab folders (update copy, beta.31 stage, wizard test roots) were removed. Older lab stages (about 19 GB, betas 2-30) were left untouched pending the user's decision.",
   "not_done": [
@@ -326,8 +342,28 @@
       "sha256": "2b479a3121fa9c328b00b4a66a75564c79b2937ee0999c1a111ce9e284a7e1c4"
     },
     {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/real-acao-expandido.png",
+      "sha256": "aaa96ddab989e1b3e24667a19c5fa182b6bca88df2ba227f0a6d11ecb86135c8"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/real-acao-paginada.png",
+      "sha256": "5e84e70ba7373698cbcc2ae8e0c4f06b645503f23777612853650b71cdca6527"
+    },
+    {
       "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/real-depois-update.png",
       "sha256": "471769ded042a2653e306ea8b97e1b043465a93739c716418c0e4f9c868f2849"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/real-equipe-propria-conta.png",
+      "sha256": "83603845689a73ecd587a7143b48ea5a675980af846d8a5e98dd14df580c30e0"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/real-kanban-resumo.png",
+      "sha256": "612a3acb72ea145b33fa6d2e26a708b678774dedb276c6e0198d258b7a727bfd"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/real-kanban.png",
+      "sha256": "c9fc60e870da150d467e0d97ed10ec6088779988a5ed2147101fb4a4b0594d45"
     },
     {
       "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/real-oferta-beta31.png",
@@ -390,13 +426,13 @@
     "date": "2026-11-11",
     "against": "work order section 5 and the user's execution prompt",
     "open": [
-      "Sign-in on the real team, its data and the four items there: needs the team's credentials (blocked, pending the user).",
       "Independent review of the installer integration: no reviewer assigned (the work order asks for it before accepting the candidate).",
       "Station on a second physical machine/LAN: not part of this proof (two isolated installs on one computer).",
       "Artifacts were built from the candidate tree 7523f04 (not on main); it differs from 2bb2b02 only in proof files that are not shipped."
     ],
     "closed": [
-      "Kanban native coverage: review path, history beyond the general list, server lost and back (accept-wo-20261111-185040.json)."
+      "Kanban native coverage: review path, history beyond the general list, server lost and back (accept-wo-20261111-185040.json).",
+      "Real install checked signed in (version, sign-in, role, data, items 1, 3 and 4) on 2026-11-11."
     ]
   }
 }
