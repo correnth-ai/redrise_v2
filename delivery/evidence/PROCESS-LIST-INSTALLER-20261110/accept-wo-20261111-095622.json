@@ -1,0 +1,59 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "PROCESS-LIST-INSTALLER-20261110",
+  "install": "install-beta31",
+  "setup": "RedRise-Setup-0.1.0-beta.31.exe",
+  "scenarios": {
+    "processes": {
+      "passed": false,
+      "stopped": "Stop: could not invoke Mostrar as rotinas de Histórico 9078: Exceção ao chamar \"GetCurrentPattern\" com \"1\" argumento(s): \"Padrão sem-suporte.\"\nNo C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\tools\\proof-wo\\boas-vindas\\ui.ps1:117 caractere:15\n+ ...     catch { $e.GetCurrentPattern([System.Windows.Automation.TogglePat ...\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    },
+    "kanban": {
+      "passed": false,
+      "stopped": "CoreError: PROCESS-HAS-START"
+    },
+    "layout": {
+      "passed": true,
+      "screenshots": [
+        "Kanban-escuro",
+        "Kanban-claro",
+        "Ação-escuro",
+        "Ação-claro"
+      ],
+      "note": "reviewed by eye: five columns sharing the width when maximized; horizontal scroll of the board when narrow",
+      "board_region_present": true
+    },
+    "wizard_cancel": {
+      "passed": false,
+      "role_preselected_from_unconsumed_intent": true,
+      "cancel_before": {
+        "exit": 0,
+        "record": {
+          "cancelled": true
+        }
+      },
+      "cancel_during": {
+        "previous_install_kept": true,
+        "staging_left": [],
+        "error_page": false,
+        "record": "browsers/chromium-1243/chrome-win64/chrome.dll: Espaço insuficiente no disco. (os error 112)"
+      }
+    },
+    "wizard_station": {
+      "passed": false,
+      "stopped": "Stop: wizard: RedRise instalado not shown; screen: Static|A instalação não foi concluída|\nStatic|A instalação anterior, se havia, e os seus dados continuam como estavam. Detalhes:|\nEdit|browsers/chromium-1243/chrome-win64/chrome.dll: Espaço insuficiente no disco. (os error 112)|\nButton|< Voltar|0\nButton|Concluir|0\nButton|Cancelar|0\n"
+    }
+  },
+  "core": "0.3.10",
+  "clicks_lost": [],
+  "seconds": 841,
+  "only": [
+    "processes",
+    "kanban",
+    "layout",
+    "wizard_cancel",
+    "wizard_station"
+  ],
+  "passed": false
+}

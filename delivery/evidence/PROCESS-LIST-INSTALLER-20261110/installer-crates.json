@@ -1,0 +1,390 @@
+﻿[
+    {
+        "crate":  "adler2 v2.0.1",
+        "license":  "0BSD OR MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "aho-corasick v1.1.5",
+        "license":  "Unlicense OR MIT"
+    },
+    {
+        "crate":  "anstream v1.0.0",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "anstyle v1.0.14",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "anstyle-parse v1.0.0",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "anstyle-query v1.1.5",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "anstyle-wincon v3.0.11",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "anyhow v1.0.104",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "bitflags v1.3.2",
+        "license":  "MIT/Apache-2.0"
+    },
+    {
+        "crate":  "bitflags v2.13.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "block-buffer v0.10.4",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "block-buffer v0.12.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "bumpalo v3.20.3",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "bytemuck v1.25.2",
+        "license":  "Zlib OR Apache-2.0 OR MIT"
+    },
+    {
+        "crate":  "byteorder v1.5.0",
+        "license":  "Unlicense OR MIT"
+    },
+    {
+        "crate":  "byteorder-lite v0.1.0",
+        "license":  "Unlicense OR MIT"
+    },
+    {
+        "crate":  "cfg-if v1.0.5",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "clap v4.6.7",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "clap_builder v4.6.7",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "clap_derive v4.6.7 (proc-macro)",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "clap_lex v1.1.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "colorchoice v1.0.5",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "const-oid v0.10.3",
+        "license":  "Apache-2.0 OR MIT"
+    },
+    {
+        "crate":  "cpufeatures v0.2.17",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "cpufeatures v0.3.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "crc32fast v1.5.3",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "crypto-common v0.1.7",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "crypto-common v0.2.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "ctrlc v3.5.2",
+        "license":  "MIT/Apache-2.0"
+    },
+    {
+        "crate":  "digest v0.10.7",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "digest v0.11.3",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "env_filter v2.0.0",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "env_logger v0.11.11",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "equivalent v1.0.3",
+        "license":  "Apache-2.0 OR MIT"
+    },
+    {
+        "crate":  "fdeflate v0.3.7",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "flate2 v1.1.10",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "generic-array v0.14.7",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "glob v0.3.4",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "hashbrown v0.17.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "heck v0.5.0",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "hex v0.4.3",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "hybrid-array v0.4.15",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "ico v0.5.0",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "image v0.25.10",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "indexmap v2.14.2",
+        "license":  "Apache-2.0 OR MIT"
+    },
+    {
+        "crate":  "installrs v0.1.1",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "is_terminal_polyfill v1.70.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "itoa v1.0.18",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "jiff v0.2.42",
+        "license":  "Unlicense OR MIT"
+    },
+    {
+        "crate":  "jiff-core v0.1.4",
+        "license":  "Unlicense OR MIT"
+    },
+    {
+        "crate":  "log v0.4.34",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "memchr v2.8.3",
+        "license":  "Unlicense OR MIT"
+    },
+    {
+        "crate":  "miniz_oxide v0.8.9",
+        "license":  "MIT OR Zlib OR Apache-2.0"
+    },
+    {
+        "crate":  "miniz_oxide v0.9.1",
+        "license":  "MIT OR Zlib OR Apache-2.0"
+    },
+    {
+        "crate":  "moxcms v0.8.1",
+        "license":  "BSD-3-Clause OR Apache-2.0"
+    },
+    {
+        "crate":  "mslnk v0.1.8",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "num-traits v0.2.19",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "once_cell_polyfill v1.70.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "png v0.17.16",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "png v0.18.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "proc-macro2 v1.0.107",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "pxfm v0.1.30",
+        "license":  "BSD-3-Clause OR Apache-2.0"
+    },
+    {
+        "crate":  "quote v1.0.47",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "redrise-setup v0.2.0",
+        "license":  "LicenseRef-RedRise-Proprietary"
+    },
+    {
+        "crate":  "regex v1.13.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "regex-automata v0.4.18",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "regex-syntax v0.8.11",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "same-file v1.0.6",
+        "license":  "Unlicense/MIT"
+    },
+    {
+        "crate":  "semver v1.0.28",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "serde v1.0.229",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "serde_core v1.0.229",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "serde_derive v1.0.229 (proc-macro)",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "serde_json v1.0.154",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "serde_spanned v0.6.9",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "sha2 v0.10.9",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "sha2 v0.11.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "simd-adler32 v0.3.10",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "strsim v0.11.1",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "syn v2.0.119",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "syn v3.0.9",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "toml v0.8.23",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "toml_datetime v0.6.11",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "toml_edit v0.22.27",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "toml_write v0.1.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "typenum v1.20.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "unicode-ident v1.0.27",
+        "license":  "(MIT OR Apache-2.0) AND Unicode-3.0"
+    },
+    {
+        "crate":  "utf8parse v0.2.2",
+        "license":  "Apache-2.0 OR MIT"
+    },
+    {
+        "crate":  "walkdir v2.5.0",
+        "license":  "Unlicense/MIT"
+    },
+    {
+        "crate":  "winapi-util v0.1.11",
+        "license":  "Unlicense OR MIT"
+    },
+    {
+        "crate":  "windows-link v0.2.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "windows-sys v0.61.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "crate":  "winnow v0.7.15",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "winreg v0.56.0",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "winsafe v0.0.27",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "zip v2.6.1",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "zmij v1.0.23",
+        "license":  "MIT"
+    },
+    {
+        "crate":  "zopfli v0.8.4",
+        "license":  "Apache-2.0"
+    }
+]

@@ -1,0 +1,14 @@
+{
+  "at": 1794403120,
+  "ok": true,
+  "result": {
+    "configuration": "existing (role kept)",
+    "data_root_untouched": "C:\\Users\\raulv\\AppData\\Local\\RedRise",
+    "files": 3758,
+    "install_root": "C:\\Users\\raulv\\AppData\\Local\\Programs\\@redrise",
+    "installed": "0.1.0-beta.31",
+    "previous_kept": true,
+    "setup_intent": null,
+    "shortcut": "C:\\Users\\raulv\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\RedRise.lnk"
+  }
+}

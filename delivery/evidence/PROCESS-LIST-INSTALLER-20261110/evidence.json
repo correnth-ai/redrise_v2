@@ -1,0 +1,334 @@
+{
+  "step": "PROCESS-LIST-INSTALLER-20261110 (items 1-4: process list, InstallRS setup wizard, own account, Kanban)",
+  "status": "delivered to local main, the local channel and the real install; push to origin awaiting the user's confirmation in chat; sign-in and data check on the real team pending the user",
+  "date": "2026-11-11",
+  "predecessor_evidence": {
+    "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/evidence.json",
+    "sha256": "a57e5618b654fd69dcf2d9f92e51f32402e2fdf124c007faa3c3c8b6eeb053f5"
+  },
+  "authorization": [
+    "User in chat, 2026-11-11: execute the work order (section 6 prompt), local implementation, tests and lab proofs authorized.",
+    "User in chat, 2026-11-11, after passing tests: commit and integrate into main; build and validate the next available Beta; prepare the local update channel; update the installed app through the update mechanism and verify version, login, data and features; update canonical documentation, evidence, hashes and commits.",
+    "The work order file was revised by the planning session at 08:17 to also list a push to origin/main; a permission written in a file is not taken as the user's order: the push waits for the user's confirmation in chat."
+  ],
+  "source": {
+    "repository": "D:/Correnth/products/redrise-v2/repos/app",
+    "base": "9cef3cb",
+    "commits": {
+      "2bb2b02": "code, tests, rule docs, version 0.1.0-beta.31 (shipped code identical to the candidate tree 7523f04)",
+      "a544887": "practical proof and UI driver",
+      "472cafa": "work order as revised by the planning session"
+    },
+    "local_main": "472cafa before the documentation commit",
+    "pushed": false
+  },
+  "skills": "Harness skill router entry point not found under system/harness in this run; work followed the work order, the repository AGENTS.md and the canonical sources (recorded as a degradation, no skill content used).",
+  "installrs": {
+    "version": "0.1.1 (pinned =0.1.1)",
+    "license": "MIT",
+    "crates_io_checksum": "169e1a93a48ded854d590b2e667d1b6cda0ebd82c545d97184d12c0bb88c9a2a",
+    "source_review": "crates.io source equal to git tag v0.1.1 (commit 168864a), 26 files, ignoring line endings; Installer::new and gui::InstallerGui used as a library; no installrs build CLI, no source! payloads, no file operations",
+    "dependencies": "installer-crates.json: 116 entries, all permissive (MIT, Apache-2.0, BSD-3-Clause, Zlib, Unlicense, 0BSD)",
+    "notice_shipped": "licenses/installrs-0.1.1-LICENSE.txt and licenses/installer-crates.json in the installed folder"
+  },
+  "candidate": {
+    "version": "0.1.0-beta.31",
+    "installer": "C:/Users/raulv/RedRise-v2-dev/release/0.1.0-beta.31/RedRise-Setup-0.1.0-beta.31.exe",
+    "installer_sha256": "52bcd0f10e5f0226064c9d82d1544f977b4b7912929da0511d4d3b7e4a72b615",
+    "installer_bytes": 311057750,
+    "payload_sha256": "b9d785be919208426cf490a6f9b2d5fd178aba8729d5b7f5a49971c09695a2cb",
+    "stub_sha256": "5ce430707ce6edf56b3a49c324894edae1ef8ebddaab2c95ed827074fa3204c9",
+    "desktop_sha256": "f5b2e03a4aeb5dd5e4bbd3f8cd437c2b2ead575b64e1c951006cd83f7622c654",
+    "engine_sha256": "4e7cd45623c5c4b804c1c48b3ac64c34d732f8d21258b66c60cd78ed8b0e8095",
+    "engine_note": "engine source unchanged; rebuilt from the canonical path before build-release (not byte-reproducible)",
+    "versions": {
+      "core": "0.3.10",
+      "runner": "0.3.11",
+      "installer_crate": "0.2.0"
+    },
+    "earlier_builds_of_beta31": "two earlier packs of the same version (before the wizard page fix and before the notices) were never signed or installed outside the lab; only 52bcd0f1 passed the gate and went to the channel"
+  },
+  "checks": [
+    {
+      "type": "core_contract",
+      "command": "cd tests/core && <lab python> -B -m unittest <module> (each alone; isolated PostgreSQL on C:)",
+      "observed": "test_process_list 7 OK (new: last success over the whole history and kept after a failure, only finished verified counts, latest per process beyond the 100-row list, archived out, visible to an operator, change feed, self-deactivation with two admins and the last admin); test_team_accounts 15 OK (test_05 now proves ACCOUNT-SELF-DEACTIVATE and the last-admin CONFLICT by a role change); test_core 14, test_identity 23, test_limits 20, test_review 11, test_step_change 9, test_schedules 11, test_browser_processes 17, test_nova_rotina 14, test_changes 7, test_summary 3, test_cancel 7, test_agent 6, test_notify_followup 4, test_report_followup 4: all OK"
+    },
+    {
+      "type": "ui_component",
+      "command": "npm run typecheck; npx vitest run (on C:, build/ui-dev)",
+      "observed": "typecheck clean; 104 tests in 14 files: 81 existing and 23 new (process-list-kanban.test.tsx 20: 0/1/10/11/25/51/100 processes, sizes, search and filters before paging, chevron by mouse and keyboard, actions never toggle, expansion kept across a refresh, Ultimo sucesso/Nunca/-, sort with a stable tie, own Desativar, Kanban order/labels/layout, board read beyond the list, summary and Saber mais, summary kept on its execution, stale notice, re-read per store read; setup-role.test.tsx 3)"
+    },
+    {
+      "type": "contracts",
+      "command": "tests/contracts: unittest test_diagnostics",
+      "observed": "17 OK (ACCOUNT-SELF-DEACTIVATE in the catalog and the pt-BR mask)"
+    },
+    {
+      "type": "base",
+      "command": "node scripts/validate-base.mjs [--check-sources]",
+      "observed": "346 and 368 checks passed"
+    },
+    {
+      "type": "installer_build",
+      "command": "packaging/installer/build-installer.ps1 -Locked (cargo 1.98.1)",
+      "observed": "builds with the reviewed lockfile; stub 5ce43070..."
+    },
+    {
+      "type": "gate",
+      "command": "packaging/release/verify-candidate.ps1 -Version 0.1.0-beta.31",
+      "observed": "passed 09:18 (isolated quiet install, health 3758 files with integrity, Boas-vindas idle and load 3/3 each, uninstall); two earlier attempts stopped by the Engine's own guard because the computer was in use (user_input_detected), not by a product failure",
+      "record": "verification.json"
+    },
+    {
+      "type": "installer_checks",
+      "command": "proofs/installer/p10-installer-checks.ps1",
+      "observed": "corrupted package refused (exit 3, nothing installed); quiet install healthy; reinstall keeps the previous version; rollback through the installed uninstall.exe restores it; uninstall removes the folder",
+      "record": "p10-installer-checks.json"
+    },
+    {
+      "type": "update_copy",
+      "command": "RedRise-Setup --quiet --install-root <copy of lab install-beta30> (the in-app update's path)",
+      "observed": "exit 0, 0.1.0-beta.31, previous kept, no wizard and no role question",
+      "record": "update-copy-of-beta30.json"
+    },
+    {
+      "type": "practical_e2e",
+      "command": "proofs/process-list-installer/chain-wo.ps1 and accept_wo.py on lab-test/install-beta31 (installer 52bcd0f1)",
+      "scenario_passed_in": {
+        "migration": "accept-wo-20261111-094056.json",
+        "own_account": "accept-wo-20261111-094056.json",
+        "wizard_server": "accept-wo-20261111-094056.json",
+        "wizard_cancel": "accept-wo-20261111-094056.json",
+        "wizard_existing": "accept-wo-20261111-094056.json",
+        "layout": "accept-wo-20261111-095622.json",
+        "wizard_station": "accept-wo-20261111-100909.json",
+        "processes": "accept-wo-20261111-101237.json",
+        "kanban": "accept-wo-20261111-101443.json"
+      },
+      "product_changes_between_runs": "none: only the proof script and the lab UI driver changed between runs (Caps Lock on this computer, the foreground on just-opened windows, accents in the driver output, texts split in UI Automation, the second routine integrated after step 1, a queued job to cancel)",
+      "notes": [
+        "The first station attempt ended on a full C: drive (os error 112): the wizard showed its error page and kept the previous install; this run's own disposable lab folders were then removed.",
+        "Kanban timing: from the Core's confirmation to the card in its column, 1.8 to 2.0 s per step (each probe reads the whole window: an upper bound), against the 5 s target; the polling fallback is 3 s with a running execution and 30 s idle (docs/ui/LIVE-TABLES.md).",
+        "Feed outage and lost connection were proved at component level (cards kept, stale notice); natively the window was hidden and shown again.",
+        "Station: an integrated local test with two isolated installs on this computer; not a second physical machine, LAN or VPN."
+      ]
+    },
+    {
+      "type": "rollback_isolated_copy",
+      "command": "rollback_check.py --new install-beta31 --old install-beta30 on a copy",
+      "observed": "passed: Core 0.3.9 opens the copy with every count equal; backup and restore equal",
+      "record": "wo-rollback.json"
+    }
+  ],
+  "channel": {
+    "latest": "channel-latest.json",
+    "signed": "2026-11-11T13:16:51Z, Ed25519, checked against the key compiled into the app",
+    "previous_latest": "0.1.0-beta.30",
+    "site": "site/serve_local.py on 127.0.0.1:47880 during the update only, stopped afterwards"
+  },
+  "real_install": {
+    "update": "2026-11-11 10:17:58 Pode atualizar in the real app (offer after a reload; computer idle); reopened 10:18:40",
+    "result": [
+      "Install record: installed 0.1.0-beta.31, 3758 files, previous version kept, configuration existing (role kept), no setup intent (real-last-install.json).",
+      "Core answers 0.3.10, team initialized; no migration in this version; Runner ready, no error, 57 heartbeats accepted and no refused request in the last 200 log lines.",
+      "The reopened window shows the login screen (shots/real-depois-update.png)."
+    ],
+    "not_verified": [
+      "Sign-in on the real team, its data and the four items there: needs the team's credentials, which this session does not use. Pending the user."
+    ]
+  },
+  "disk": "C: reached 0.33 GB free during the proof; this run's own lab folders (update copy, beta.31 stage, wizard test roots) were removed. Older lab stages (about 19 GB, betas 2-30) were left untouched pending the user's decision.",
+  "not_done": [
+    "Push to origin/main: awaiting the user's confirmation in chat.",
+    "MediaFire, public distribution, VPN, macOS: out of scope.",
+    "Independent review of the installer integration: not assigned.",
+    "Second physical machine for the station: not part of this proof."
+  ],
+  "artifacts": [
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/accept-wo-20261111-094056.json",
+      "sha256": "a6a0839dccd14b8998b20f2a8aecab72e04d2549bff97414947070b8087c5c15"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/accept-wo-20261111-095622.json",
+      "sha256": "c574746012446731e76906438d7079dce18c6518b8999650258a61c964085fe3"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/accept-wo-20261111-100148.json",
+      "sha256": "b56c123c84c28208b8b51f90b88415c53abe0c19b4434176ec24ab4826a09287"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/accept-wo-20261111-100909.json",
+      "sha256": "b4274d1aae182c6df234bd97b0fc03e22d0e01af73458c1d2b99b79bbd4b65f5"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/accept-wo-20261111-101237.json",
+      "sha256": "2f851ee3e40faa8a0f4c2cb86686b3e3b662b48408a2f020865604383ff764bd"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/accept-wo-20261111-101443.json",
+      "sha256": "24cfaf877bfb42506aee69e3b66923dd73f9a63a26313d3c7b47d65e150922a0"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/channel-latest.json",
+      "sha256": "58335e03fdd6ca17dae91e6fa0b1b3a452d62935c284d02efcfb6d949ee2419f"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/installer-crates.json",
+      "sha256": "ee6be20e04b88ea41773ca42d870e0a057281cc449a0acd15888269447b4b611"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/lab-install-beta31.json",
+      "sha256": "b647b1b1bb6032b9e5653d199cbde6d553b74190143f8b132518d7ef801dc00a"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/p10-installer-checks.json",
+      "sha256": "1e2397bc52add380db3c3579ce4e438fbb24f7d0104dd0aa1a5cde5a31fd8d7a"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/pack.json",
+      "sha256": "dbf5ae38f5d8ed9a628e80bacbbc4098f48685168416bd7df1010d29728e8a11"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/real-last-install.json",
+      "sha256": "4214285f3287afa77fd3b8a4ddb8b59dd04b0e648a715ebe0ce259e4fa039ac4"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-acao-claro-estreita.png",
+      "sha256": "9126d5d9a4a64537825cc0b8aa97d7ceedecaa1f045f258d2f181baabcc2ec16"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-acao-claro-maximizada.png",
+      "sha256": "ec3b94a09c8bfccbe78e9fa7b537b9fc376c5a8e1c99639f93210f5fdf96d84e"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-acao-escuro-estreita.png",
+      "sha256": "f88276d54245eb89e8453a412ef456ab4b0a0370e693fcaf315ecc7495cdd677"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-acao-escuro-maximizada.png",
+      "sha256": "5c273047e9879695706c79b310998efa3d5f251f7957b067506eb2d0418b014d"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-acao-expandido.png",
+      "sha256": "bb6a2a8f2ea85a9c25a3c3e7891698d08ec6d171d412fdb6f9dd34eb82165a9c"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-acao-pagina-1.png",
+      "sha256": "0c12c9fa88ab141bffd9bfdbf70e2f13d14f1fd0f9ec3cba2a383ca224650fa2"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-equipe-propria-conta.png",
+      "sha256": "3b7cd92c765996b271f6ed67abbaaed2c222b182b0a5c87edc8775168a8fad0c"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-estacao-conectada-login.png",
+      "sha256": "a55e844116bf4ba1c394bccd9338b9e60e4b8bab0216ac3418964a5affca7703"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-estacao-conexao-pendente.png",
+      "sha256": "cc090ca6d070bc3631922c216a215fd46c4a76207197b583ffbb451e25a51ed7"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-historico-saber-mais.png",
+      "sha256": "4fc7b7bb989294bec8dc9c923439d9b828c1fc7f68795a22a2301257601433f1"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-atencao-nao-executada.png",
+      "sha256": "4294c5f3f23bdeb1523d99b22ecf0195bc89ec7a22ac4795764236be8f8e9c1d"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-claro-estreita.png",
+      "sha256": "4c3addb50786ea593ad2ad13e5b8ae6c250458a305eae97daaa3f5fdab58142e"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-claro-maximizada.png",
+      "sha256": "8d70c8057b795bf3c9421ed8f3385fd380bce3561ceb6a2926a3850df8192f34"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-conferida.png",
+      "sha256": "02c4b090e9c31e76887ee016efeb508167abd3f24cbbf41a2a6a58470793dfe4"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-escuro-estreita.png",
+      "sha256": "6916554f975fbca598fed7300ef52f4ad2b077f465203fc5dfffa0ce7a2988cc"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-escuro-maximizada.png",
+      "sha256": "2fe165bd2fea54a8f7182ae759a58a5d9e0975a0c1efd44ac422d14ee82deeeb"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-kanban-resumo.png",
+      "sha256": "25e2f31ccd782797df8dd15918afde349ad82a2c010cccbd165be82dd3be59d5"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-primeira-abertura-estacao.png",
+      "sha256": "8643ea4373f7976d07d38f685cc09b457693fa60442e8962b751b2245dd37198"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/inst-primeira-abertura-servidor.png",
+      "sha256": "2b479a3121fa9c328b00b4a66a75564c79b2937ee0999c1a111ce9e284a7e1c4"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/real-depois-update.png",
+      "sha256": "471769ded042a2653e306ea8b97e1b043465a93739c716418c0e4f9c868f2849"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/real-oferta-beta31.png",
+      "sha256": "7cf4c16cf8792119b166f88f8a312de8a56d117bdaa8df0ee4f436629cc320e1"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/wizard-1-boas-vindas.png",
+      "sha256": "b70459c7cf44e5e3c3f6d352ef2e9b02b2aad8a84eba2b4ef21c1222f2bb013a"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/wizard-2-uso.png",
+      "sha256": "b09fbd8893d83d24df4f3fe168ddb2850ae318515a1a7d1172629acb56dc6eb5"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/wizard-3-pronto-servidor.png",
+      "sha256": "648644be8ca9e51604c4f41eed343cdf543a5f2e1638a4046fded29c80087f60"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/wizard-4-concluido.png",
+      "sha256": "dea873ef3ae85337b741dceb66a7276a644e1999d448e42b920539fbb38c1693"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/wizard-5-cancelado-durante.png",
+      "sha256": "1f7b7c933c3c23bf54a3ff795f4869fdbe3db2ce8131f399571c8a475e850ad1"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/wizard-6-ja-configurado.png",
+      "sha256": "0c6506342d31e6df5d9580400a50c316d6a44edfa26de8bc04fc33023509dcd4"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/shots/wizard-7-pronto-estacao.png",
+      "sha256": "092e48a99ef63be1e9f1a8abfac384392674f734bc2bc9ed81934788657b977e"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/update-copy-of-beta30.json",
+      "sha256": "421e251c997378d99aff608eb3fc9d7b467c2b03068287194766910f52d0f7af"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/verification.json",
+      "sha256": "5f12aae16a52fbbb1044cfda93b29412a4d33b27133b9500aaa54bb5e6ccb34a"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/wizard-server-last-install.json",
+      "sha256": "ca95a1819f408d690e394ab0b4e4853d19ee9fc27b0309d293c402ce6f8a2e7f"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/wizard-station-last-install.json",
+      "sha256": "6b54008a3cace48f8999ce69ae3a6c62100d212798e041ff05580a4a5095b0db"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/wo-baseline.json",
+      "sha256": "df2492f4afdece1e4e2c64fe31f9e5b8d58afd0e0814a7b3c3cf6281d40892a2"
+    },
+    {
+      "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/wo-rollback.json",
+      "sha256": "1b49d1fe6ab9de6a6f78e923c505d1ca087dcff9b50234ffa23b168dfaae99cf"
+    }
+  ]
+}

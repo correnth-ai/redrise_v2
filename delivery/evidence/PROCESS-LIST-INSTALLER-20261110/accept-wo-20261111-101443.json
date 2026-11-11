@@ -1,0 +1,51 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "PROCESS-LIST-INSTALLER-20261110",
+  "install": "install-beta31",
+  "setup": "RedRise-Setup-0.1.0-beta.31.exe",
+  "scenarios": {
+    "kanban": {
+      "passed": true,
+      "column_order": [
+        "Aguardando",
+        "Em andamento",
+        "Atenção",
+        "Não executada",
+        "Conferida"
+      ],
+      "summary_kept_on_its_execution": true,
+      "saber_mais_exact_execution": true,
+      "card": "1. Abrir planilha 7bd5 Kanban 7bd5 Estação Kanban 7bd5 · operador.kanban.7bd5",
+      "seconds_to_screen": {
+        "started -> Aguardando": 1.84,
+        "running -> Em andamento": 1.91,
+        "verified -> Conferida": 1.89,
+        "newer failed -> Atenção": 1.77,
+        "not run -> Não executada": 1.8,
+        "hidden then shown -> Aguardando": 1.83,
+        "cancelled -> Atenção or Não executada": 1.91
+      },
+      "target_s": 5.0,
+      "max_live_s": 1.91,
+      "observer": "the lab app window (admin session)",
+      "actor": "another session (operator) and a simulated Runner, same Core",
+      "executions": [
+        "85f24a6c-085d-488b-af56-1ada55201888",
+        "2fdca9e5-2d13-468d-8c29-6d291a2b8404",
+        "ca532ccb-7e68-4d2b-a977-227914af9e16"
+      ],
+      "cancelled_execution": {
+        "outcome": "cancelled",
+        "end_reason": "cancelled"
+      }
+    }
+  },
+  "core": "0.3.10",
+  "clicks_lost": [],
+  "seconds": 102,
+  "only": [
+    "kanban"
+  ],
+  "passed": true
+}

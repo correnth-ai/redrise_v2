@@ -1,0 +1,120 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "PROCESS-LIST-INSTALLER-20261110",
+  "install": "install-beta31",
+  "setup": "RedRise-Setup-0.1.0-beta.31.exe",
+  "scenarios": {
+    "migration": {
+      "passed": true,
+      "tables": {
+        "processes": 42,
+        "routines": 92,
+        "routine_versions": 92,
+        "executions": 54,
+        "jobs": 135,
+        "users": 20,
+        "schema_migrations": 12,
+        "schedules": 2,
+        "schedule_runs": 2,
+        "notifications": 10
+      },
+      "baseline_tables": {
+        "processes": 42,
+        "routines": 92,
+        "routine_versions": 92,
+        "executions": 54,
+        "jobs": 135,
+        "users": 20,
+        "schema_migrations": 12,
+        "schedules": 2,
+        "schedule_runs": 2,
+        "notifications": 10
+      },
+      "changed": {},
+      "core": "0.3.10"
+    },
+    "processes": {
+      "passed": false,
+      "stopped": "Stop: Buscar em Processos did not keep what was typed"
+    },
+    "own_account": {
+      "passed": true,
+      "reason_on_screen": true,
+      "direct_call": "ACCOUNT-SELF-DEACTIVATE",
+      "still_active": true
+    },
+    "kanban": {
+      "passed": false,
+      "stopped": "CoreError: PROCESS-HAS-START"
+    },
+    "layout": {
+      "passed": false,
+      "stopped": "Stop: could not invoke Ativar modo escuro: not found: 'Ativar modo escuro' [Button] #0 (count 0)\nNo C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\tools\\proof-wo\\boas-vindas\\ui.ps1:87 caractere:32\n+ ... e $Index) { throw \"not found: '$n' [$Type] #$Index (count $($els.Coun ...\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    },
+    "wizard_server": {
+      "passed": true,
+      "choice_required": true,
+      "intent": {
+        "chosen_at": 1794400580,
+        "installer_version": "0.1.0-beta.31",
+        "role": "server",
+        "schema": "redrise.setup-intent/1"
+      },
+      "install_seconds": 64.3,
+      "first_open_server_only": true,
+      "record": {
+        "configuration": "none yet",
+        "data_root_untouched": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard\\server\\data",
+        "files": 3758,
+        "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard\\server\\Programs\\@redrise",
+        "installed": "0.1.0-beta.31",
+        "previous_kept": false,
+        "setup_intent": "server",
+        "shortcut": null
+      },
+      "exit": 0,
+      "uac": "no elevation prompt (asInvoker, per-user root)"
+    },
+    "wizard_cancel": {
+      "passed": true,
+      "role_preselected_from_unconsumed_intent": false,
+      "cancel_before": {
+        "exit": 0,
+        "record": {
+          "cancelled": true
+        }
+      },
+      "cancel_during": {
+        "previous_install_kept": true,
+        "staging_left": [],
+        "error_page": true,
+        "record": "installation cancelled before any change"
+      }
+    },
+    "wizard_existing": {
+      "passed": true,
+      "role_question_shown": false,
+      "record": {
+        "configuration": "existing (role kept)",
+        "data_root_untouched": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\data",
+        "files": 3758,
+        "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard\\existing\\Programs\\@redrise",
+        "installed": "0.1.0-beta.31",
+        "previous_kept": false,
+        "setup_intent": null,
+        "shortcut": null
+      },
+      "lab_data_intent_unchanged": true
+    },
+    "wizard_station": {
+      "passed": false,
+      "stopped": "Stop: the app window did not come to the front: no input sent"
+    }
+  },
+  "core": "0.3.10",
+  "clicks_lost": [],
+  "seconds": 773,
+  "only": null,
+  "passed": false
+}

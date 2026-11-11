@@ -162,6 +162,12 @@
 - Commit integrado e push confirmados; canal local atualizado; update da instalação real concluído e verificado; documentação/evidências reconciliadas e enviadas. Versão instalada só avança com evidência e publicação pública permanece adiada.
 - Relatório final com arquivos alterados, comandos/resultados, commits local/remoto, versão efetivamente instalada, caminho/hash do instalador e limitações. Não encerrar como entrega completa apenas porque o laboratório passou. Distribuição pública, VPN e macOS permanecem fora do escopo.
 
+## Registro de execução (11/11/2026)
+
+- Itens 1–4 implementados e provados (laboratório nativo, Core e UI); 0.1.0-beta.31, instalador `52bcd0f1…b615`, fonte `2bb2b02`; `main` local integrada; canal local assinado; app real atualizado pelo update do app (Core 0.3.10, papel mantido).
+- Pendente: push para `origin/main` (confirmação do usuário no chat), login e conferência na equipe real (credenciais do usuário), revisão independente do instalador.
+- Checkpoint: [PROCESS-LIST-INSTALLER-20261110](../checkpoints/PROCESS-LIST-INSTALLER-20261110.md); evidência: `delivery/evidence/PROCESS-LIST-INSTALLER-20261110/evidence.json`.
+
 ## 6. Prompt de execução para o agente engenheiro
 
 ```text

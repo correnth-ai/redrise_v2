@@ -1,0 +1,71 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "PROCESS-LIST-INSTALLER-20261110",
+  "install": "install-beta31",
+  "setup": "RedRise-Setup-0.1.0-beta.31.exe",
+  "scenarios": {
+    "processes": {
+      "passed": true,
+      "processes": 109,
+      "created_now": 0,
+      "first_view": "Text|Mostrando 1 a 10 de 109 linhas|",
+      "pages": "",
+      "last_page": "Text|Mostrando 101 a 109 de 109 linhas|",
+      "seconds": {
+        "open_page": 4.95,
+        "next_page": 3.61
+      },
+      "history_process": {
+        "last_success_at": "2026-08-08T10:10:15.778748-03:00",
+        "last_attempt": "failed",
+        "shown": "08/08/2026 10:10",
+        "expected_local": "08/08/2026 10:10"
+      },
+      "routines_hidden_before_chevron": true
+    },
+    "kanban": {
+      "passed": false,
+      "column_order": [
+        "Aguardando",
+        "Em andamento",
+        "Atenção",
+        "Não executada",
+        "Conferida"
+      ],
+      "summary_kept_on_its_execution": true,
+      "saber_mais_exact_execution": false,
+      "card": "1. Abrir planilha 082c Kanban 082c Estação Kanban 082c · operador.kanban.082c",
+      "seconds_to_screen": {
+        "started -> Aguardando": 1.94,
+        "running -> Em andamento": 2.0,
+        "verified -> Conferida": 1.94,
+        "newer failed -> Atenção": 1.83,
+        "not run -> Não executada": 1.77,
+        "hidden then shown -> Aguardando": 2.0,
+        "cancelled -> Atenção or Não executada": 1.91
+      },
+      "target_s": 5.0,
+      "max_live_s": 2.0,
+      "observer": "the lab app window (admin session)",
+      "actor": "another session (operator) and a simulated Runner, same Core",
+      "executions": [
+        "da27e68b-ad39-4a87-b49e-1620f5838a03",
+        "e4651438-fd3b-4b03-be32-a29dca9f389b",
+        "4de5312f-1ad5-4aa0-aebd-3463a520c63f"
+      ],
+      "cancelled_execution": {
+        "outcome": "cancelled",
+        "end_reason": "cancelled"
+      }
+    }
+  },
+  "core": "0.3.10",
+  "clicks_lost": [],
+  "seconds": 169,
+  "only": [
+    "processes",
+    "kanban"
+  ],
+  "passed": false
+}

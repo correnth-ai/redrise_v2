@@ -1,0 +1,55 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "PROCESS-LIST-INSTALLER-20261110",
+  "install": "install-beta31",
+  "setup": "RedRise-Setup-0.1.0-beta.31.exe",
+  "scenarios": {
+    "processes": {
+      "passed": false,
+      "processes": 107,
+      "created_now": 0,
+      "first_view": "Text|Mostrando 1 a 10 de 107 linhas|",
+      "pages": "",
+      "last_page": "Text|Mostrando 101 a 107 de 107 linhas|",
+      "seconds": {
+        "open_page": 5.2,
+        "next_page": 3.8
+      },
+      "history_process": {
+        "last_success_at": "2026-08-08T10:04:01.479311-03:00",
+        "last_attempt": "failed",
+        "shown": "08/08/2026 10:04",
+        "expected_local": "08/08/2026 10:04"
+      },
+      "routines_hidden_before_chevron": true
+    },
+    "kanban": {
+      "passed": false,
+      "stopped": "Stop: 2. Salvar planilha 23bc not in Não executada after 30.0 s; board: {\"Aguardando\": [\"2. Salvar planilha 23bc Kanban 23bc Estação Kanban 23bc · operador.kanban.23bc\", \"2. Salvar planilha a9bf Kanban a9bf Estação Kanban a9bf · operador.kanban.a9bf\"], \"Em andamento\": [\"1. Abrir planilha 23bc Kanban 23bc Estação Kanban 23bc · operador.kanban.23bc\"], \"Atenção\": [], \"Não executada\": [\"2. Cancelar 2 afa9-0 Prova cancelar afa9-0 estacao-teste · teste.admin\", \"2. Cancelar 2 6971-0 Prova cancelar 6971-0 estacao-teste · teste.admin\"], \"Conferida\": [\"1. Abrir planilha a9bf Kanban a9bf Estação Kanban a9bf · operador.kanban.a9bf\", \"1. Prova agendada 148c - abrir Prova agendada 148c estacao-teste · teste.admin\", \"1. Ao vivo empresa afa9 Ao vivo empresa afa9 (avulsa) estacao-teste · teste.admin\", \"1. Cancelar 1 afa9-0 Prova cancelar afa9-0 estacao-teste · teste.admin\", \"1. Abrir calc rel afa9 Prova relatorio afa9 estacao-teste · teste.admin\", \"2. Gerar PDF afa9 Prova re"
+    },
+    "wizard_station": {
+      "passed": true,
+      "first_open_station_only": true,
+      "pending_without_local_server": true,
+      "joined_lab_core": true,
+      "intent_consumed": true,
+      "station": {
+        "station_id": 9,
+        "station_name": "estacao-wo-23bc",
+        "host": "127.0.0.1",
+        "port": 47810
+      },
+      "scope": "integrated local test: two isolated installs on this computer; not a second physical machine, LAN or VPN"
+    }
+  },
+  "core": "0.3.10",
+  "clicks_lost": [],
+  "seconds": 336,
+  "only": [
+    "processes",
+    "kanban",
+    "wizard_station"
+  ],
+  "passed": false
+}
