@@ -7,7 +7,7 @@
 - **Base observada:** branch `main`, HEAD `9cef3cb99f8ba2c2832d5b401fbc1cbb97a76479`; árvore limpa antes deste documento. Revalidar no início da construção.
 - **Estado documental:** beta.30, Core 0.3.9, Runner 0.3.11; fonte `AGENTS.md` e `delivery/status.json`. A imagem do usuário também mostra beta.30. Não constitui nova prova de instalação.
 - **Contexto:** nova WO, sem reabrir TEAM-ACCOUNTS ou ACCOUNT-ERASURE. Escopo de UI em P13 e instalação/update nas fronteiras existentes de P10/P11.
-- **Autorização atual:** concluir o plano e preparar o prompt para o engenheiro. A submissão desse prompt pelo usuário autoriza implementação local, testes, candidato e provas em laboratório com dados sintéticos. **InstallRS aprovado explicitamente pelo usuário como tecnologia escolhida**. A escolha está encerrada; a integração ainda precisa ser implementada e provada. Commit, push, update da instalação real e publicação não estão incluídos no pedido de fechamento deste documento; não herdar ordens de execução de WOs anteriores. Preparar a entrega verificável antes de solicitar eventual autorização dessas operações.
+- **Autorização atual:** por instrução explícita do usuário em 11/11/2026, o engenheiro deve implementar, testar e, após validar a alteração, fazer commit, integrar à main, fazer push ao remote autorizado, gerar a nova versão Beta, atualizar o canal local e realizar o update da instalação real, verificando o resultado e reconciliando a documentação. Essas operações não exigem repetir a pergunta de autorização. **InstallRS aprovado explicitamente como tecnologia escolhida**. MediaFire e distribuição pública permanecem adiados. Esta sessão apenas finaliza o documento/prompt; a execução cabe ao agente engenheiro.
 
 ## 1. Processo › Ação: lista navegável e rotinas recolhíveis
 
@@ -129,9 +129,22 @@
 2. Implementar campo de último sucesso/contrato e lista paginada/expansível; verificar item 1.
 3. Integrar InstallRS com o mecanismo de instalação existente e contrato de intenção; verificar item 2 em incrementos pequenos, sem migração ampla do app.
 4. Implementar proteção da própria conta e Kanban (itens 3 e 4), com testes localizados e prova de atualização entre clientes.
-5. Integrar os quatro itens num candidato de laboratório, validar instalação/update/rollback em cópias e reconciliar documentos dos comportamentos entregues. Entregar checkpoint, evidências, artefatos e pendências de liberação, sem alterar registros históricos ou a versão instalada real por inferência.
+5. Integrar os quatro itens num candidato de laboratório, validar instalação/update/rollback em cópias e reconciliar documentos dos comportamentos entregues.
+6. Executar a entrega autorizada abaixo até verificar a instalação real e a documentação final, preservando registros históricos.
+
+### Entrega autorizada após testes aprovados
+
+1. Determinar a próxima versão Beta disponível pelo estado real e sincronizar os manifests/lockfiles pertinentes antes do commit e da build final. Não presumir beta.31 nem aumentar versões de componentes não alterados sem necessidade.
+2. Fazer commit somente das mudanças revisadas desta WO e dependências necessárias identificadas. Integrar à `main`, resolver conflitos preservando trabalho alheio e repetir os checks afetados. Se já estiver em main, não criar merge artificial. Registrar SHA da fonte integrada.
+3. Fazer push normal para `origin/main` após conferir que o remote corresponde a `https://github.com/correnth-ai/redrise_v2.git`; sem force-push, reset destrutivo ou alterações de proteção. Se o remoto avançou, integrar com cuidado e revalidar antes de enviar. Confirmar o SHA remoto.
+4. Gerar instalador e artefatos finais de update rastreáveis ao commit integrado. Executar gates de integridade, instalação e update/rollback em laboratório; artefato que difere do candidato testado exige revalidar os checks afetados. Registrar versão, tamanho e SHA256.
+5. Preparar o canal local de atualização e assinatura exigida pelo mecanismo vigente, mantendo chaves no cofre e fora de logs. Preservar backup recuperável de dados/configuração antes de migrações. Não enviar instalador para MediaFire ou outro serviço público.
+6. Atualizar o app instalado pelo mecanismo de update, em janela segura de interação. Não encerrar automações ou trabalho do usuário à força. Verificar o app reaberto: versão efetiva, login, papel servidor/estação, preservação de dados e os quatro itens aplicáveis. Falta de acesso/sessão necessária é bloqueio concreto a registrar, não motivo para declarar update concluído.
+7. Atualizar documentação canônica afetada, `AGENTS.md`, `delivery/status.json`, regras do app, contratos/UI/instalação pertinentes e evidências/checkpoint. Distinguir build, instalação real e distribuição pública; versão oficial Beta deste canal local não implica publicação pública nem homologação VPN/macOS.
+8. Fazer commit e push complementar dos registros finais de update/documentação, se surgirem após o commit da build. Preservar a relação entre SHA da build, hash do instalador e SHA documental. Confirmar consistência local/remota e reportar quaisquer arquivos não relacionados preservados.
 
 - **Write-set atual:** somente este documento.
+- **Write-set de entrega autorizado para o engenheiro:** manifests/lockfiles de versão realmente afetados, scripts existentes de build/update quando necessário, `AGENTS.md`, `delivery/status.json`, documentação canônica pertinente e evidências/checkpoint desta WO. Artefatos, dados e segredos não entram no Git por inferência.
 - **Write-set complementar dos itens 3/4:** `desktop/src/features/{configuracoes,fluxos}.tsx`, `desktop/src/data/status.ts`, `desktop/src/state.tsx`, contratos de dados e testes associados; `core/redrise_core/{service,api}.py` somente para proteção/autorização, abrangência da consulta e eventos necessários. Reutilizar componentes existentes de diálogo; reconciliar `docs/APP-RULES.md` e `docs/ui/LIVE-TABLES.md` com o comportamento entregue.
 - **Write-set de construção proposto:** `desktop/src/features/processos.tsx`, `desktop/src/components/data-table.tsx`, `desktop/src/lib/table-state.ts`, `desktop/src/data/{types,source,demo}.ts`, `core/redrise_core/service.py` e API se contrato exigir, testes de UI/Core; `installer/`, scripts atuais de packaging e provas de instalação/update afetados; `desktop/src/features/auth.tsx`, integração Tauri de setup/configuração e testes relacionados; documentação/contratos/avisos de licença afetados. Delimitar arquivos exatos após leitura das instruções locais vigentes.
 - **Verificações:** `node scripts/validate-base.mjs`; scripts efetivos de typecheck/testes em `desktop/package.json`; testes Core em PostgreSQL isolado; checks Rust do instalador e `proofs/installer/p10-installer-checks.ps1` adaptados ao contrato real. Registrar comandos e resultados na execução; validação documental não prova comportamento do app.
@@ -140,14 +153,14 @@
 - **Fora de escopo:** macOS, VPN, hospedagem/download público/MediaFire, identidade externa, mudança dos papéis de usuários, reconversão de instalação existente, revisão ampla de automações ou WOs anteriores.
 - **Parada atual:** planejamento encerrado, próximo passo é executar pelo prompt. Na construção, incompatibilidade material de InstallRS exige diagnóstico, não troca silenciosa de tecnologia; continuar frentes independentes possíveis. Revisão de integração do instalador antes de aceitar candidato; revisor ainda não designado. Não ultrapassar a fronteira de liberação definida acima.
 
-### Gate de conclusão da execução local
+### Gate de conclusão da entrega
 
 - Itens 1–4 implementados com respectivos aceites demonstrados; falhas e provas não executadas explicitadas, sem declarar sucesso parcial como total.
-- InstallRS fixado, licenças registradas e candidato Windows rastreável à árvore fonte/HEAD e diferenças locais; registrar versão real e SHA256, sem presumir beta.31.
+- InstallRS fixado, licenças registradas e instalador Windows rastreável ao commit integrado e enviado; registrar versão real e SHA256, sem presumir beta.31.
 - Instalação servidor/estação, preservação de configuração e compatibilidade de update/rollback provadas em laboratório. Testes nativos e simulados identificados separadamente.
 - Testes de dados históricos, permissões, Kanban entre clientes e layouts realizados; tempo de atualização medido.
-- Documentação aplicável e checkpoint coerentes com a entrega local; `published` e versão da instalação real não avançam sem evidência dessas operações.
-- Relatório final com arquivos alterados, comandos/resultados, limitações, caminho/hash do candidato e próxima ação de liberação. Distribuição pública, VPN e macOS permanecem fora do escopo.
+- Commit integrado e push confirmados; canal local atualizado; update da instalação real concluído e verificado; documentação/evidências reconciliadas e enviadas. Versão instalada só avança com evidência e publicação pública permanece adiada.
+- Relatório final com arquivos alterados, comandos/resultados, commits local/remoto, versão efetivamente instalada, caminho/hash do instalador e limitações. Não encerrar como entrega completa apenas porque o laboratório passou. Distribuição pública, VPN e macOS permanecem fora do escopo.
 
 ## 6. Prompt de execução para o agente engenheiro
 
@@ -157,17 +170,25 @@ Execute a Work Order D:\Correnth\products\redrise-v2\repos\app\delivery\work-ord
 Root exclusiva: D:\Correnth\products\redrise-v2\repos\app.
 Leia a WO integralmente, os AGENTS.md aplicáveis e as fontes canônicas pertinentes. Confirme branch, HEAD, alterações locais, estado atual e evidências; preserve trabalho existente e não reinicie WOs concluídas.
 
-Esta mensagem autoriza implementar localmente os quatro itens, testar, gerar o candidato e realizar provas em laboratório com dados sintéticos. Siga KISS e os defaults documentados. InstallRS está escolhido e aprovado: fixe a versão, integre e valide; não reabra comparação de tecnologias nem substitua silenciosamente.
+Esta mensagem autoriza implementar os quatro itens, testar, gerar o candidato e realizar provas em laboratório com dados sintéticos; após os testes aprovados, fazer commit, integrar à main, fazer push ao remote autorizado, gerar a nova versão Beta e concluir o update da instalação real e a documentação. Não peça novamente autorização para essas operações já aprovadas. Siga KISS e os defaults documentados. InstallRS está escolhido e aprovado: fixe a versão, integre e valide; não reabra comparação de tecnologias nem substitua silenciosamente.
 
 Entregue: processos paginados e expansíveis com último sucesso real; assistente Windows servidor/estação; proteção da própria conta contra desativação; Kanban responsivo com resumo, Saber mais e atualização automática entre clientes. Preserve contratos, permissões, histórico, dados e garantias de instalação/update/rollback.
 
 Use as skills aplicáveis conforme o router e registre evidências reais. Prove cada item com os testes e cenários da WO, inclusive UI nativa e instalação em laboratório. Simulação não comprova instalação real nem homologação LAN/VPN. Não altere dados reais para testar.
 
-Continue até o gate de conclusão da execução local. Resolva decisões rotineiras sem pedir confirmação; diante de bloqueio material, registre evidência e conclua o trabalho independente possível. Não fabrique testes ou declare conclusão com aceites obrigatórios pendentes.
+Após validar os itens, siga a sequência de entrega da seção 5:
+1. Defina a próxima versão Beta disponível e sincronize manifests/lockfiles antes do commit/build.
+2. Faça commit, integre à main, revalide mudanças de integração e faça push normal para origin/main, conferindo remote e SHA. Preserve alterações alheias; não use force-push.
+3. Gere os artefatos finais a partir do commit integrado; valide integridade, instalação, update e rollback em laboratório. Registre hashes.
+4. Atualize o canal local com os artefatos e assinatura exigidos, preservando backup recuperável e segredos no cofre.
+5. Faça o update da instalação real pelo mecanismo do app, sem interromper trabalho ou automações em curso. Verifique versão, login, dados, papel da instalação e funcionalidades após reabrir.
+6. Reconcilie toda a documentação afetada e evidências/checkpoint. Faça commit/push documental complementar quando necessário e confirme consistência com a versão instalada.
 
-Atualize a documentação afetada e grave evidências/checkpoint da WO. Não faça commit, push, update da instalação real ou publicação externa nesta execução sem ordem específica para esta entrega; deixe candidato e resultados prontos para revisão/liberação. MediaFire, VPN e macOS estão fora do escopo.
+Continue até o gate de conclusão da entrega, não somente até a build ou os testes. Resolva decisões rotineiras sem pedir confirmação; diante de bloqueio material, registre evidência e conclua o trabalho independente possível. Não fabrique testes ou declare conclusão com aceites obrigatórios pendentes. Não presuma o número da próxima versão.
 
-Ao finalizar, informe itens entregues, arquivos alterados, testes/provas, versão e SHA256 do candidato, documentação, limitações e próxima ação. Não confunda candidato de laboratório com versão oficial instalada.
+MediaFire e distribuição pública permanecem adiados. VPN e macOS estão fora do escopo. Push do código para o repositório autorizado está incluído; publicação pública de instalador não está.
+
+Ao finalizar, informe itens entregues, testes/provas, commits e confirmação do push, versão efetivamente instalada, caminho e SHA256 do instalador, documentação atualizada e pendências. Não confunda candidato de laboratório com versão oficial instalada.
 ```
 
 ## 7. Rastreabilidade do planejamento
