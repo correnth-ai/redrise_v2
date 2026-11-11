@@ -165,7 +165,8 @@
 ## Registro de execução (11/11/2026)
 
 - Itens 1–4 implementados e provados (laboratório nativo, Core e UI); 0.1.0-beta.31, instalador `52bcd0f1…b615`, fonte `2bb2b02`; `main` local integrada; canal local assinado; app real atualizado pelo update do app (Core 0.3.10, papel mantido).
-- Pendente: push para `origin/main` (confirmação do usuário no chat), login e conferência na equipe real (credenciais do usuário), revisão independente do instalador.
+- Push: `9cef3cb..f836683` em `origin/main` (11/11/2026, SHA remoto conferido), seguido do commit documental.
+- Pendente: login e conferência na equipe real (credenciais do usuário), revisão independente do instalador, prova nativa do Kanban no caminho de revisão, queda do feed e histórico além da lista geral (hoje provados no Core e nos componentes).
 - Checkpoint: [PROCESS-LIST-INSTALLER-20261110](../checkpoints/PROCESS-LIST-INSTALLER-20261110.md); evidência: `delivery/evidence/PROCESS-LIST-INSTALLER-20261110/evidence.json`.
 
 ## 6. Prompt de execução para o agente engenheiro

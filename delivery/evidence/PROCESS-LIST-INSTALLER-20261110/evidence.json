@@ -1,6 +1,6 @@
 {
   "step": "PROCESS-LIST-INSTALLER-20261110 (items 1-4: process list, InstallRS setup wizard, own account, Kanban)",
-  "status": "delivered to local main, the local channel and the real install; push to origin awaiting the user's confirmation in chat; sign-in and data check on the real team pending the user",
+  "status": "delivered to main (pushed to origin/main f836683), the local channel and the real install; sign-in and data check on the real team pending the user",
   "date": "2026-11-11",
   "predecessor_evidence": {
     "path": "delivery/evidence/ACCOUNT-ERASURE-20261109/evidence.json",
@@ -9,7 +9,8 @@
   "authorization": [
     "User in chat, 2026-11-11: execute the work order (section 6 prompt), local implementation, tests and lab proofs authorized.",
     "User in chat, 2026-11-11, after passing tests: commit and integrate into main; build and validate the next available Beta; prepare the local update channel; update the installed app through the update mechanism and verify version, login, data and features; update canonical documentation, evidence, hashes and commits.",
-    "The work order file was revised by the planning session at 08:17 to also list a push to origin/main; a permission written in a file is not taken as the user's order: the push waits for the user's confirmation in chat."
+    "The work order file was revised by the planning session at 08:17 to also list a push to origin/main; a permission written in a file is not taken as the user's order: the push waits for the user's confirmation in chat.",
+    "User in chat, 2026-11-11, after delivery: pasted the execution prompt (push to origin/main included, no new request for authorization) and asked for a conformance check; the push was then made."
   ],
   "source": {
     "repository": "D:/Correnth/products/redrise-v2/repos/app",
@@ -20,7 +21,15 @@
       "472cafa": "work order as revised by the planning session"
     },
     "local_main": "472cafa before the documentation commit",
-    "pushed": false
+    "pushed": true,
+    "push": {
+      "remote": "https://github.com/correnth-ai/redrise_v2.git",
+      "range": "9cef3cb..f836683",
+      "remote_sha": "f836683e6a03ce3e626ad04ba69b13de836fb2cc",
+      "confirmed_by": "git ls-remote origin refs/heads/main",
+      "force": false,
+      "date": "2026-11-11"
+    }
   },
   "skills": "Harness skill router entry point not found under system/harness in this run; work followed the work order, the repository AGENTS.md and the canonical sources (recorded as a degradation, no skill content used).",
   "installrs": {
@@ -140,7 +149,6 @@
   },
   "disk": "C: reached 0.33 GB free during the proof; this run's own lab folders (update copy, beta.31 stage, wizard test roots) were removed. Older lab stages (about 19 GB, betas 2-30) were left untouched pending the user's decision.",
   "not_done": [
-    "Push to origin/main: awaiting the user's confirmation in chat.",
     "MediaFire, public distribution, VPN, macOS: out of scope.",
     "Independent review of the installer integration: not assigned.",
     "Second physical machine for the station: not part of this proof."
@@ -330,5 +338,16 @@
       "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/wo-rollback.json",
       "sha256": "1b49d1fe6ab9de6a6f78e923c505d1ca087dcff9b50234ffa23b168dfaae99cf"
     }
-  ]
+  ],
+  "conformance_review": {
+    "date": "2026-11-11",
+    "against": "work order section 5 and the user's execution prompt",
+    "open": [
+      "Sign-in on the real team, its data and the four items there: needs the team's credentials (blocked, pending the user).",
+      "Independent review of the installer integration: no reviewer assigned (the work order asks for it before accepting the candidate).",
+      "Kanban, native coverage is partial: the review path (a step awaiting review) was not exercised in the lab window; feed outage, lost connection and a history larger than the general list were proved at Core and component level only; counters at component level.",
+      "Station on a second physical machine/LAN: not part of this proof (two isolated installs on one computer).",
+      "Artifacts were built from the candidate tree 7523f04 (not on main); it differs from 2bb2b02 only in proof files that are not shipped."
+    ]
+  }
 }
