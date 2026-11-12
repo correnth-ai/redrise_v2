@@ -1,0 +1,11 @@
+{
+  "schema": "redrise.release/1",
+  "version": "0.1.0-beta.32",
+  "notes": "Ações por ícone em todos os processos (inclusive Boas-vindas), exclusão do processo com a palavra Confirmado, Kanban de um dia com um cartão por processo e relatório de falha do instalador que diz o que ficou instalado.",
+  "published_at": "2026-11-12T08:55:25+00:00",
+  "installer": {
+    "file": "RedRise-Setup-0.1.0-beta.32.exe",
+    "size": 311083974,
+    "sha256": "93601c7324833f00b8ff219ff54a91472e04a6631894e5ef9ae2cb1052811d64"
+  }
+}

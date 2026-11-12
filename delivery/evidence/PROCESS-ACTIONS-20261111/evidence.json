@@ -1,0 +1,320 @@
+{
+  "schema": "redrise.evidence/1",
+  "step": "PROCESS-ACTIONS-20261111",
+  "status": "delivered; real install checked up to the login screen, signed-in check waits for the user to sign in",
+  "date": "2026-11-12",
+  "predecessor_evidence": {
+    "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/evidence.json",
+    "sha256": "c52463f7348289f692c09fa581786ec547106448b142c49f8a883b0c6eab0245"
+  },
+  "authorization": [
+    "User in chat, 2026-11-11: pasted the execution prompt of the work order: implement, test and, after passing tests, commit, integrate into main, push normally to https://github.com/correnth-ai/redrise_v2.git, build the next Beta, update the signed local channel, update the real install, reconcile docs and clean stale lab/stage folders with an inventory; no new request for these authorizations; no force-push.",
+    "User in chat, 2026-11-11: deletion follows the work order (process only, typed word Confirmado); Kanban follows the work order redesign (four columns, one day, one card per process)."
+  ],
+  "source": {
+    "base": "5f40ecbc32c32b594094a9988ac4a0a24ca53bbf",
+    "commits": {
+      "654e81c6b93c539ee20975fb8ca33e17de0269d8": "docs: work order and review (planning session)",
+      "f87121043e33cef508217d5056b242de21d39423": "feat: process actions by icon, delete with typed word, Boas-vindas managed, Kanban of one day, installer failure reports, 0.1.0-beta.32",
+      "6a6fbd1c40eaaf5fd8ead3f6ff646fdd3a95a86e": "fix: installer reads its manifest with BOM when reporting a failure; proof scripts"
+    },
+    "remote": "origin/main = 6a6fbd1c40eaaf5fd8ead3f6ff646fdd3a95a86e (git ls-remote, 2026-11-12), normal push, fast-forward",
+    "candidate_source": "installer stub and package built from 6a6fbd1; desktop and Core sources identical to f871210"
+  },
+  "candidate": {
+    "version": "0.1.0-beta.32",
+    "core": "0.3.11",
+    "runner": "0.3.11",
+    "installer_crate": "0.2.1",
+    "installrs": "0.1.1",
+    "installer": "C:/Users/raulv/RedRise-v2-dev/release/0.1.0-beta.32/RedRise-Setup-0.1.0-beta.32.exe",
+    "installer_sha256": "93601c7324833f00b8ff219ff54a91472e04a6631894e5ef9ae2cb1052811d64",
+    "installer_bytes": 311083974,
+    "payload_sha256": "036557946234de9338a01d1b0edc979c59cf35246dce8b30abf4b4847f54cf78",
+    "desktop_exe_sha256": "627fa1aeb36ad7690ece6623628fde94fe27152e53ced8e8ec5bc76a80610ad0",
+    "files": 3758,
+    "migration": "none (schema_migrations 12 before and after)",
+    "earlier_build": "a first package of the same version (stub fc7dc0f5) was withdrawn before signing: the native failure proof found the installer could not read its own manifest (UTF-8 with BOM); fixed in 6a6fbd1, repacked and every lab step rerun"
+  },
+  "checks": {
+    "automated": {
+      "core": "tests/core full suite 187/187 OK (isolated PostgreSQL), including tests/core/test_process_actions.py (15 new)",
+      "ui": "vitest 117/117 and tsc --noEmit clean (tests/process-actions.test.tsx new; process-list-kanban, schedules, routine-wizard, usage-adjustments updated)",
+      "contracts": "17 OK",
+      "validate_base": "346 passed",
+      "installer": "no Rust unit tests; built with build-installer.ps1 -Locked; validated natively below"
+    },
+    "native_lab": {
+      "where": "C:/Users/raulv/RedRise-v2-dev/lab-test (synthetic team, vault rrtest2), computer idle, chain proofs/process-actions/chain-actions.ps1",
+      "gate": "verify-candidate.ps1 passed for 93601c73… (verification.json, 2026-11-12 01:52)",
+      "p10": "corrupted package refused, install, reinstall, rollback by uninstall.exe, uninstall (p10-installer-checks.json)",
+      "update_copy": "quiet update of a copy of beta.31 to beta.32, previous kept (update-copy-of-beta31.json)",
+      "lab_install": "lab-install-beta32.json",
+      "practical": "accept-actions-20261112-054953.json: migration, actions, delete, kanban_day, layout, welcome, failures, wizard_server, wizard_cancel, wizard_existing, wizard_station, wizard_error all passed (1154 s)",
+      "installer_failures": "accept-actions-failures-20261112-014408.json: before-swap, swap, restore, after-swap, intent and fresh-swap on copies; message, JSON and files agree",
+      "rollback": "actions-rollback.json: beta.32 -> beta.31 on an isolated copy of the lab data, backup/restore and table counts equal, passed",
+      "kanban_live": "1.67 to 1.80 s from Core change to screen (target 5 s)",
+      "attempts": "the first two native runs stopped before any input because the lab window could not take the foreground from the Claude desktop window; the chain now minimizes only that window while the person is away and restores it after; the third run passed"
+    },
+    "simulated_vs_native": "Core tests and UI component tests are simulated (isolated DB, mocked data source); the lab chain above is native (installed app, real installer, UI Automation on real windows). Station on a second physical machine, LAN or VPN was not exercised."
+  },
+  "channel": {
+    "latest": "C:/Users/raulv/RedRise-v2-dev/channel/latest.json = 0.1.0-beta.32",
+    "signed": "2026-11-12T08:55:25Z, Ed25519 by packaging/release/release_channel.py sign (key used in-process from the OS vault, never displayed); signature checked against desktop/src-tauri/channel-public-key.b64, size and SHA-256 match",
+    "previous_latest": "0.1.0-beta.31, its latest.json and signature kept in channel/previous-beta31"
+  },
+  "real_install": {
+    "before": "0.1.0-beta.31, signed in as Admin Lab (admin.lab, administrador); Processo › Ação 3 processes, Rotina › Lista 6 routines, Processo › Histórico 4 executions, Configuração › Equipe 2 accounts (Admin Lab, Operador Lab); read through UI Automation only",
+    "backup": {
+      "data": "C:/Users/raulv/RedRise-v2-dev/backups/real-data-before-beta32-20261112-0556: cold copy of %LOCALAPPDATA%/RedRise taken with the app, Core and PostgreSQL stopped (2136 files, 3851565806 bytes, equal to the source)",
+      "app": "%LOCALAPPDATA%/Programs/@redrise.previous = 0.1.0-beta.31; beta.31 installer kept in the channel and in release/0.1.0-beta.31",
+      "why_not_pg_dump": "a database dump needs the app database credential from the Windows vault, which this work may not read"
+    },
+    "update": {
+      "when": "2026-11-12 05:56–05:59, computer idle (no input for 403 s), no execution running, next scheduled run 16/11",
+      "how": "app closed through UI Automation (window Close; Core and PostgreSQL stopped with it), cold backup, then the signed channel installer run with the updater's own arguments (--quiet --relaunch)",
+      "why_not_in_app": "the app checks the channel only at sign-in and every 6 h; showing the offer now would need a reload by keyboard, which is input; the in-app path itself is unchanged since P11 and proved on earlier real updates",
+      "record": "real-last-install.json: installed 0.1.0-beta.32, 3758 files, configuration existing (role kept), previous kept, data root untouched, Start Menu shortcut written"
+    },
+    "after": [
+      "Install folder manifest app_version 0.1.0-beta.32; RedRise.exe SHA-256 627fa1ae… equal to the candidate; @redrise.previous = 0.1.0-beta.31.",
+      "App relaunched at 05:59:03 and shows the login screen (Bem-vindo de volta), as after the previous real update.",
+      "GET https://127.0.0.1:47800/api/v1/status: initialized true, team Equipe Lab RedRise, core 0.3.11.",
+      "Runner status: runner 0.3.11, core reachable, Windows session ready, no job, no error."
+    ],
+    "not_done": [
+      "Signed-in check (role, data counts, six icons, Kanban of the day) on the real install: needs the person's password, which this work may not type; done for beta.31 on 2026-11-11 and on the lab for beta.32. It can be read through UI Automation once the person signs in.",
+      "No data of the real team was changed."
+    ]
+  },
+  "walkthrough": "installer-walkthrough.md (15 steps, real InstallRS windows of the final candidate; lab team code masked in shots/inst-estacao-conexao-pendente.png)",
+  "cleanup": {
+    "record": "cleanup.json",
+    "removed": [
+      "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard",
+      "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\rollback-copy",
+      "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\actions-p10",
+      "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wo-p10",
+      "C:\\Users\\raulv\\RedRise-v2-dev\\stage\\release-0.1.0-beta.30"
+    ],
+    "failed": [],
+    "removed_bytes_calculated": 3033492454,
+    "free_c_before_bytes": 38909587456,
+    "free_c_after_bytes": 41966317568,
+    "kept": [
+      "real install and its .previous, real data and the cold backup of this update",
+      "lab-test/install-beta31 (previous version for rollback proofs), lab-test/install-beta32 (current), lab-test/data, tools, webview",
+      "stage/release-0.1.0-beta.32 (layout of the current candidate), release/0.1.0-beta.30..32, the channel, verify/* (logs, a few KB each)",
+      "older lab report files and shots-* folders (small; not all consolidated elsewhere)"
+    ],
+    "earlier_in_this_session": "on 2026-11-11/12, by the user's order in chat, duplicate lab folders (40, 25.8 GB) and old release/channel betas 1-29 (12.1 GB) were removed before this work order started"
+  },
+  "not_done": [
+    "Independent review of the installer: deferred by the user (2026-11-11).",
+    "Station on a second physical machine, LAN or VPN: deferred by the user; proved only as two isolated installs on this computer.",
+    "Signed-in check of the real install after the update: waits for the person to sign in.",
+    "MediaFire/public distribution, VPN and macOS: out of scope."
+  ],
+  "artifacts": {
+    "accept-actions-20261112-054953.json": {
+      "sha256": "84d7806bf684f06e7c9cd3a3f062939fe1845beb9d44f91957128a84a1fe1b62",
+      "bytes": 13800
+    },
+    "accept-actions-failures-20261112-014408.json": {
+      "sha256": "95553cd788db76b25fcc7c492d640f6088ee74f57d8dbdbb6b67ed2d534a783c",
+      "bytes": 6180
+    },
+    "actions-baseline.json": {
+      "sha256": "6b782edcbb89780ed8e6a2b35866b61f87d12f914a65af74dffc894ca3d0dc45",
+      "bytes": 551
+    },
+    "actions-rollback.json": {
+      "sha256": "f18508ff739268ffba8aaf3e6cdead3233b4cd860a6f95bd3417ba683d2d2215",
+      "bytes": 1838
+    },
+    "channel-latest.json": {
+      "sha256": "4c3d454c41b704f10f8d8764633f0f5f3cca7efd990d8dd6cd31e94813ce9c13",
+      "bytes": 525
+    },
+    "cleanup.json": {
+      "sha256": "a961fe12e75b96e9fe4d66912f27765bdd5ecc969b26e5f503f23feca23d5cf2",
+      "bytes": 3071
+    },
+    "installer-walkthrough.md": {
+      "sha256": "6e00930727dd79cac650febfc5c070716b2d92f9160f61aa01011a23ed114bd2",
+      "bytes": 8258
+    },
+    "lab-install-beta32.json": {
+      "sha256": "a805013e10c830cb5917916f126fb96fa3ea6104e4d4fa1972043ac9a82d3e55",
+      "bytes": 351
+    },
+    "p10-installer-checks.json": {
+      "sha256": "b6adde2eafa94fc8a689a49f5b3d375452019166afd069af0d07bd627a654b5c",
+      "bytes": 2229
+    },
+    "pack.json": {
+      "sha256": "553b98a010af065ae1b47ca83c58a3853acaba50d32abda8568fadcfb18816e2",
+      "bytes": 290
+    },
+    "real-last-install.json": {
+      "sha256": "b4fd95428ba78ff643773ea4f8aee415bce4c2392c78daa29b1527d9ccee12a5",
+      "bytes": 462
+    },
+    "shots/inst-acao-claro-estreita.png": {
+      "sha256": "cc7dee75a9dffabcfff0f78e8180d38507b21e53637d1825a638005ffb07d2b3",
+      "bytes": 64827
+    },
+    "shots/inst-acao-claro-maximizada.png": {
+      "sha256": "c18e0ddc4d6308d8a83b7aa3d40f0d7c4ecae1934b00755e66424ff48d3f2793",
+      "bytes": 133625
+    },
+    "shots/inst-acao-escuro-estreita.png": {
+      "sha256": "e4ddc165d1dc446a5ccf81a43ad761724cc39e29b1e03d7acbc5d890754c0696",
+      "bytes": 63137
+    },
+    "shots/inst-acao-escuro-maximizada.png": {
+      "sha256": "5a685020dec1512fbeae9a672a28a6ec7ae4e045f13596d1e0c49a23c0acfb17",
+      "bytes": 130427
+    },
+    "shots/inst-acao-icones.png": {
+      "sha256": "9e2699b218a454e5a552a9c52096cc1a686bdbda24347f162f27c119540136be",
+      "bytes": 81860
+    },
+    "shots/inst-acao-play-dialogo.png": {
+      "sha256": "f1efd6eb87a73deab145dee86001b236b39de4dd690dcca6e292cb40e1362a6c",
+      "bytes": 85411
+    },
+    "shots/inst-agendamento-excluir-dialogo.png": {
+      "sha256": "a8f38fc02c115d7f965d80bec96b5680e2778811a5188092b223ee9298ff5028",
+      "bytes": 88288
+    },
+    "shots/inst-agendamentos-icones.png": {
+      "sha256": "bc7b03df713ba2a3e5dabdfabce6bb1441d09b6e35df7e9537723cdfa4659834",
+      "bytes": 83055
+    },
+    "shots/inst-estacao-conectada-login.png": {
+      "sha256": "6d84d1f859f5bb52f3430adf2ace4c06c278e8c0e2eff388a945a4ba3e93cdc1",
+      "bytes": 1339215
+    },
+    "shots/inst-estacao-conexao-pendente.png": {
+      "sha256": "33f715bdabcfd9b9ad4a7e0ea8014e4a079504b96e19dbce4a2ce240e715bb53",
+      "bytes": 48636
+    },
+    "shots/inst-excluir-boas-vindas-confirmado.png": {
+      "sha256": "9da1aa6d7cb264eab40b3395612247b241096120a3e891b48d7b7f39669e8ca7",
+      "bytes": 131934
+    },
+    "shots/inst-excluir-boas-vindas-dialogo.png": {
+      "sha256": "bef4e759f96311d366d0d6dc3c8b640f9ca131ec88ecf54ede457b7c1feb35c1",
+      "bytes": 130964
+    },
+    "shots/inst-excluir-x-5147-confirmado.png": {
+      "sha256": "073899acf1cf36f69a5b7f14651e9e09cc9291cbf5dfa5562c53a4c0735984f2",
+      "bytes": 95183
+    },
+    "shots/inst-excluir-x-5147-dialogo.png": {
+      "sha256": "c5dae90d7fa8080929a1675e28f385283c723aba99d9f6b1ece53c6f4a68dea2",
+      "bytes": 94046
+    },
+    "shots/inst-historico-processo-excluido.png": {
+      "sha256": "7f3074b962715c786831cbd13c6954025a947edb7a8bcc6af802f9ba611e077c",
+      "bytes": 108241
+    },
+    "shots/inst-kanban-claro-estreita.png": {
+      "sha256": "0bd6e55f9a69567f8e7083238360425a9864eee650e1ccaa80fa7e791f598179",
+      "bytes": 69266
+    },
+    "shots/inst-kanban-claro-maximizada.png": {
+      "sha256": "6c9ad443e7d098d57388cfeebd9feefeac7021b48bef4d9b72b86d3410fb6ebc",
+      "bytes": 94990
+    },
+    "shots/inst-kanban-dia-ontem.png": {
+      "sha256": "a0e43f0d5bf57bc1f02b340f397b65164e1651d04b080b2070c96084e35d6330",
+      "bytes": 88180
+    },
+    "shots/inst-kanban-dia-quatro-colunas.png": {
+      "sha256": "aefa53f2674bfad8eff5fc0b8db665c1554f5e141411bbeedf25b189f51b3995",
+      "bytes": 75323
+    },
+    "shots/inst-kanban-dia-resumo-falha.png": {
+      "sha256": "dd86c9d33d32960f78e06d039bc909ceb39bff7e9c102552dee80df472588335",
+      "bytes": 90107
+    },
+    "shots/inst-kanban-escuro-estreita.png": {
+      "sha256": "b394729222c8cc0bc03676ab2345dbe8bbf0703c6618f59a7d06d94dbd457340",
+      "bytes": 67029
+    },
+    "shots/inst-kanban-escuro-maximizada.png": {
+      "sha256": "a4d415bb9b646a85821a413260e45ceb8bd1034a4ad2bbe62bd09f314ecfdcc4",
+      "bytes": 86681
+    },
+    "shots/inst-primeira-abertura-estacao.png": {
+      "sha256": "8643ea4373f7976d07d38f685cc09b457693fa60442e8962b751b2245dd37198",
+      "bytes": 45022
+    },
+    "shots/inst-wizard-08-primeira-abertura-servidor.png": {
+      "sha256": "2b479a3121fa9c328b00b4a66a75564c79b2937ee0999c1a111ce9e284a7e1c4",
+      "bytes": 41963
+    },
+    "shots/wizard-01-boas-vindas.png": {
+      "sha256": "b70459c7cf44e5e3c3f6d352ef2e9b02b2aad8a84eba2b4ef21c1222f2bb013a",
+      "bytes": 9879
+    },
+    "shots/wizard-02-uso-sem-escolha.png": {
+      "sha256": "b09fbd8893d83d24df4f3fe168ddb2850ae318515a1a7d1172629acb56dc6eb5",
+      "bytes": 13669
+    },
+    "shots/wizard-03-escolha-obrigatoria.png": {
+      "sha256": "09fed1e78c70a17970ea23f958e2b80c25bbab11a7fe64061e7ff3af3221483c",
+      "bytes": 5149
+    },
+    "shots/wizard-04-uso-servidor-escolhido.png": {
+      "sha256": "c3f2e246234484ebbdbae60d3f6d1cbec5050d71cade8f847c427e770ded14bc",
+      "bytes": 13748
+    },
+    "shots/wizard-05-pronto-servidor.png": {
+      "sha256": "648644be8ca9e51604c4f41eed343cdf543a5f2e1638a4046fded29c80087f60",
+      "bytes": 12868
+    },
+    "shots/wizard-06-progresso-1.png": {
+      "sha256": "835eb902d0229153256b556fdd12283a095341a32c73e04b374550d128b35c70",
+      "bytes": 7518
+    },
+    "shots/wizard-06-progresso-2.png": {
+      "sha256": "0afa8bc1ffd7d5aacf50f051f20c2319628a3b9a775e17175c2b06577fcf5d22",
+      "bytes": 8355
+    },
+    "shots/wizard-06-progresso-3.png": {
+      "sha256": "e30dda5006d9e3ebf1b706adbf75c65873192b15129f832d1b6c5ad20eb41635",
+      "bytes": 7547
+    },
+    "shots/wizard-07-concluido-servidor.png": {
+      "sha256": "dea873ef3ae85337b741dceb66a7276a644e1999d448e42b920539fbb38c1693",
+      "bytes": 10057
+    },
+    "shots/wizard-09-cancelado-durante.png": {
+      "sha256": "cbfebd8b0c7354cf56868c5e0e5dc6a58badc6bd31d9486923be2d8c07436c94",
+      "bytes": 11272
+    },
+    "shots/wizard-10-ja-configurado.png": {
+      "sha256": "da57b215b87ad9d3b22a25550bd5dbcfc163aa7c6d47bf84c17d6bb0ebfb60ca",
+      "bytes": 12382
+    },
+    "shots/wizard-11-pronto-estacao.png": {
+      "sha256": "092e48a99ef63be1e9f1a8abfac384392674f734bc2bc9ed81934788657b977e",
+      "bytes": 12900
+    },
+    "shots/wizard-15-erro-controlado.png": {
+      "sha256": "27a639204089633961befaec0f481c93656a5923ad97911416b2a867fb665c5c",
+      "bytes": 18703
+    },
+    "update-copy-of-beta31.json": {
+      "sha256": "3ebe95e47260a16fb65b10e9386dc39bee0d653d604af1b457b2a91bb682c95a",
+      "bytes": 367
+    },
+    "verification.json": {
+      "sha256": "fd60681f295206afdb714de6d47558f657b007d5090a738edad2af8bf29838c1",
+      "bytes": 8097
+    }
+  }
+}

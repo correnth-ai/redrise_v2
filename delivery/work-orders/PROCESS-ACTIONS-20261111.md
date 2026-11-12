@@ -1,6 +1,6 @@
 # Work Order — ações de processos, instalador e limpeza do laboratório
 
-- **ID:** PROCESS-ACTIONS-20261111. **Data:** 11/11/2026. **Estado:** planejamento fechado, pronto para o engenheiro; não implementado nesta sessão.
+- **ID:** PROCESS-ACTIONS-20261111. **Data:** 11/11/2026. **Estado:** executada em 11–12/11/2026 (registro na seção 8). Planejamento fechado em 11/11.
 - **Produto/root:** `product:redrise-v2`, `repo:redrise-v2`, `D:/Correnth/products/redrise-v2/repos/app`.
 - **Base inspecionada:** `main`, `5f40ecbc32c32b594094a9988ac4a0a24ca53bbf`; SHA remoto de `origin/main` igual, árvore limpa antes destes documentos. Remote autorizado: `https://github.com/correnth-ai/redrise_v2.git`.
 - **Predecessora:** PROCESS-LIST-INSTALLER-20261110, beta.31/Core 0.3.10/Runner 0.3.11. Revisão nesta sessão em `delivery/reviews/PROCESS-LIST-INSTALLER-20261111.md`. Não repetir implementação já entregue.
@@ -178,3 +178,22 @@ Continue até o completion gate, não pare no código/build. Se houver bloqueio 
 
 Ao finalizar: itens entregues, testes/provas, commits e SHA remoto, versão realmente instalada, caminho/hash do instalador, walkthrough visual, documentação, resultado da limpeza e pendências.
 ```
+
+## 8. Registro de execução (12/11/2026)
+
+- **Decisões do usuário no chat (11/11):** exclusão "Seguir a WO" (só o processo, palavra Confirmado); Kanban "Redesenho da WO" (quatro colunas, um dia, um card por processo).
+- **Entregue:**
+  - Itens 1–3 e 4.2–4.3 em `f871210`; correção do instalador achada pela prova nativa (manifesto com BOM) e provas em `6a6fbd1`.
+  - Push normal: `origin/main` = `6a6fbd1c40eaaf5fd8ead3f6ff646fdd3a95a86e`.
+  - Versão livre conferida: 0.1.0-beta.32 (Core 0.3.11, instalador 0.2.1).
+- **Provas:**
+  - Simuladas: Core 187/187 (15 novos), UI 117/117, contratos 17, validate-base 346.
+  - Nativas no laboratório: gate, P10, update de cópia, prova prática de todos os cenários, seis falhas do instalador em cópias, rollback numa cópia.
+  - Detalhe na [evidência](../evidence/PROCESS-ACTIONS-20261111/evidence.json); passo a passo em [installer-walkthrough.md](../evidence/PROCESS-ACTIONS-20261111/installer-walkthrough.md).
+- **Instalação real:**
+  - Canal local assinado; cópia fria dos dados.
+  - Instalador `93601c73…1d64` com os argumentos do update.
+  - 0.1.0-beta.32, papel mantido, Core e executor prontos, reaberta no login.
+  - A conferência com login aguarda a pessoa entrar.
+- **Limpeza:** cinco pastas em `lab-test`/`stage` (3,03 GB calculados; C: livre de 36,24 para 39,08 GB), em [cleanup.json](../evidence/PROCESS-ACTIONS-20261111/cleanup.json).
+- **Pendente:** conferência com login na instalação real; revisão independente do instalador e estação em segunda máquina (adiadas pelo usuário). Checkpoint: [PROCESS-ACTIONS-20261111](../checkpoints/PROCESS-ACTIONS-20261111.md).

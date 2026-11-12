@@ -1,0 +1,369 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "practical_e2e",
+  "work_order": "PROCESS-ACTIONS-20261111",
+  "install": "install-beta32",
+  "setup": "RedRise-Setup-0.1.0-beta.32.exe",
+  "scenarios": {
+    "migration": {
+      "passed": true,
+      "tables": {
+        "processes": 113,
+        "routines": 167,
+        "routine_versions": 167,
+        "executions": 181,
+        "jobs": 151,
+        "users": 27,
+        "schema_migrations": 12,
+        "schedules": 2,
+        "schedule_runs": 2,
+        "notifications": 11
+      },
+      "baseline_tables": {
+        "processes": 113,
+        "routines": 167,
+        "routine_versions": 167,
+        "executions": 181,
+        "jobs": 151,
+        "users": 27,
+        "schema_migrations": 12,
+        "schedules": 2,
+        "schedule_runs": 2,
+        "notifications": 11
+      },
+      "changed": {},
+      "core": "0.3.11"
+    },
+    "actions": {
+      "passed": true,
+      "nova_execucao_absent": true,
+      "execucoes_recentes_absent": true,
+      "row_actions": {
+        "Boas-vindas": [
+          "Executar Boas-vindas",
+          "Agendar",
+          "Integrar rotina avulsa",
+          "Substituir etapa 1",
+          "Excluir Boas-vindas",
+          "Editar composição"
+        ],
+        "Ações 5147": [
+          "Executar Ações 5147",
+          "Agendar",
+          "Integrar rotina avulsa",
+          "Substituir etapa 1",
+          "Excluir Ações 5147",
+          "Editar composição"
+        ]
+      },
+      "play_opened_dialog_without_starting": true,
+      "schedule_icons": {
+        "paused": true,
+        "resumed": true,
+        "deleted_after_confirmation": true
+      }
+    },
+    "delete": {
+      "passed": true,
+      "dialog": {
+        "literal_question": true,
+        "name_shown": true,
+        "wrong_word_keeps_excluir_off": true,
+        "word_enables_excluir": true,
+        "disabled_before_typing": true
+      },
+      "A": 115,
+      "C": 117,
+      "exclusive_standalone": true,
+      "shared_kept_in_B": true,
+      "history_of_A": {
+        "process_id": 115,
+        "process_name": "X 5147",
+        "process_archived": true
+      },
+      "after_renaming_C": "X 5147",
+      "late_request_for_A": {
+        "archived": true,
+        "already": true,
+        "process_id": 115,
+        "name": "X 5147",
+        "routines": [],
+        "schedules_disabled": 0,
+        "changes_cancelled": 0
+      },
+      "schedule_hidden": true
+    },
+    "kanban_day": {
+      "passed": true,
+      "columns": [
+        "No aguardo",
+        "Em andamento",
+        "Concluído",
+        "Conferido"
+      ],
+      "today_label": "Execuções iniciadas em 12/11/2026 (hoje)",
+      "seconds_to_screen": {
+        "conferido: started -> No aguardo": 1.67,
+        "conferido: running -> Em andamento": 1.72,
+        "conferido: verified -> column": 1.7,
+        "concluido: started -> No aguardo": 1.7,
+        "concluido: running -> Em andamento": 1.78,
+        "concluido: completed_unverified -> column": 1.7,
+        "falha: started -> No aguardo": 1.7,
+        "falha: running -> Em andamento": 1.8,
+        "falha: failed -> column": 1.72,
+        "andamento: running": 1.72,
+        "fila: queued -> No aguardo": 1.7
+      },
+      "max_live_s": 1.8,
+      "target_s": 5.0,
+      "card_name": "Dia conferido 5147 Estação Kanban dia 5147 operador.dia.5147",
+      "card_rest": " Estação Kanban dia 5147 operador.dia.5147",
+      "summary_has_real_state": true,
+      "board_kept_after_escape": true,
+      "yesterday_success_on_today": null,
+      "yesterday_when_chosen": "Conferido"
+    },
+    "layout": {
+      "passed": true,
+      "screenshots": [
+        "Kanban-escuro",
+        "Kanban-claro",
+        "Ação-escuro",
+        "Ação-claro"
+      ],
+      "note": "reviewed by eye: four columns sharing the width when maximized, sideways scroll when narrow; the last execution under its badge in Acao"
+    },
+    "welcome": {
+      "passed": true,
+      "dialog": {
+        "literal_question": true,
+        "name_shown": true,
+        "wrong_word_keeps_excluir_off": true,
+        "word_enables_excluir": true,
+        "disabled_before_typing": true
+      },
+      "listed_after_delete": false,
+      "created_again_after_reopen": false,
+      "tombstone": {
+        "rows": 1,
+        "archived": true
+      },
+      "routines_kept_standalone": true
+    },
+    "failures": {
+      "passed": true,
+      "points": {
+        "before-swap": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\before-swap\\Programs\\@redrise",
+            "installed_now": "0.1.0-beta.31",
+            "phase": "before_swap",
+            "previous_kept": null,
+            "recovery_error": null,
+            "step": "check"
+          },
+          "message": "injected failure (test). Nothing was changed: version 0.1.0-beta.31 stays installed; your data were not touched.",
+          "files": {
+            "installed": "0.1.0-beta.31",
+            "previous_dir": null,
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "swap": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\swap\\Programs\\@redrise",
+            "installed_now": "0.1.0-beta.31",
+            "phase": "swap",
+            "previous_kept": null,
+            "recovery_error": null,
+            "step": "swap"
+          },
+          "message": "version swap failed: injected failure (test). The previous version 0.1.0-beta.31 was put back and checked; your data were not touched.",
+          "files": {
+            "installed": "0.1.0-beta.31",
+            "previous_dir": null,
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "restore": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\restore\\Programs\\@redrise",
+            "installed_now": null,
+            "phase": "swap",
+            "previous_kept": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\restore\\Programs\\@redrise.previous",
+            "recovery_error": "injected failure (test)",
+            "step": "swap"
+          },
+          "message": "version swap failed: injected failure (test); putting the previous version back also failed: injected failure (test). Nothing is installed in C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\restore\\Programs\\@redrise now; the previous version is kept in C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\restore\\Programs\\@redrise.previous. Your data were not touched. Run this installer again.",
+          "files": {
+            "installed": null,
+            "previous_dir": "0.1.0-beta.31",
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "after-swap": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\after-swap\\Programs\\@redrise",
+            "installed_now": "0.1.0-beta.32",
+            "phase": "after_swap",
+            "previous_kept": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\after-swap\\Programs\\@redrise.previous",
+            "recovery_error": null,
+            "step": "shortcut"
+          },
+          "message": "version 0.1.0-beta.32 is installed, but the Start Menu shortcut failed: injected failure (test). The previous version is kept in C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\after-swap\\Programs\\@redrise.previous for a rollback. Your data were not touched.",
+          "files": {
+            "installed": "0.1.0-beta.32",
+            "previous_dir": "0.1.0-beta.31",
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "intent": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": true,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\intent\\Programs\\@redrise",
+            "installed_now": "0.1.0-beta.32",
+            "phase": "after_swap",
+            "previous_kept": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\intent\\Programs\\@redrise.previous",
+            "recovery_error": null,
+            "step": "setup_intent"
+          },
+          "message": "version 0.1.0-beta.32 is installed, but saving the server/station choice failed: injected failure (test). The previous version is kept in C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\intent\\Programs\\@redrise.previous for a rollback. Your data were not touched, except the setup intent file that was not saved.",
+          "files": {
+            "installed": "0.1.0-beta.32",
+            "previous_dir": "0.1.0-beta.31",
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "fresh-swap": {
+          "agree": true,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\fresh\\Programs\\@redrise",
+            "installed_now": null,
+            "phase": "swap",
+            "previous_kept": null,
+            "recovery_error": null,
+            "step": "swap"
+          },
+          "message": "version swap failed: injected failure (test). Nothing was installed; your data were not touched."
+        }
+      },
+      "previous": "0.1.0-beta.31",
+      "new": "0.1.0-beta.32",
+      "scope": "isolated copies only (--install-root/--data-root); the real install never reads --test-fail-at"
+    },
+    "wizard_server": {
+      "passed": true,
+      "choice_required": true,
+      "progress_seen": [
+        "Static|Copiando e conferindo arquivos (1 de 3759)|",
+        "Static|Copiando e conferindo arquivos (1 de 3759)|",
+        "Static|Copiando e conferindo arquivos (276 de 3759)|"
+      ],
+      "first_open_server": true,
+      "record": {
+        "configuration": "none yet",
+        "data_root_untouched": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard\\server\\data",
+        "files": 3758,
+        "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard\\server\\Programs\\@redrise",
+        "installed": "0.1.0-beta.32",
+        "previous_kept": false,
+        "setup_intent": "server",
+        "shortcut": null
+      },
+      "exit": 0
+    },
+    "wizard_cancel": {
+      "passed": true,
+      "role_preselected_from_unconsumed_intent": true,
+      "cancel_before": {
+        "exit": 0,
+        "record": {
+          "cancelled": true
+        }
+      },
+      "cancel_during": {
+        "previous_install_kept": true,
+        "staging_left": [],
+        "error_page": true,
+        "record": "installation cancelled before any change"
+      }
+    },
+    "wizard_existing": {
+      "passed": true,
+      "role_question_shown": false,
+      "record": {
+        "configuration": "existing (role kept)",
+        "data_root_untouched": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\data",
+        "files": 3758,
+        "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard\\existing\\Programs\\@redrise",
+        "installed": "0.1.0-beta.32",
+        "previous_kept": false,
+        "setup_intent": null,
+        "shortcut": null
+      },
+      "lab_data_intent_unchanged": true
+    },
+    "wizard_station": {
+      "passed": true,
+      "first_open_station_only": true,
+      "pending_without_local_server": true,
+      "joined_lab_core": true,
+      "intent_consumed": true,
+      "station": {
+        "station_id": 14,
+        "station_name": "estacao-wo-5147",
+        "host": "127.0.0.1",
+        "port": 47810
+      },
+      "scope": "integrated local test: two isolated installs on this computer; not a second physical machine, LAN or VPN"
+    },
+    "wizard_error": {
+      "passed": true,
+      "record": {
+        "data_touched": false,
+        "error": "injected failure (test)",
+        "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard\\error\\Programs\\@redrise",
+        "installed_now": "0.1.0-beta.32",
+        "phase": "after_swap",
+        "previous_kept": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard\\error\\Programs\\@redrise.previous",
+        "recovery_error": null,
+        "step": "shortcut"
+      },
+      "installed_in_folder": "0.1.0-beta.32",
+      "page_says_installed": true,
+      "page_excerpt": "Edit|A versão 0.1.0-beta.32 foi instalada, mas o atalho no menu Iniciar falhou: injected failure (test).  A versão anterior continua guardada em C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard\\error\\Programs\\@redrise.previous para voltar, se precisar. Seus dados não foram tocados.  Abra o RedRise por "
+    }
+  },
+  "core": "0.3.11",
+  "clicks_lost": [],
+  "seconds": 1154,
+  "only": null,
+  "passed": true
+}

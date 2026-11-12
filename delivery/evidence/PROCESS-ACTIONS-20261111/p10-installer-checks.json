@@ -1,0 +1,48 @@
+﻿{
+    "corrupted":  {
+                      "message":  "corrupted package: content SHA-256 does not match",
+                      "installed":  false,
+                      "exit":  3
+                  },
+    "install":  {
+                    "seconds":  37,
+                    "result":  {
+                                   "configuration":  "not checked (isolated test root without --data-root)",
+                                   "data_root_untouched":  "C:\\Users\\raulv\\AppData\\Local\\RedRise",
+                                   "files":  3758,
+                                   "install_root":  "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\actions-p10\\Programs\\@redrise",
+                                   "installed":  "0.1.0-beta.32",
+                                   "previous_kept":  false,
+                                   "setup_intent":  null,
+                                   "shortcut":  null
+                               },
+                    "exit":  0
+                },
+    "installed_health":  {
+                             "status":  "healthy",
+                             "uninstall_exe":  true,
+                             "files":  3758,
+                             "integrity":  true
+                         },
+    "reinstall":  {
+                      "exit":  0,
+                      "previous_kept":  true
+                  },
+    "rollback":  {
+                     "restored":  true,
+                     "via":  "installed uninstall.exe",
+                     "exit":  0
+                 },
+    "uninstall":  {
+                      "out":  {
+                                  "at":  1794459264,
+                                  "ok":  true,
+                                  "result":  {
+                                                 "data_kept":  "C:\\Users\\raulv\\AppData\\Local\\RedRise",
+                                                 "uninstalled":  "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\actions-p10\\Programs\\@redrise"
+                                             }
+                              },
+                      "root_removed":  true,
+                      "exit":  0
+                  }
+}

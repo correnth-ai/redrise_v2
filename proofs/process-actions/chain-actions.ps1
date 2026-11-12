@@ -72,12 +72,21 @@ try {
   } else { Log 'from the proof: gate, checks, baseline and install of an earlier run; proof scripts copied again' }
 
   $py = Join-Path $inst 'runtime\python\python.exe'
+  # The lab window cannot take the foreground from the Claude desktop app's window (the UI driver refuses to type then):
+  # that one window is minimized while the person is away, and restored after the proof. No input is sent.
+  Add-Type -Namespace CF -Name W -MemberDefinition '[DllImport("user32.dll")] public static extern System.IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr h, out uint p); [DllImport("user32.dll")] public static extern bool ShowWindow(System.IntPtr h, int c);'
+  $fg = [CF.W]::GetForegroundWindow(); $fp = 0; [void][CF.W]::GetWindowThreadProcessId($fg, [ref]$fp)
+  $parked = $null
+  if ($fg -ne [IntPtr]::Zero -and (Get-Process -Id $fp -ErrorAction SilentlyContinue).ProcessName -eq 'claude') {
+    [void][CF.W]::ShowWindow($fg, 6); $parked = $fg; Log 'the Claude window was in front: minimized for the proof (no input)'
+  }
   Log "proof: accept_actions $Only"
   $a = @('-B', '-X', 'utf8', (Join-Path $tools 'process-actions\accept_actions.py'), '--lab', $lab, '--shots', (Join-Path $lab 'shots-actions'),
          '--baseline', $baseline, '--setup', $setup, '--previous', $prev)
   if ($Only) { $a += @('--only', $Only) }
   & $py @a *>&1 | Out-File -Encoding utf8 (Join-Path $lab 'actions-proof.log')
   Log ("proof: " + ((Get-Content (Join-Path $lab 'actions-proof.log') -Tail 1)))
+  if ($parked) { [void][CF.W]::ShowWindow($parked, 9); Log 'the Claude window was restored' }
 
   Start-Sleep -Seconds 5
   if ($Only) { Log 'done (partial run: no rollback copy)'; return }

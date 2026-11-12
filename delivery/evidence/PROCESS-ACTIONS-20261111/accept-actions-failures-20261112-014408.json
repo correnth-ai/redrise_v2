@@ -1,0 +1,136 @@
+{
+  "schema": "redrise.proof/1",
+  "kind": "native_installer_failures",
+  "work_order": "PROCESS-ACTIONS-20261111",
+  "setup": "RedRise-Setup-0.1.0-beta.32.exe",
+  "scenarios": {
+    "failures": {
+      "passed": true,
+      "points": {
+        "before-swap": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\before-swap\\Programs\\@redrise",
+            "installed_now": "0.1.0-beta.31",
+            "phase": "before_swap",
+            "previous_kept": null,
+            "recovery_error": null,
+            "step": "check"
+          },
+          "message": "injected failure (test). Nothing was changed: version 0.1.0-beta.31 stays installed; your data were not touched.",
+          "files": {
+            "installed": "0.1.0-beta.31",
+            "previous_dir": null,
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "swap": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\swap\\Programs\\@redrise",
+            "installed_now": "0.1.0-beta.31",
+            "phase": "swap",
+            "previous_kept": null,
+            "recovery_error": null,
+            "step": "swap"
+          },
+          "message": "version swap failed: injected failure (test). The previous version 0.1.0-beta.31 was put back and checked; your data were not touched.",
+          "files": {
+            "installed": "0.1.0-beta.31",
+            "previous_dir": null,
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "restore": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\restore\\Programs\\@redrise",
+            "installed_now": null,
+            "phase": "swap",
+            "previous_kept": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\restore\\Programs\\@redrise.previous",
+            "recovery_error": "injected failure (test)",
+            "step": "swap"
+          },
+          "message": "version swap failed: injected failure (test); putting the previous version back also failed: injected failure (test). Nothing is installed in C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\restore\\Programs\\@redrise now; the previous version is kept in C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\restore\\Programs\\@redrise.previous. Your data were not touched. Run this installer again.",
+          "files": {
+            "installed": null,
+            "previous_dir": "0.1.0-beta.31",
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "after-swap": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\after-swap\\Programs\\@redrise",
+            "installed_now": "0.1.0-beta.32",
+            "phase": "after_swap",
+            "previous_kept": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\after-swap\\Programs\\@redrise.previous",
+            "recovery_error": null,
+            "step": "shortcut"
+          },
+          "message": "version 0.1.0-beta.32 is installed, but the Start Menu shortcut failed: injected failure (test). The previous version is kept in C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\after-swap\\Programs\\@redrise.previous for a rollback. Your data were not touched.",
+          "files": {
+            "installed": "0.1.0-beta.32",
+            "previous_dir": "0.1.0-beta.31",
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "intent": {
+          "agree": true,
+          "exit": 3,
+          "failure": {
+            "data_touched": true,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\intent\\Programs\\@redrise",
+            "installed_now": "0.1.0-beta.32",
+            "phase": "after_swap",
+            "previous_kept": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\intent\\Programs\\@redrise.previous",
+            "recovery_error": null,
+            "step": "setup_intent"
+          },
+          "message": "version 0.1.0-beta.32 is installed, but saving the server/station choice failed: injected failure (test). The previous version is kept in C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\intent\\Programs\\@redrise.previous for a rollback. Your data were not touched, except the setup intent file that was not saved.",
+          "files": {
+            "installed": "0.1.0-beta.32",
+            "previous_dir": "0.1.0-beta.31",
+            "staging_left": [],
+            "intent_file": false
+          }
+        },
+        "fresh-swap": {
+          "agree": true,
+          "failure": {
+            "data_touched": false,
+            "error": "injected failure (test)",
+            "install_root": "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\fail-copies\\fresh\\Programs\\@redrise",
+            "installed_now": null,
+            "phase": "swap",
+            "previous_kept": null,
+            "recovery_error": null,
+            "step": "swap"
+          },
+          "message": "version swap failed: injected failure (test). Nothing was installed; your data were not touched."
+        }
+      },
+      "previous": "0.1.0-beta.31",
+      "new": "0.1.0-beta.32",
+      "scope": "isolated copies only (--install-root/--data-root); the real install never reads --test-fail-at"
+    }
+  },
+  "passed": true
+}

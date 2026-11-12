@@ -1,0 +1,59 @@
+﻿{
+    "schema":  "redrise.cleanup/1",
+    "work_order":  "PROCESS-ACTIONS-20261111",
+    "at":  "2026-11-12T06:05:38",
+    "allowed_roots":  [
+                          "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test",
+                          "C:\\Users\\raulv\\RedRise-v2-dev\\stage"
+                      ],
+    "free_before_bytes":  38909587456,
+    "free_after_bytes":  41966317568,
+    "removed_bytes_calculated":  3033492454,
+    "targets":  [
+                    {
+                        "path":  "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wizard",
+                        "purpose":  "wizard test roots of this run (server, existing, station, error); proofs passed, screenshots consolidated in the evidence folder",
+                        "bytes":  2227763082,
+                        "files":  11626,
+                        "last_write":  "2026-11-12T05:49:47",
+                        "result":  "removed",
+                        "error":  null
+                    },
+                    {
+                        "path":  "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\rollback-copy",
+                        "purpose":  "isolated data copy of the rollback check of this run; result in actions-rollback.json (evidence)",
+                        "bytes":  70151716,
+                        "files":  2547,
+                        "last_write":  "2026-11-12T05:50:39",
+                        "result":  "removed",
+                        "error":  null
+                    },
+                    {
+                        "path":  "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\actions-p10",
+                        "purpose":  "P10 isolated root of this run; summary copied as p10-installer-checks.json (evidence)",
+                        "bytes":  3606,
+                        "files":  7,
+                        "last_write":  "2026-11-12T01:54:32",
+                        "result":  "removed",
+                        "error":  null
+                    },
+                    {
+                        "path":  "C:\\Users\\raulv\\RedRise-v2-dev\\lab-test\\wo-p10",
+                        "purpose":  "P10 isolated root of PROCESS-LIST-INSTALLER-20261110; summary already in its evidence",
+                        "bytes":  3556,
+                        "files":  7,
+                        "last_write":  "2026-11-11T09:21:45",
+                        "result":  "removed",
+                        "error":  null
+                    },
+                    {
+                        "path":  "C:\\Users\\raulv\\RedRise-v2-dev\\stage\\release-0.1.0-beta.30",
+                        "purpose":  "build stage of beta.30; recovery now uses beta.31 (real .previous, lab install-beta31, signed installer in the channel)",
+                        "bytes":  735570494,
+                        "files":  3757,
+                        "last_write":  "2026-11-09T08:38:18",
+                        "result":  "removed",
+                        "error":  null
+                    }
+                ]
+}

@@ -1,0 +1,115 @@
+{
+    "schema":  "redrise.release-verification/1",
+    "version":  "0.1.0-beta.32",
+    "installer_sha256":  "93601c7324833f00b8ff219ff54a91472e04a6631894e5ef9ae2cb1052811d64",
+    "verified_at":  "2026-11-12T01:52:42.1568792-03:00",
+    "trials_per_mode":  3,
+    "work_dir":  "C:\\Users\\raulv\\RedRise-v2-dev\\verify\\0.1.0-beta.32-20261112-014453",
+    "checks":  {
+                   "install":  {
+                                   "exit":  0,
+                                   "ok":  true
+                               },
+                   "health":  {
+                                  "ok":  true,
+                                  "files":  3758,
+                                  "status":  "healthy",
+                                  "integrity":  true
+                              },
+                   "boas_vindas_idle":  {
+                                            "ok":  true,
+                                            "stopped":  null,
+                                            "rows":  [
+                                                         {
+                                                             "trial":  1,
+                                                             "state":  "verified",
+                                                             "code":  null,
+                                                             "opened_app":  {
+                                                                                "image":  "notepad.exe",
+                                                                                "was_running":  false,
+                                                                                "action":  "closed"
+                                                                            },
+                                                             "windows_left":  0,
+                                                             "session_tabs_added":  0,
+                                                             "ok":  true
+                                                         },
+                                                         {
+                                                             "trial":  2,
+                                                             "state":  "verified",
+                                                             "code":  null,
+                                                             "opened_app":  {
+                                                                                "image":  "notepad.exe",
+                                                                                "was_running":  false,
+                                                                                "action":  "closed"
+                                                                            },
+                                                             "windows_left":  0,
+                                                             "session_tabs_added":  0,
+                                                             "ok":  true
+                                                         },
+                                                         {
+                                                             "trial":  3,
+                                                             "state":  "verified",
+                                                             "code":  null,
+                                                             "opened_app":  {
+                                                                                "image":  "notepad.exe",
+                                                                                "was_running":  false,
+                                                                                "action":  "closed"
+                                                                            },
+                                                             "windows_left":  0,
+                                                             "session_tabs_added":  0,
+                                                             "ok":  true
+                                                         }
+                                                     ]
+                                        },
+                   "boas_vindas_load":  {
+                                            "ok":  true,
+                                            "stopped":  null,
+                                            "rows":  [
+                                                         {
+                                                             "trial":  1,
+                                                             "state":  "verified",
+                                                             "code":  null,
+                                                             "opened_app":  {
+                                                                                "image":  "notepad.exe",
+                                                                                "was_running":  false,
+                                                                                "action":  "closed"
+                                                                            },
+                                                             "windows_left":  0,
+                                                             "session_tabs_added":  0,
+                                                             "ok":  true
+                                                         },
+                                                         {
+                                                             "trial":  2,
+                                                             "state":  "verified",
+                                                             "code":  null,
+                                                             "opened_app":  {
+                                                                                "image":  "notepad.exe",
+                                                                                "was_running":  false,
+                                                                                "action":  "closed"
+                                                                            },
+                                                             "windows_left":  0,
+                                                             "session_tabs_added":  0,
+                                                             "ok":  true
+                                                         },
+                                                         {
+                                                             "trial":  3,
+                                                             "state":  "verified",
+                                                             "code":  null,
+                                                             "opened_app":  {
+                                                                                "image":  "notepad.exe",
+                                                                                "was_running":  false,
+                                                                                "action":  "closed"
+                                                                            },
+                                                             "windows_left":  0,
+                                                             "session_tabs_added":  0,
+                                                             "ok":  true
+                                                         }
+                                                     ]
+                                        },
+                   "uninstall":  {
+                                     "exit":  0,
+                                     "ok":  true
+                                 }
+               },
+    "passed":  true
+}
