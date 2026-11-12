@@ -194,6 +194,6 @@ Ao finalizar: itens entregues, testes/provas, commits e SHA remoto, versão real
   - Canal local assinado; cópia fria dos dados.
   - Instalador `93601c73…1d64` com os argumentos do update.
   - 0.1.0-beta.32, papel mantido, Core e executor prontos, reaberta no login.
-  - A conferência com login aguarda a pessoa entrar.
+  - Conferida com login em 12/11: versão, papel, dados iguais à referência, seis ícones em todos os processos e Kanban de hoje.
 - **Limpeza:** cinco pastas em `lab-test`/`stage` (3,03 GB calculados; C: livre de 36,24 para 39,08 GB), em [cleanup.json](../evidence/PROCESS-ACTIONS-20261111/cleanup.json).
-- **Pendente:** conferência com login na instalação real; revisão independente do instalador e estação em segunda máquina (adiadas pelo usuário). Checkpoint: [PROCESS-ACTIONS-20261111](../checkpoints/PROCESS-ACTIONS-20261111.md).
+- **Pendente:** revisão independente do instalador e estação em segunda máquina (adiadas pelo usuário). Checkpoint: [PROCESS-ACTIONS-20261111](../checkpoints/PROCESS-ACTIONS-20261111.md).

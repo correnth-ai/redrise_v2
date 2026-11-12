@@ -28,8 +28,14 @@
   - Backup: cópia fria dos dados reais com o app parado (`RedRise-v2-dev/backups/real-data-before-beta32-20261112-0556`, 2.136 arquivos, 3,85 GB). A beta.31 ficou em `@redrise.previous`.
   - Update às 05:59, com o computador ocioso e sem execução, pelo instalador assinado com os argumentos do próprio update (`--quiet --relaunch`): 0.1.0-beta.32, papel mantido, dados não tocados.
   - O app reabriu no login. O Core responde 0.3.11 com a equipe inicializada e o executor está pronto, sem erro.
+  - **Conferido com login (12/11; a pessoa entrou e pediu a conferência; só leitura e navegação pela UI Automation):**
+    - 0.1.0-beta.32, conta Admin Lab (administrador).
+    - Servidor da equipe com a estação servidor-lab-2, executor ativo e sessão do Windows disponível.
+    - Dados iguais à referência anterior ao update: 3 processos, 6 rotinas, 4 execuções e 2 contas.
+    - Os três processos, inclusive Boas-vindas, têm os seis ícones; não há Nova execução nem Execuções recentes; o agendamento tem os ícones.
+    - O Kanban de hoje (12/11) mostra as quatro colunas vazias com a mensagem de dia sem execuções, sem herdar o Conferido de dias anteriores.
+    - Nenhum ícone de ação foi usado na equipe real.
   - Antes do update, a instalação real tinha 3 processos, 6 rotinas, 4 execuções e 2 contas.
 - **Pendente:**
-  - Conferência com login na instalação real: pede a senha da pessoa; dá para ler pela UI Automation depois que ela entrar.
   - Revisão independente do instalador e estação em segunda máquina física/LAN, adiadas pelo usuário.
 - **Limpeza (seção 5):** inventário e remoção com `Remove-Item -LiteralPath`, um caminho por vez, dentro de `lab-test` e `stage`, sem junções nem processos em uso ([cleanup.json](../evidence/PROCESS-ACTIONS-20261111/cleanup.json)). Saíram as raízes do assistente, a cópia do rollback, as duas pastas P10 e o stage da beta.30: 3,03 GB calculados, e o C: livre passou de 36,24 para 39,08 GB. Ficaram a instalação real e sua `.previous`, o backup, `install-beta31` e `install-beta32` do laboratório, dados, ferramentas, o stage da beta.32, as releases, o canal e as evidências.

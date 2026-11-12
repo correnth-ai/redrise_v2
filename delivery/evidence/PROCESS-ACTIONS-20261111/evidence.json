@@ -1,7 +1,7 @@
 {
   "schema": "redrise.evidence/1",
   "step": "PROCESS-ACTIONS-20261111",
-  "status": "delivered; real install checked up to the login screen, signed-in check waits for the user to sign in",
+  "status": "delivered; real install updated and checked signed in",
   "date": "2026-11-12",
   "predecessor_evidence": {
     "path": "delivery/evidence/PROCESS-LIST-INSTALLER-20261110/evidence.json",
@@ -83,9 +83,23 @@
       "Runner status: runner 0.3.11, core reachable, Windows session ready, no job, no error."
     ],
     "not_done": [
-      "Signed-in check (role, data counts, six icons, Kanban of the day) on the real install: needs the person's password, which this work may not type; done for beta.31 on 2026-11-11 and on the lab for beta.32. It can be read through UI Automation once the person signs in.",
       "No data of the real team was changed."
-    ]
+    ],
+    "checked_signed_in": {
+      "date": "2026-11-12",
+      "how": "the person signed in to the real app and asked for the check in chat; UI Automation reads and sidebar link invokes on the real window (pid of the installed RedRise.exe), no keyboard or mouse input, no action icon used",
+      "verified": [
+        "Version: sidebar and Configuração › Aplicativo show 0.1.0-beta.32.",
+        "Sign-in and role: Admin Lab (administrador); Servidor da equipe (este computador), station servidor-lab-2, executor ativo, Sessão do Windows disponível, Servidor da equipe conectado.",
+        "Data equal to the reference read before the update: Processo › Ação 3 processes, Rotina › Lista 6 routines, Processo › Histórico 4 executions, Configuração › Equipe 2 accounts (Admin Lab, Operador Lab); the Boas-vindas schedule is listed.",
+        "Item 1: no Nova execução and no Execuções recentes in Ação; each of the 3 processes (Campanha P1, Campanha P2, Boas-vindas) has Executar, Agendar, Integrar rotina avulsa, Substituir etapa 1, Excluir, Editar composição in this order; the schedule has the icons Pausar and Excluir.",
+        "Item 4.3: Kanban shows 'Execuções iniciadas em 12/11/2026 (hoje)' with Hoje, the columns No aguardo, Em andamento, Concluído, Conferido (0 each) and the empty-day message; the verified executions of earlier days are not carried into today."
+      ],
+      "not_done": [
+        "No action icon was used and no execution was started on the real team: delete, schedule changes and starts were proved on the lab only.",
+        "The app was left on Processo › Ação, signed in."
+      ]
+    }
   },
   "walkthrough": "installer-walkthrough.md (15 steps, real InstallRS windows of the final candidate; lab team code masked in shots/inst-estacao-conexao-pendente.png)",
   "cleanup": {
@@ -112,7 +126,6 @@
   "not_done": [
     "Independent review of the installer: deferred by the user (2026-11-11).",
     "Station on a second physical machine, LAN or VPN: deferred by the user; proved only as two isolated installs on this computer.",
-    "Signed-in check of the real install after the update: waits for the person to sign in.",
     "MediaFire/public distribution, VPN and macOS: out of scope."
   ],
   "artifacts": {
