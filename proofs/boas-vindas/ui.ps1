@@ -141,6 +141,7 @@ switch ($Do) {
     "value $Name"
   }
   'rect' { $r = (Find $Name).Current.BoundingRectangle; "{0} {1} {2} {3}" -f [int]$r.X, [int]$r.Y, [int]$r.Width, [int]$r.Height }
+  'enabled' { "enabled=" + (Find $Name).Current.IsEnabled }  # read only: no input, no foreground
   'click' {
     Front
     $e = Find $Name

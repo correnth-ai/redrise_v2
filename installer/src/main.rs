@@ -204,7 +204,8 @@ pub struct Failure {
 }
 
 fn installed_version(root: &Path) -> Option<String> {
-    let v: Value = serde_json::from_slice(&fs::read(root.join("manifest.json")).ok()?).ok()?;
+    // The layout manifest is UTF-8 with BOM (written by Windows PowerShell): read it as the package check does.
+    let v: Value = serde_json::from_slice(no_bom(&fs::read(root.join("manifest.json")).ok()?)).ok()?;
     v["app_version"].as_str().map(str::to_string)
 }
 
@@ -218,17 +219,21 @@ impl Failure {
                "installed_now": self.installed_now, "previous_kept": self.previous_kept, "install_root": self.root,
                "data_touched": self.step == "setup_intent"})
     }
+    fn kept(&self) -> String {
+        self.previous_kept.as_deref().unwrap_or(Path::new("?")).display().to_string()
+    }
     /// English, for the JSON record and logs.
     pub fn message(&self) -> String {
         let now = self.installed_now.as_deref();
         match (self.phase, &self.recovery_error) {
-            ("before_swap", _) if self.step == "cancelled" => format!("{CANCELLED}"),
+            ("before_swap", _) if self.step == "cancelled" => CANCELLED.to_string(),
             ("before_swap", _) => format!("{}. Nothing was changed: {}; your data were not touched.", self.error,
                                           now.map(|v| format!("version {v} stays installed")).unwrap_or("nothing was installed".into())),
             ("swap", None) => format!("version swap failed: {}. {}; your data were not touched.", self.error,
                                       now.map(|v| format!("The previous version {v} was put back and checked")).unwrap_or("Nothing was installed".into())),
-            ("swap", Some(r)) => format!("version swap failed: {}; putting the previous version back also failed: {r}. Nothing is installed in {} now;                                           the previous version is kept in {}. Your data were not touched. Run this installer again.",
-                                         self.error, self.root.display(), self.previous_kept.as_deref().unwrap_or(Path::new("?")).display()),
+            ("swap", Some(r)) => format!("version swap failed: {}; putting the previous version back also failed: {r}. Nothing is installed in {} \
+                                          now; the previous version is kept in {}. Your data were not touched. Run this installer again.",
+                                         self.error, self.root.display(), self.kept()),
             _ => format!("version {} is installed, but {} failed: {}. {}Your data were not touched{}.", now.unwrap_or("?"), self.step_en(), self.error,
                          self.previous_kept.as_ref().map(|p| format!("The previous version is kept in {} for a rollback. ", p.display())).unwrap_or_default(),
                          if self.step == "setup_intent" { ", except the setup intent file that was not saved" } else { "" }),
@@ -242,36 +247,22 @@ impl Failure {
         let now = self.installed_now.as_deref();
         match (self.phase, &self.recovery_error) {
             ("before_swap", _) if self.step == "cancelled" => pt_error(CANCELLED),
-            ("before_swap", _) => format!("{}.
-
-Nada foi alterado: {}. Seus dados não foram tocados.
-
-Corrija o motivo acima e abra o instalador de novo.",
+            ("before_swap", _) => format!("{}.\n\nNada foi alterado: {}. Seus dados não foram tocados.\n\nCorrija o motivo acima e abra o instalador de novo.",
                                           pt_error(&self.error), now.map(|v| format!("a versão {v} continua instalada")).unwrap_or("nada foi instalado".into())),
-            ("swap", None) => format!("A troca de versão falhou: {}.
-
-{}. Seus dados não foram tocados.
-
-Feche o que estiver usando a pasta do RedRise e abra o instalador de novo.",
+            ("swap", None) => format!("A troca de versão falhou: {}.\n\n{}. Seus dados não foram tocados.\n\n\
+                                       Feche o que estiver usando a pasta do RedRise e abra o instalador de novo.",
                                       pt_error(&self.error), now.map(|v| format!("A versão anterior ({v}) foi recolocada e conferida")).unwrap_or("Nada foi instalado".into())),
-            ("swap", Some(r)) => format!("A troca de versão falhou: {}.
-Recolocar a versão anterior também falhou: {r}.
-
-Não há RedRise instalado em {} agora; a versão                                           anterior está guardada em {}. Seus dados não foram tocados.
-
-Abra este instalador de novo para instalar a versão nova.",
-                                         pt_error(&self.error), self.root.display(), self.previous_kept.as_deref().unwrap_or(Path::new("?")).display()),
+            ("swap", Some(r)) => format!("A troca de versão falhou: {}.\nRecolocar a versão anterior também falhou: {r}.\n\n\
+                                          Não há RedRise instalado em {} agora; a versão anterior está guardada em {}. Seus dados não foram tocados.\n\n\
+                                          Abra este instalador de novo para instalar a versão nova.",
+                                         pt_error(&self.error), self.root.display(), self.kept()),
             _ => {
                 let (what, next) = match self.step {
                     "shortcut" => ("o atalho no menu Iniciar", format!("Abra o RedRise por {}, ou abra o instalador de novo para criar o atalho.", self.root.join(APP_EXE).display())),
                     "uninstall_entry" => ("o registro de desinstalação", "Abra o instalador de novo para criar o registro.".to_string()),
                     _ => ("gravar a escolha servidor/estação", "Abra o RedRise: ele pergunta de novo como este computador será usado.".to_string()),
                 };
-                format!("A versão {} foi instalada, mas {what} falhou: {}.
-
-{}Seus dados não foram tocados.
-
-{next}", now.unwrap_or("?"), self.error,
+                format!("A versão {} foi instalada, mas {what} falhou: {}.\n\n{}Seus dados não foram tocados.\n\n{next}", now.unwrap_or("?"), self.error,
                         self.previous_kept.as_ref().map(|p| format!("A versão anterior continua guardada em {} para voltar, se precisar. ", p.display())).unwrap_or_default())
             }
         }
