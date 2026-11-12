@@ -85,8 +85,9 @@ class NovaRotinaTest(unittest.TestCase):
         # The refusal undoes the routine too: the same transaction.
         self.assertEqual({r["id"] for r in self.admin().call("GET", "/api/v1/routines")}, before)
         self.expect("NOT-FOUND", lambda: self.app_routine(link=999999), 404)
+        # The ready-made process is changed like any other (PROCESS-ACTIONS-20261111): it already has a step 1.
         ready_made = next(x for x in self.admin().call("GET", "/api/v1/processes") if x["system_key"])
-        self.expect("VALIDATION", lambda: self.app_routine(link=ready_made["id"]), 400)
+        self.expect("PROCESS-HAS-START", lambda: self.app_routine(link=ready_made["id"]), 409)
 
     def test_04_concurrent_starts_give_one_winner(self):
         p = self.empty_process()
@@ -192,7 +193,11 @@ class NovaRotinaTest(unittest.TestCase):
         self.expect("CONFLICT", lambda: a.call("POST", f"/api/v1/processes/{other['id']}/items", {"routine_id": one}), 409)
         ready_made = next(x for x in a.call("GET", "/api/v1/processes") if x["system_key"])
         three = self.app_routine()["routine"]["id"]
-        self.expect("VALIDATION", lambda: a.call("POST", f"/api/v1/processes/{ready_made['id']}/items", {"routine_id": three}), 400)
+        # Integrating into the ready-made process works like any other (PROCESS-ACTIONS-20261111 item 1.1); undone after.
+        grown = a.call("POST", f"/api/v1/processes/{ready_made['id']}/items", {"routine_id": three})
+        self.assertEqual([i["routine_id"] for i in grown["items"]], [i["routine_id"] for i in ready_made["items"]] + [three])
+        a.call("PUT", f"/api/v1/processes/{ready_made['id']}", {"name": ready_made["name"], "items": [
+            {"routine_id": i["routine_id"], "continue_next": i["continue_next"]} for i in ready_made["items"]]})
         template = self.admin().call("POST", "/api/v1/routines", {"name": "m", "category": "windows", "version": {"kind": "template", "template_id": "boas-vindas"}})["routine"]["id"]
         self.expect("VALIDATION", lambda: a.call("POST", f"/api/v1/processes/{other['id']}/items", {"routine_id": template}), 400)
 

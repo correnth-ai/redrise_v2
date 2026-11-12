@@ -51,13 +51,13 @@ describe("versionOf", () => {
 });
 
 describe("Nova Rotina", () => {
-  it("offers only processes without a first step", async () => {
+  it("offers only processes without a first step, the ready-made one too (PROCESS-ACTIONS-20261111)", async () => {
     const user = userEvent.setup();
     render(<RoutineWizard />);
     await user.click(screen.getByRole("radio", { name: /Iniciar um processo/ }));
     expect((screen.getByRole("button", { name: "Continuar" }) as HTMLButtonElement).disabled).toBe(true);
     await user.click(screen.getByLabelText("Processo"));
-    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Sem etapa"]);
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Sem etapa", "Boas-vindas"]);
   });
 
   it("a starting routine: preparing shows the checks and never opens; only the link tests", async () => {

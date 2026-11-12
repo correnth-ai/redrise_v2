@@ -79,7 +79,7 @@ describe("Processo › Ação: remover vínculos (item 5)", () => {
     const u = userEvent.setup();
     store.processes = [proc(11, "Conferência", [item(1, R.b)]), proc(13, "Só revisão", [item(1, R.f)]), proc(14, "Vazio", [])];
     page(<ProcessTable />);
-    for (const [name, why] of [["Só revisão", /follow-up/], ["Vazio", /Sem etapa 1/]] as const) {
+    for (const [name, why] of [["Só revisão", /^Executar: .*follow-up/], ["Vazio", /^Executar: sem etapa 1/]] as const) {
       const head = screen.getByText(name).closest("tr")!;
       expect((within(head).getByRole("button", { name: why }) as HTMLButtonElement).disabled).toBe(true);
     }

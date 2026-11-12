@@ -43,6 +43,8 @@ WELCOME_KEY = "boas-vindas"
 WELCOME_PROCESS = "Boas-vindas"
 # Routines of the ready-made process; the Runner reads `step` (redrise_runner.notepad_steps).
 WELCOME_STEPS = (("Abrir e identificar", "open"), ("Digitar e salvar", "save"), ("Fechar e verificar", "close"))
+# Deleting a process asks the person to type this word, compared as trim().lower() (PROCESS-ACTIONS-20261111 item 2).
+DELETE_WORD = "confirmado"
 _URL = re.compile(r"^https?://[^\s/$.?#][^\s]*$", re.IGNORECASE)
 _FULL_PATH = re.compile(r"^([a-zA-Z]:\\|\\\\[^\\]+\\[^\\]+\\).+$")
 _HTML_PATH = re.compile(r"^([a-zA-Z]:\\|\\\\[^\\]+\\[^\\]+\\).+\.html?$", re.IGNORECASE)
@@ -667,12 +669,12 @@ class Core:
         return {"routine": _jsonable(r), "version": v}
 
     def _changeable_process(self, c, process_id) -> dict:
+        """Any process, the ready-made Boas-vindas included (PROCESS-ACTIONS-20261111 item 1.1: administrators manage
+        every process the same way); the access rule stays the caller's require_admin."""
         p = c.execute("SELECT id, name, system_key FROM processes WHERE id = %s AND NOT archived FOR UPDATE",
                       (process_id,)).fetchone() if isinstance(process_id, int) else None
         if not p:
             raise err(404, "NOT-FOUND", what_missing="process")
-        if p["system_key"]:
-            raise err(400, "VALIDATION", reason="the ready-made process cannot be changed")
         return p
 
     def _link_after(self, c, link: dict, routine_id: int) -> None:
@@ -1141,11 +1143,9 @@ class Core:
         self.require_admin(actor)
         name = self._process_name(name)
         with self.db.tx() as c:
-            row = c.execute("SELECT id, system_key FROM processes WHERE id = %s AND NOT archived FOR UPDATE", (process_id,)).fetchone()
+            row = c.execute("SELECT id FROM processes WHERE id = %s AND NOT archived FOR UPDATE", (process_id,)).fetchone()
             if not row:
                 raise err(404, "NOT-FOUND", what_missing="process")
-            if row["system_key"]:
-                raise err(400, "VALIDATION", reason="the ready-made process cannot be changed")
             links = self._items(c, items)
             first = c.execute("""SELECT i.routine_id, v.kind FROM process_items i JOIN LATERAL (SELECT kind FROM routine_versions
                                  WHERE routine_id = i.routine_id ORDER BY version DESC LIMIT 1) v ON true
@@ -1181,6 +1181,43 @@ class Core:
                       (p["id"], n + 1, routine_id))
             c.execute("UPDATE processes SET updated_at = now() WHERE id = %s", (p["id"],))
         return self.get_process(actor, process_id)
+
+    def archive_process(self, actor: dict, process_id, confirm) -> dict:
+        """Deleting a process (Processo > Acao, PROCESS-ACTIONS-20261111 item 2): ONLY the process. In one transaction it is
+        archived and its links are taken out; no routine is archived (one linked only here becomes standalone, a shared one
+        keeps its other processes). Its schedules are disabled (their occurrences stay), its pending replacements of step 1
+        are cancelled (never approved by this), and executions, reviews and evidence stay with its id and name. The archived
+        row is the tombstone: the ready-made Boas-vindas is not created again, and a new process of the same name is a new id.
+        The typed word only guards against a slip (the UI sends it); access is the session's, the target is the id."""
+        self.require_admin(actor)
+        if not isinstance(process_id, int):
+            raise err(404, "NOT-FOUND", what_missing="process")
+        if not isinstance(confirm, str) or confirm.strip().lower() != DELETE_WORD:
+            raise err(400, "PROCESS-DELETE-UNCONFIRMED")
+        with self.db.tx() as c:
+            # Schedules first, then the process: the scheduler's order (schedule row, then the process FOR SHARE at start).
+            c.execute("SELECT id FROM schedules WHERE process_id = %s ORDER BY id FOR UPDATE", (process_id,))
+            p = c.execute("SELECT id, name, archived FROM processes WHERE id = %s FOR UPDATE", (process_id,)).fetchone()
+            if not p:
+                raise err(404, "NOT-FOUND", what_missing="process")
+            if p["archived"]:  # a repeated request: nothing more happens, to this process or any other
+                return {"archived": True, "already": True, "process_id": p["id"], "name": p["name"], "routines": [],
+                        "schedules_disabled": 0, "changes_cancelled": 0}
+            # Starts hold the process FOR SHARE until they commit: one that won the lock is seen here and refuses this.
+            if self._running_execution(c, p["id"]):
+                raise err(409, "PROCESS-BUSY", process=p["name"])
+            routines = [r["routine_id"] for r in c.execute("SELECT routine_id FROM process_items WHERE process_id = %s ORDER BY position",
+                                                           (p["id"],)).fetchall()]
+            c.execute("DELETE FROM process_items WHERE process_id = %s", (p["id"],))
+            c.execute("UPDATE processes SET archived = true, updated_at = now() WHERE id = %s", (p["id"],))
+            sched = c.execute("""UPDATE schedules SET enabled = false, paused_reason = 'process_deleted', next_slot_local = NULL,
+                                        next_run_at = NULL, updated_at = now() WHERE process_id = %s RETURNING id""", (p["id"],)).fetchall()
+            changes = c.execute("""UPDATE step_change_requests SET status = 'cancelled', decided_by = %s, decided_at = now()
+                                   WHERE process_id = %s AND status = 'pending' RETURNING id""", (actor["id"], p["id"])).fetchall()
+            for q in changes:
+                c.execute("DELETE FROM notifications WHERE change_id = %s", (q["id"],))
+        return {"archived": True, "already": False, "process_id": p["id"], "name": p["name"], "routines": routines,
+                "schedules_disabled": len(sched), "changes_cancelled": len(changes)}
 
     def list_processes(self, actor: dict, process_id: int | None = None) -> list[dict]:
         with self.db.tx() as c:
@@ -1357,7 +1394,7 @@ class Core:
         c.execute("UPDATE executions SET state = 'finished', outcome = %s, end_reason = %s, finished_at = now() WHERE id = %s",
                   (state, end, execution_id))
 
-    _EXEC_SELECT = """SELECT e.*, p.name AS process_name, s.name AS station_name, u.username AS requested_by_name
+    _EXEC_SELECT = """SELECT e.*, p.name AS process_name, p.archived AS process_archived, s.name AS station_name, u.username AS requested_by_name
                       FROM executions e LEFT JOIN processes p ON p.id = e.process_id
                       JOIN stations s ON s.id = e.station_id JOIN users u ON u.id = e.requested_by"""
 
@@ -1457,7 +1494,8 @@ class Core:
 
     def list_schedules(self, actor: dict) -> list[dict]:
         with self.db.tx() as c:
-            rows = c.execute(f"{self._SCHED_SELECT} ORDER BY p.name, s.hour, s.minute, s.id").fetchall()
+            # The schedules of a deleted process leave the list (disabled with it); their occurrences stay in the database.
+            rows = c.execute(f"{self._SCHED_SELECT} WHERE NOT p.archived ORDER BY p.name, s.hour, s.minute, s.id").fetchall()
         return [self._schedule_view(r) for r in rows]
 
     def schedule_runs(self, actor: dict, schedule_id: int) -> list[dict]:
@@ -1475,7 +1513,8 @@ class Core:
         return {"next_slot_local": slot, "next_run_at": at.isoformat()}
 
     def _schedule_target(self, c, process_id, station_id) -> None:
-        if not isinstance(process_id, int) or not c.execute("SELECT 1 FROM processes WHERE id = %s AND NOT archived", (process_id,)).fetchone():
+        # FOR SHARE: a deletion of the process waits for this schedule, then disables it with the others.
+        if not isinstance(process_id, int) or not c.execute("SELECT 1 FROM processes WHERE id = %s AND NOT archived FOR SHARE", (process_id,)).fetchone():
             raise err(404, "NOT-FOUND", what_missing="process")
         if not isinstance(station_id, int) or not c.execute("SELECT 1 FROM stations WHERE id = %s AND revoked_at IS NULL", (station_id,)).fetchone():
             raise err(404, "NOT-FOUND", what_missing="station")
@@ -1682,6 +1721,47 @@ class Core:
                                        started_at, finished_at FROM jobs WHERE execution_id = ANY(%s)""", (ids,)).fetchall() if ids else []
             reviews = self._reviews_of(c, ids)
         return [self._shape(r, [j for j in jobs if j["execution_id"] == r["id"]], reviews) for r in rows]
+
+    # Team time zone for "a day" (Kanban): the server database's TimeZone, which initdb takes from the server computer, so
+    # every client of the team reads the same day. Tests set `team_tz`.
+    team_tz: str | None = None
+
+    def _team_zone(self, c) -> str:
+        return self.team_tz or c.execute("SELECT current_setting('TimeZone') AS tz").fetchone()["tz"]
+
+    def kanban(self, actor: dict, day=None) -> dict:
+        """The Kanban of one day (PROCESS-ACTIONS-20261111 item 4.3): per process, its most recent execution STARTED that day
+        (created_at in [local midnight, next local midnight) of the team zone, computed by the database, so a day with a
+        clock change is 23 or 25 hours), with its current result. The day is filtered BEFORE the latest per process is chosen;
+        ties go to the execution id. Deleted processes keep their cards of that day; standalone routines are not on it.
+        Without `day`, today in the team zone (the answer says which)."""
+        with self.db.tx() as c:
+            self._sweep(c)
+            tz = self._team_zone(c)
+            today = c.execute("SELECT (now() AT TIME ZONE %s)::date AS d", (tz,)).fetchone()["d"]
+            if day in (None, ""):
+                d = today
+            else:
+                try:
+                    d = datetime.strptime(str(day), "%Y-%m-%d").date() if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(day)) else None
+                except ValueError:
+                    d = None
+                if d is None:
+                    raise err(400, "VALIDATION", reason="day must be a date YYYY-MM-DD")
+            b = c.execute("""SELECT (%(d)s::date)::timestamp AT TIME ZONE %(tz)s AS since,
+                                    ((%(d)s::date) + 1)::timestamp AT TIME ZONE %(tz)s AS until""", {"d": d, "tz": tz}).fetchone()
+            rows = c.execute(f"""{self._EXEC_SELECT} WHERE e.id IN (
+                                     SELECT DISTINCT ON (x.process_id) x.id FROM executions x
+                                     WHERE x.process_id IS NOT NULL AND x.created_at >= %(since)s AND x.created_at < %(until)s
+                                     ORDER BY x.process_id, x.created_at DESC, x.id DESC)
+                                 ORDER BY e.created_at DESC, e.id DESC""", b).fetchall()
+            ids = [r["id"] for r in rows]
+            jobs = c.execute("""SELECT id, execution_id, position, state, verified, diagnostic, diagnostic ->> 'error_code' AS error_code,
+                                       started_at, finished_at FROM jobs WHERE execution_id = ANY(%s)""", (ids,)).fetchall() if ids else []
+            reviews = self._reviews_of(c, ids)
+        return {"day": d.isoformat(), "today": today.isoformat(), "timezone": tz, "since": b["since"].isoformat(),
+                "until": b["until"].isoformat(),
+                "executions": [self._shape(r, [j for j in jobs if j["execution_id"] == r["id"]], reviews) for r in rows]}
 
     # ------------------------------------------------------------ review requests and notifications
     def list_reviews(self, actor: dict) -> list[dict]:

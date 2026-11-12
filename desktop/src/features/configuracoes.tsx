@@ -1,7 +1,7 @@
 // Configuração: team and profile, station inventory and remembered stations,
 // app/environment. Storage (stats-13) shows measured bytes, separate from counts.
 import { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Ban, Plus, Trash2, UserCheck, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +78,7 @@ function TeamAdmin() {
   const users = useAsync<Account[]>(() => api("GET", "/api/v1/users"), [changeTick]);
   const [error, setError] = useState<unknown>(null);
   const [remove, setRemove] = useState<Account | null>(null);
+  const [doing, setDoing] = useState<number | null>(null);
   const action = useAction(setError);
   // The row changes only after the Core confirms; a failure keeps it and shows the diagnostic.
   const act = (fn: () => Promise<unknown>) => action.run(async () => { setError(null); await fn(); users.reload(); });
@@ -94,8 +95,9 @@ function TeamAdmin() {
                   visible but unavailable, with the reason, and sends nothing (the Core refuses it too: ACCOUNT-SELF-DEACTIVATE). */}
               {u.id === me.id && u.active
                 ? <span className="inline-flex items-center gap-2"><span id={`acc-${u.id}-why`} className="text-xs text-muted-foreground">Você não pode desativar sua própria conta</span>
-                    <Button size="sm" variant="outline" disabled aria-describedby={`acc-${u.id}-why`}>Desativar</Button></span>
-                : <Button size="sm" variant="outline" disabled={action.busy} onClick={() => act(() => api("PATCH", `/api/v1/users/${u.id}`, { active: !u.active }))}>{u.active ? "Desativar" : "Reativar"}</Button>}
+                    <IconAction label="Desativar" disabled describedBy={`acc-${u.id}-why`} onClick={() => undefined}><UserX /></IconAction></span>
+                : <IconAction label={u.active ? "Desativar" : "Reativar"} busy={action.busy && doing === u.id} disabled={action.busy}
+                    onClick={() => { setDoing(u.id); void act(() => api("PATCH", `/api/v1/users/${u.id}`, { active: !u.active })); }}>{u.active ? <UserX /> : <UserCheck />}</IconAction>}
               {!u.active && <IconAction label="Excluir conta" disabled={action.busy} onClick={() => { setError(null); setRemove(u); }}><Trash2 /></IconAction>}
             </span></TableCell></TableRow>
         ))}</TableBody></Table></div>
@@ -107,8 +109,8 @@ function TeamAdmin() {
 }
 
 /** Simple confirmation: Cancel changes nothing; the dialog closes only after the Core confirms, a failure stays in it. */
-function ConfirmDelete({ open, title, description, confirm, onCancel, onConfirm }: { open: boolean; title: string; description: string; confirm: string;
-  onCancel: () => void; onConfirm: () => Promise<void> }) {
+function ConfirmDelete({ open, title, description, confirm, busyLabel = "Excluindo…", onCancel, onConfirm }: { open: boolean; title: string; description: string;
+  confirm: string; busyLabel?: string; onCancel: () => void; onConfirm: () => Promise<void> }) {
   const [error, setError] = useState<unknown>(null);
   const action = useAction(setError);
   const cancel = () => { if (!action.busy) { setError(null); onCancel(); } };
@@ -119,7 +121,7 @@ function ConfirmDelete({ open, title, description, confirm, onCancel, onConfirm 
         <ErrorView error={error} />
         <DialogFooter>
           <Button variant="ghost" disabled={action.busy} onClick={cancel}>Cancelar</Button>
-          <Button variant="destructive" disabled={action.busy} onClick={() => action.run(async () => { setError(null); await onConfirm(); })}>{action.busy ? "Excluindo…" : confirm}</Button>
+          <Button variant="destructive" disabled={action.busy} onClick={() => action.run(async () => { setError(null); await onConfirm(); })}>{action.busy ? busyLabel : confirm}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -190,15 +192,15 @@ export function StationsPage() {
             <TableCell className="text-xs">{s.browsers === null ? "não informado (executor anterior)" : s.browsers.length ? s.browsers.map((b) => `${b.name}${b.version ? " " + b.version : ""}${b.homologated ? "" : " · não homologado"}`).join("; ") : "nenhum"}</TableCell>
             <TableCell className="text-right">{manage && (s.current
               ? <span className="inline-flex items-center gap-2"><span id={`st-${s.id}-why`} className="text-xs text-muted-foreground">Em uso por esta sessão</span>
-                  <Button size="sm" variant="outline" disabled aria-describedby={`st-${s.id}-why`}>{s.revoked ? "Excluir" : "Revogar"}</Button></span>
+                  <IconAction label={s.revoked ? "Excluir estação" : "Revogar"} disabled describedBy={`st-${s.id}-why`} onClick={() => undefined}>{s.revoked ? <Trash2 /> : <Ban />}</IconAction></span>
               : !s.revoked
-                ? <Button size="sm" variant={armed === s.id ? "destructive" : "outline"} disabled={revoke.busy} onClick={() => {
-                    if (armed !== s.id) { setArmed(s.id); return; }
-                    void revoke.run(async () => { setError(null); await api("DELETE", `/api/v1/stations/${s.id}`); setArmed(null); await after(); });
-                  }}>{armed === s.id ? "Confirmar: execuções aguardando nela serão recusadas" : "Revogar"}</Button>
+                ? <IconAction label="Revogar" destructive disabled={revoke.busy} onClick={() => { setError(null); setArmed(s.id); }}><Ban /></IconAction>
                 : <IconAction label="Excluir estação" disabled={revoke.busy} onClick={() => { setError(null); setRemove(s); }}><Trash2 /></IconAction>)}</TableCell>
           </TableRow>
         ))}</TableBody></Table></div>
+      <ConfirmDelete open={armed !== null} title="Revogar estação" confirm="Revogar" busyLabel="Revogando…"
+        description={(() => { const st = stations.find((x) => x.id === armed); return st ? `A estação ${st.name} deixa de executar: execuções aguardando nela serão recusadas. Ela continua no inventário como revogada.` : ""; })()}
+        onCancel={() => setArmed(null)} onConfirm={async () => { await api("DELETE", `/api/v1/stations/${armed}`); setArmed(null); await after(); }} />
       <ConfirmDelete open={remove !== null} title="Excluir estação" confirm="Excluir estação"
         description={remove ? `A estação ${remove.name} sai do inventário. As execuções e os agendamentos que a usaram continuam no histórico; agendamentos nela não executam.` : ""}
         onCancel={() => setRemove(null)} onConfirm={async () => { await api("POST", `/api/v1/stations/${remove!.id}/remove`); setRemove(null); await after(); }} />

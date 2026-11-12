@@ -658,6 +658,20 @@
       "next": "Aguarde a execução terminar e tente de novo.",
       "details": "A etapa 1 só muda com o processo fora de execução."
     },
+    "PROCESS-DELETE-UNCONFIRMED": {
+      "what": "A exclusão do processo não foi confirmada.",
+      "completed": "O pedido foi recusado. O processo não foi alterado.",
+      "pending": "O processo, suas rotinas e seus agendamentos continuam como estão.",
+      "next": "Digite Confirmado na caixa de confirmação e escolha Excluir.",
+      "details": "A palavra de confirmação evita um engano; o acesso é conferido pela sessão."
+    },
+    "PROCESS-BUSY": {
+      "what": "O processo {process} tem uma execução em andamento ou aguardando revisão.",
+      "completed": "O pedido foi recusado. O processo não foi excluído.",
+      "pending": "A execução continua como está; nada foi cancelado.",
+      "next": "Aguarde terminar, aprove a revisão (Processo › Marcado para mim) ou cancele a etapa (Rotina › Atividade) e tente de novo.",
+      "details": "Um processo só é excluído sem execução em andamento ou aguardando revisão."
+    },
     "CHANGE-PENDING-EXISTS": {
       "what": "O processo {process} já tem uma substituição da etapa 1 pendente.",
       "completed": "O pedido foi recusado. Nenhum outro pedido foi aberto.",

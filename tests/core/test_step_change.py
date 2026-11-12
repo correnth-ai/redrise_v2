@@ -137,8 +137,11 @@ class StepChangeTest(unittest.TestCase):
         self.expect("VALIDATION", lambda: a.call("POST", f"/api/v1/processes/{empty['id']}/step1", {"routine_id": new}), 400)
         other, in_use = self.process()
         self.expect("CONFLICT", lambda: a.call("POST", f"/api/v1/processes/{pid}/step1", {"routine_id": in_use}), 409)
+        # The ready-made process accepts a replacement request like any other (PROCESS-ACTIONS-20261111); cancelled after.
         ready_made = next(x for x in a.call("GET", "/api/v1/processes") if x["system_key"])
-        self.expect("VALIDATION", lambda: a.call("POST", f"/api/v1/processes/{ready_made['id']}/step1", {"routine_id": new}), 400)
+        q = a.call("POST", f"/api/v1/processes/{ready_made['id']}/step1", {"routine_id": new})
+        self.assertEqual(q["status"], "pending")
+        a.call("POST", f"/api/v1/step-changes/{q['id']}/cancel")
 
     def test_07_routine_taken_after_the_request_blocks_the_approval(self):
         a = self.admin()

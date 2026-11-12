@@ -1,6 +1,6 @@
 [package]
 name = "redrise-setup"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "RedRise per-user installer: InstallRS wizard over a self-contained payload, verified, atomic swap with rollback"
 license = "LicenseRef-RedRise-Proprietary"

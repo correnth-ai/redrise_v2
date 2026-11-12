@@ -225,7 +225,11 @@ class BrowserProcessTest(unittest.TestCase):
                           ("Fechar e verificar", "notepad_step", "close", True)])
         self.su_core().ensure_welcome_process()  # a later start of the same team creates nothing
         self.assertEqual(sum(1 for x in a.call("GET", "/api/v1/processes") if x["system_key"] == "boas-vindas"), 1)
-        self.expect("VALIDATION", lambda: a.call("PUT", f"/api/v1/processes/{p['id']}", {"name": "x", "items": [{"routine_id": p["items"][0]["routine_id"], "continue_next": True}]}), 400)
+        # Administrators edit it like any process (PROCESS-ACTIONS-20261111 item 1.1); put back as it was after.
+        a.call("PUT", f"/api/v1/processes/{p['id']}", {"name": "x", "items": [{"routine_id": p["items"][0]["routine_id"], "continue_next": True}]})
+        self.assertEqual(len(self.welcome()["items"]), 1)
+        a.call("PUT", f"/api/v1/processes/{p['id']}", {"name": p["name"], "items": [{"routine_id": i["routine_id"], "continue_next": i["continue_next"]} for i in p["items"]]})
+        self.assertEqual(self.welcome()["items"], p["items"])
 
     def test_12_welcome_steps_run_in_order_with_context_of_the_same_execution(self):
         sid, r, hb = self.station("bv-st", categories=("windows",))

@@ -62,7 +62,14 @@ export interface Execution {
   finished_at: string | null; steps: ExecutionStep[];
   /** Set when a schedule started it (SCHEDULE-PROCESS-20261107). */
   schedule_id?: number | null;
+  /** The process was deleted (PROCESS-ACTIONS-20261111): its id and name stay on its executions. */
+  process_archived?: boolean | null;
 }
+
+/** The Kanban of one day (PROCESS-ACTIONS-20261111 item 4.3): per process, its latest execution started that day in the team zone. */
+export interface KanbanDay { day: string; today: string; timezone: string; since: string; until: string; executions: Execution[] }
+export interface ProcessDeleted { archived: boolean; already: boolean; process_id: number; name: string; routines: number[];
+  schedules_disabled: number; changes_cancelled: number }
 
 export interface ScheduleInput { process_id: number; station_id: number; weekdays: number[]; hour: number; minute: number; timezone: string }
 export interface Schedule {

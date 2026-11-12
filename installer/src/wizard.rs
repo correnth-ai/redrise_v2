@@ -12,7 +12,7 @@ use installrs::gui::{self, ButtonLabels, InstallerGui};
 use installrs::{Installer, OptionKind};
 use serde_json::{json, Value};
 
-use crate::{configured, install, log_result, now, pt_error, read_intent, Opts, Progress, APP_EXE};
+use crate::{configured, install, log_result, now, read_intent, Failure, Opts, Progress, APP_EXE};
 
 const SERVER: &str = "Servidor da equipe: guarda os dados da equipe e também executa rotinas. Fica ligado, com o RedRise \
 aberto, para atender estações e agendamentos.";
@@ -65,7 +65,7 @@ pub fn run(o: Opts, stub: usize, me: Vec<u8>, zip: Vec<u8>) -> i32 {
                         são mantidos; nada é perguntado de novo.\n\nDestino: {dest}\n\nClique em Instalar."))
         .skip_if(move |_| !existing);
 
-    let outcome: Arc<Mutex<Option<Result<Value, String>>>> = Arc::new(Mutex::new(None));
+    let outcome: Arc<Mutex<Option<Result<Value, Failure>>>> = Arc::new(Mutex::new(None));
     let out_c = outcome.clone();
     let o_c = o.clone();
     w.install_page(move |i| {
@@ -78,7 +78,7 @@ pub fn run(o: Opts, stub: usize, me: Vec<u8>, zip: Vec<u8>) -> i32 {
         let cancelled = || i.is_cancelled();
         let r = install(&opts, stub, &me, &zip, &Progress { report: &report, cancelled: &cancelled });
         *out_c.lock().unwrap() = Some(r.clone());
-        r.map(|_| ()).map_err(|e| anyhow::anyhow!(pt_error(&e)))
+        r.map(|_| ()).map_err(|f| anyhow::anyhow!(f.pt()))
     })
     .hide_log();
     w.finish_page("RedRise instalado",
@@ -87,14 +87,15 @@ pub fn run(o: Opts, stub: usize, me: Vec<u8>, zip: Vec<u8>) -> i32 {
         .with_widgets(|p| {
             p.checkbox("open", "Abrir o RedRise agora");
         });
-    w.error_page("A instalação não foi concluída",
-                 "A instalação anterior, se havia, e os seus dados continuam como estavam. Detalhes:");
+    // The text of each failure says what really happened (phase, version in the folder, data, next step): nothing
+    // here assumes the previous version is intact (PROCESS-ACTIONS-20261111 item 4.2).
+    w.error_page("A instalação não foi concluída como esperado", "O que aconteceu e o que fazer agora:");
 
     let ran = w.run(&mut i);
     let result = outcome.lock().unwrap().take();
     let record = match &result {
         Some(Ok(v)) => json!({"ok": true, "at": now(), "result": v, "via": "wizard"}),
-        Some(Err(e)) => json!({"ok": false, "at": now(), "error": e, "via": "wizard"}),
+        Some(Err(f)) => json!({"ok": false, "at": now(), "error": f.message(), "failure": f.to_json(), "via": "wizard"}),
         None => json!({"ok": true, "at": now(), "result": {"cancelled": true}, "via": "wizard"}),
     };
     log_result(&o, &record);

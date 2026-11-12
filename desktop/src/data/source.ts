@@ -2,7 +2,7 @@
 // the demonstration source exists only in a `vite --mode demo` build (fixtures,
 // identified on screen) and is never a fallback for a failing backend.
 import { api, call } from "@/lib/api";
-import type { Schedule, ScheduleInput } from "./types";
+import type { KanbanDay, ProcessDeleted, Schedule, ScheduleInput } from "./types";
 import type { Execution, ExecutionSummary, Job, Me, Member, NewExecution, Notifications, Process, Review, Routine, RoutineLink, RoutineVersionInput, Station, StationApp, StepChange, Storage } from "./types";
 
 export interface DataSource {
@@ -15,8 +15,8 @@ export interface DataSource {
   executionSummary(): Promise<ExecutionSummary>;
   /** Executions started in the last `days` days, newest first, up to 500: the rows behind the summary. */
   executionsSince(days: number): Promise<Execution[]>;
-  /** The most recent execution of every process, whatever its age (the Kanban's cards; not capped by the list above). */
-  latestExecutions(): Promise<Execution[]>;
+  /** The Kanban of one day: `null` asks for today in the team time zone (the answer says which day it is). */
+  kanban(day: string | null): Promise<KanbanDay>;
   stations(): Promise<Station[]>;
   storage(): Promise<Storage>;
   apps(stationId: number): Promise<{ apps: StationApp[] | null }>;
@@ -42,6 +42,8 @@ export interface DataSource {
   cancelStepChange(id: string): Promise<void>;
   archiveRoutine(id: number): Promise<void>;
   saveProcess(id: number | null, name: string, items: { routine_id: number; continue_next: boolean }[]): Promise<void>;
+  /** Deletes ONLY the process, by its id; `confirm` is the word the person typed (checked again by the Core). */
+  archiveProcess(id: number, confirm: string): Promise<ProcessDeleted>;
   startExecution(req: NewExecution): Promise<Execution>;
   schedules(): Promise<Schedule[]>;
   previewSchedule(input: ScheduleInput): Promise<{ next_slot_local: string; next_run_at: string }>;
@@ -58,7 +60,7 @@ export const realSource: DataSource = {
   executions: () => api("GET", "/api/v1/executions"),
   executionSummary: () => api("GET", "/api/v1/executions/summary"),
   executionsSince: (days) => api("GET", `/api/v1/executions?days=${Math.trunc(days)}`),
-  latestExecutions: () => api("GET", "/api/v1/executions?latest=process"),
+  kanban: (day) => api("GET", `/api/v1/kanban${day ? `?day=${encodeURIComponent(day)}` : ""}`),
   stations: () => api("GET", "/api/v1/stations"),
   async storage() {
     const s: Storage = await api("GET", "/api/v1/storage");
@@ -115,6 +117,7 @@ export const realSource: DataSource = {
     if (id === null) await api("POST", "/api/v1/processes", { name, items });
     else await api("PUT", `/api/v1/processes/${id}`, { name, items });
   },
+  archiveProcess: (id, confirm) => api("POST", `/api/v1/processes/${Math.trunc(id)}/archive`, { confirm }),
   startExecution: (req) => api("POST", "/api/v1/executions", req),
   schedules: () => api("GET", "/api/v1/schedules"),
   previewSchedule: (input) => api("POST", "/api/v1/schedules/preview", input),

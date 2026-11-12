@@ -77,11 +77,13 @@ ROUTES = [
     ("PUT", r"/api/v1/processes/(\d+)", "process_update", "user"),
     ("POST", r"/api/v1/processes/(\d+)/items", "process_integrate", "user"),
     ("POST", r"/api/v1/processes/(\d+)/step1", "process_step_change", "user"),
+    ("POST", r"/api/v1/processes/(\d+)/archive", "process_archive", "user"),
     ("GET", r"/api/v1/step-changes", "step_changes", "user"),
     ("POST", r"/api/v1/step-changes/([0-9a-f-]{36})/approve", "step_change_approve", "user"),
     ("POST", r"/api/v1/step-changes/([0-9a-f-]{36})/cancel", "step_change_cancel", "user"),
     ("GET", r"/api/v1/executions", "executions", "user"),
     ("GET", r"/api/v1/executions/summary", "execution_summary", "user"),
+    ("GET", r"/api/v1/kanban", "kanban", "user"),
     ("POST", r"/api/v1/executions", "execution_create", "user"),
     ("GET", r"/api/v1/executions/([0-9a-f-]{36})", "execution_get", "user"),
     ("GET", r"/api/v1/reviews", "reviews", "user"),
@@ -102,7 +104,7 @@ ROUTES = [
     ("POST", r"/api/v1/runner/jobs/([0-9a-f-]{36})/result", "rn_result", "runner"),
     ("POST", r"/api/v1/runner/jobs/([0-9a-f-]{36})/progress", "rn_progress", "runner"),
 ]
-_QUERY = {"executions", "execution_summary"}  # handlers that read the query string
+_QUERY = {"executions", "execution_summary", "kanban"}  # handlers that read the query string
 _COMPILED = [(m, re.compile(p + r"$"), h, a) for m, p, h, a in ROUTES]
 
 
@@ -231,6 +233,9 @@ class Handlers:
     def process_step_change(self, b, who, cid, pid):
         return self.core.request_step_change(who, int(pid), b.get("routine_id"))
 
+    def process_archive(self, b, who, cid, pid):
+        return self.core.archive_process(who, int(pid), b.get("confirm"))
+
     def step_changes(self, b, who, cid):
         return self.core.list_step_changes(who)
 
@@ -243,6 +248,9 @@ class Handlers:
     def executions(self, b, who, cid, query=None):
         q = query or {}
         return self.core.list_executions(who, days=q.get("days"), latest=q.get("latest"))
+
+    def kanban(self, b, who, cid, query=None):
+        return self.core.kanban(who, (query or {}).get("day"))
 
     def execution_summary(self, b, who, cid, query=None):
         return self.core.execution_summary(who, (query or {}).get("days"))

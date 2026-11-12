@@ -24,7 +24,6 @@ import { SearchableSelect } from "@/components/searchable-select";
 import { ExecutionBadge, StateBadge } from "@/components/blocks";
 import { describeConfig } from "@/features/run-dialog";
 import { END_REASON, groupOf, title } from "@/data/status";
-import { HISTORY_COLUMNS } from "@/features/fluxos";
 import { AssignedToMe } from "@/features/reviews";
 import type { Process, Routine } from "@/data/types";
 import { useStore } from "@/state";
@@ -36,6 +35,10 @@ const CATEGORY: Record<string, string> = { windows: "Windows", browser: "Navegad
 const FOLLOW_UP: Record<string, string> = { review: "Solicitar revisão", report: "Gerar relatório", notify: "Notificar alguém" };
 const originLabel = (kind: string, c: Routine["config"]) => kind === "followup" ? FOLLOW_UP[c?.action ?? ""] ?? "Follow-up" : kind === "notepad_step" ? "Bloco de Notas" : kind === "app_open" ? (c?.target?.kind === "file" ? "Arquivo" : "Aplicativo") : c ? (c.origin === "site" ? "Site" : "HTML local") : "Legada";
 const PREPARED = ["browser_open", "app_open"];
+/** Kinds a process links (the Core's PROCESS_KINDS): the Boas-vindas steps too, and a follow-up after another step. */
+const LINKABLE = [...PREPARED, "notepad_step", "followup"];
+/** Kinds that can be a step 1 (a follow-up needs a step before it). */
+const STARTS = [...PREPARED, "notepad_step"];
 /** Why a process cannot start as composed (the Core refuses it too: PROCESS-START-INVALID), or null. */
 export const startProblem = (p: Process): string | null => !p.items.length ? "Sem etapa 1 para executar"
   : p.items[0].kind === "followup" ? "A etapa 1 é um follow-up, que precisa de uma etapa anterior" : null;
@@ -49,6 +52,9 @@ const Action = IconAction;
 
 // ---------------------------------------------------------------- Processo › Ação: paginated processes, routines on demand
 /** Situation of the last attempt, for the filter and its column (the same rules as before this table was paginated). */
+/** Why the process cannot be deleted now (the Core checks every execution of it: PROCESS-BUSY), or null. */
+const busyProblem = (p: Process): string | null => p.last_execution?.state === "running" ? "Em execução: aguarde terminar para excluir"
+  : p.last_execution?.state === "waiting_review" ? "Aguardando revisão: conclua a revisão para excluir" : null;
 const lastState = (p: Process) => !p.last_execution ? "never" : p.last_execution.state === "running" ? "running"
   : p.last_execution.state === "finished" && p.last_execution.outcome !== "verified" ? "attention" : "other";
 
@@ -68,6 +74,7 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
   const [integrate, setIntegrate] = useState<Process | null>(null);
   const [replace, setReplace] = useState<Process | null>(null);
   const [schedule, setSchedule] = useState<Process | null>(null);
+  const [remove, setRemove] = useState<Process | null>(null);
   const toggle = (id: number) => setOpen((cur) => { const next = new Set(cur); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const columns: DataColumn<Process>[] = [
     { id: "name", header: "Processo", sortValue: (p) => p.name, searchText: (p) => p.name, cell: (p) => {
@@ -85,19 +92,28 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
     } },
     { id: "routines", header: "Rotinas", className: "text-muted-foreground", sortValue: (p) => p.items.length,
       cell: (p) => p.items.length ? `${p.items.length} ${p.items.length === 1 ? "rotina" : "rotinas"}` : "sem etapa 1" },
-    { id: "state", header: "Execução", searchText: (p) => p.last_execution ? "" : "nunca executado", cell: (p) => <span className="flex flex-wrap items-center gap-2">
+    // In a narrow window the last execution goes under its badge, its date kept whole (nothing of it is dropped).
+    { id: "state", header: "Execução", searchText: (p) => p.last_execution ? "" : "nunca executado", cell: (p) => <span className="flex flex-col items-start gap-1">
       {p.last_execution ? <ExecutionBadge e={{ state: p.last_execution.state, outcome: p.last_execution.outcome } as any} /> : <Badge variant="outline">Nunca executado</Badge>}
-      {p.last_execution && <span className="text-xs text-muted-foreground">última: {when(p.last_execution.created_at)}{p.last_execution.end_reason ? ` · ${END_REASON[p.last_execution.end_reason] ?? p.last_execution.end_reason}` : ""}</span>}
+      {p.last_execution && <span className="text-xs text-muted-foreground">última: <span className="whitespace-nowrap">{when(p.last_execution.created_at)}</span>{p.last_execution.end_reason ? ` · ${END_REASON[p.last_execution.end_reason] ?? p.last_execution.end_reason}` : ""}</span>}
     </span> },
     { id: "success", header: "Último sucesso", className: "whitespace-nowrap", sortValue: (p) => p.last_success_at ?? null, cell: (p) => <LastSuccess p={p} /> },
-    { id: "actions", header: "Ações", fixed: true, className: "text-right whitespace-nowrap", cell: (p) => <>
-      <Action label={startProblem(p) ?? "Executar processo"} onClick={() => run({ kind: "process", id: p.id })} disabled={!!startProblem(p)}><Play /></Action>
-      {me.role === "admin" && !compact && !!p.items.length && <Action label="Agendar" onClick={() => setSchedule(p)}><CalendarClock /></Action>}
-      {me.role === "admin" && !p.system_key && <Action label="Integrar rotina avulsa" onClick={() => setIntegrate(p)}><Link2 /></Action>}
-      {me.role === "admin" && !p.system_key && !!p.items.length && <Action label={p.pending_change ? "Já há substituição pendente" : p.last_execution && p.last_execution.state !== "finished" ? "Em execução: aguarde terminar" : "Substituir etapa 1"}
-        disabled={!!p.pending_change || (!!p.last_execution && p.last_execution.state !== "finished")} onClick={() => setReplace(p)}><Replace /></Action>}
-      {me.role === "admin" && !p.system_key && <Action label="Editar composição" onClick={() => setCompose(p)}><Pencil /></Action>}
-    </> },
+    // The same six actions on every process, Boas-vindas included (PROCESS-ACTIONS-20261111 item 1.1), in this order; an
+    // action that cannot work now is unavailable with the reason. Operators only execute; the Core checks access anyway.
+    { id: "actions", header: "Ações", fixed: true, className: "text-right whitespace-nowrap", cell: (p) => {
+      const replaceWhy = !p.items.length ? "Sem etapa 1 para substituir" : p.pending_change ? "Já há substituição pendente"
+        : p.last_execution && p.last_execution.state !== "finished" ? "Em execução: aguarde terminar" : null;
+      return <span className="inline-flex items-center justify-end gap-0.5">
+        <Action label={startProblem(p) ? `Executar: ${startProblem(p)!.toLowerCase()}` : `Executar ${p.name}`} onClick={() => run({ kind: "process", id: p.id })} disabled={!!startProblem(p)}><Play /></Action>
+        {me.role === "admin" && <>
+          <Action label={startProblem(p) ? `Agendar: ${startProblem(p)!.toLowerCase()}` : "Agendar"} disabled={!!startProblem(p)} onClick={() => setSchedule(p)}><CalendarClock /></Action>
+          <Action label="Integrar rotina avulsa" onClick={() => setIntegrate(p)}><Link2 /></Action>
+          <Action label={replaceWhy ?? "Substituir etapa 1"} disabled={!!replaceWhy} onClick={() => setReplace(p)}><Replace /></Action>
+          <Action label={busyProblem(p) ?? `Excluir ${p.name}`} destructive disabled={!!busyProblem(p)} onClick={() => setRemove(p)}><Trash2 /></Action>
+          <Action label="Editar composição" onClick={() => setCompose(p)}><Pencil /></Action>
+        </>}
+      </span>;
+    } },
   ];
   // The routines of an expanded process, in their order, on the process's own page.
   const routinesOf = (p: Process) => !open.has(p.id) ? null : (
@@ -135,6 +151,7 @@ export function ProcessTable({ compact = false }: { compact?: boolean }) {
       <IntegrateRoutine process={integrate} onClose={() => setIntegrate(null)} />
       <ReplaceStepOne process={replace} onClose={() => setReplace(null)} />
       <ScheduleDialog key={schedule?.id ?? "none"} process={schedule} onClose={() => setSchedule(null)} />
+      <DeleteProcess key={remove?.id ?? "none"} process={remove} onClose={() => setRemove(null)} />
       <RoutineSheet routine={detail} onClose={() => setDetail(null)} />
     </div>
   );
@@ -261,7 +278,7 @@ function CountTile({ label, value, icon: Icon, mark, onOpen }: { label: string; 
 }
 
 export function ProcessesPage({ focus }: { focus?: string }) {
-  const { processes, executions, reviews, go, run, error } = useStore();
+  const { processes, reviews, go, error } = useStore();
   const [tab, setTab] = useState(focus && focus !== "schedules" ? "mine" : "overview");  // "schedules": from a schedule notification
   const { summary, error: summaryError } = useExecutionSummary();
   const days = summary?.days ?? 30;
@@ -288,14 +305,9 @@ export function ProcessesPage({ focus }: { focus?: string }) {
           <CountTile label="Precisam de atenção" value={summary?.attention} mark="bg-destructive" onOpen={history("attention")} />
           <CountTile label="Verificadas" value={summary?.verified} mark="bg-ok" onOpen={history("verified")} />
         </section>
-        <div className="flex justify-end"><Button onClick={() => run(null)}><Play /> Nova execução</Button></div>
+        {/* Executions start from the Play of each process row; the history lives in Processo > Historico. */}
         <ProcessTable />
         <SchedulesSection />
-        <section aria-label="Execuções recentes" className="space-y-2">
-          <h3 className="text-sm font-semibold">Execuções recentes</h3>
-          <DataTable label="Execuções recentes" storageKey="processo-acao-execucoes" rows={executions} columns={HISTORY_COLUMNS} rowKey={(e) => e.id} rowLabel={title}
-            empty="Nenhuma execução." searchPlaceholder="Buscar processo, estação ou pessoa…" pageSizes={[5, 10, 25]} onRowOpen={(e) => go({ menu: "processo", page: "historico", id: e.id })} />
-        </section>
       </TabsContent>
       <TabsContent value="mine"><AssignedToMe focus={focus} /></TabsContent>
     </Tabs>
@@ -336,7 +348,9 @@ function IntegrateRoutine({ process, onClose }: { process: Process | null; onClo
   const [pick, setPick] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const free = (routines ?? []).filter((r) => PREPARED.includes(r.kind) && !(processes ?? []).some((p) => p.items.some((i) => i.routine_id === r.id)));
+  // A follow-up needs a step before it, so it is offered only to a process that has one.
+  const free = (routines ?? []).filter((r) => (process?.items.length ? LINKABLE : STARTS).includes(r.kind)
+    && !(processes ?? []).some((p) => p.items.some((i) => i.routine_id === r.id)));
   const next = (process?.items.length ?? 0) + 1;
   const close = () => { setPick(null); setError(null); onClose(); };
   async function confirm() {
@@ -371,7 +385,7 @@ function ReplaceStepOne({ process, onClose }: { process: Process | null; onClose
   const [pick, setPick] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const free = (routines ?? []).filter((r) => PREPARED.includes(r.kind) && !(processes ?? []).some((p) => p.items.some((i) => i.routine_id === r.id)));
+  const free = (routines ?? []).filter((r) => STARTS.includes(r.kind) && !(processes ?? []).some((p) => p.items.some((i) => i.routine_id === r.id)));
   const close = () => { setPick(null); setError(null); onClose(); };
   async function confirm() {
     if (!process || !pick || busy) return;
@@ -400,6 +414,52 @@ function ReplaceStepOne({ process, onClose }: { process: Process | null; onClose
   );
 }
 
+// ---------------------------------------------------------------- deleting ONLY the process (PROCESS-ACTIONS-20261111 item 2)
+/** The word to type, compared as trim().toLowerCase() (the Core compares it again). */
+export const DELETE_WORD = "confirmado";
+export const deleteConfirmed = (typed: string) => typed.trim().toLowerCase() === DELETE_WORD;
+
+/** Typing the word only enables Excluir; the request goes by the process id, once, and the lists change only after the Core
+ *  confirms. Cancel, X or Escape change nothing; a new opening (another key) starts with an empty field. */
+function DeleteProcess({ process, onClose }: { process: Process | null; onClose: () => void }) {
+  const { src, reload } = useStore();
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const ok = deleteConfirmed(typed);
+  const close = () => { if (!busy) onClose(); };
+  async function confirm(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!process || !ok || busy) return;
+    setBusy(true); setError(null);
+    try { await src.archiveProcess(process.id, typed); await reload(); onClose(); }
+    catch (e) { setError(e); await reload().catch(() => undefined); }
+    finally { setBusy(false); }
+  }
+  return (
+    <Dialog open={process !== null} onOpenChange={(o) => { if (!o) close(); }}>
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={confirm} className="grid gap-4">
+          <DialogHeader>
+            <DialogTitle>Excluir processo</DialogTitle>
+            <DialogDescription>Confirma exclusão do processo? As rotinas não serão excluídas.</DialogDescription>
+          </DialogHeader>
+          <p className="text-sm">Processo: <b className="break-words">{process?.name}</b></p>
+          <p className="text-sm text-muted-foreground">Rotinas só deste processo ficam avulsas; as usadas em outros processos continuam neles. Os agendamentos dele deixam de executar e o histórico de execuções é mantido.</p>
+          <div className="space-y-2"><Label htmlFor="del-word">Digite Confirmado para excluir</Label>
+            <Input id="del-word" value={typed} autoComplete="off" spellCheck={false} disabled={busy} onChange={(e) => setTyped(e.target.value)}
+              aria-describedby="del-word-help" /><p id="del-word-help" className="text-xs text-muted-foreground">Maiúsculas e minúsculas tanto faz.</p></div>
+          <ErrorView error={error} />
+          <DialogFooter>
+            <Button type="button" variant="ghost" disabled={busy} onClick={close}>Cancelar</Button>
+            <Button type="submit" variant="destructive" disabled={!ok || busy} aria-busy={busy || undefined}>{busy ? "Excluindo…" : "Excluir"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ---------------------------------------------------------------- dialog-11: process composition
 function ProcessComposer({ value, onClose }: { value: Process | "new" | null; onClose: () => void }) {
   const { routines, src, reload } = useStore();
@@ -416,7 +476,7 @@ function ProcessComposer({ value, onClose }: { value: Process | "new" | null; on
     setItems(editing?.items.map((i) => ({ routine_id: i.routine_id, continue_next: i.continue_next })) ?? []);
     setError(null);
   }
-  const available = (routines ?? []).filter((r) => PREPARED.includes(r.kind));
+  const available = (routines ?? []).filter((r) => LINKABLE.includes(r.kind));
   const nameOf = (id: number) => routines?.find((r) => r.id === id)?.name ?? `#${id}`;
   const move = (i: number, d: number) => setItems((xs) => { const ys = [...xs]; const [x] = ys.splice(i, 1); ys.splice(i + d, 0, x); return ys; });
   const valid = name.trim().length > 0; // the first routine may come later, from Nova Rotina or an integration

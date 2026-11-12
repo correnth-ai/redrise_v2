@@ -35,20 +35,30 @@ export const TONE_CLASS: Record<Tone, string> = {
   muted: "bg-muted text-muted-foreground border-transparent",
 };
 
-/** Kanban column of a step. "Atenção" keeps failed/uncertain/unverified distinct via their badge. */
-export type Column = "waiting" | "running" | "verified" | "attention" | "not_run";
-/** Left to right on the board (PROCESS-LIST-INSTALLER-20261110 item 4.1). */
-export const COLUMNS: Column[] = ["waiting", "running", "attention", "not_run", "verified"];
-/** Board labels only: the canonical result stays `verified` ("Verificada" elsewhere). */
-export const COLUMN_LABEL: Record<Column, string> = {
-  waiting: "Aguardando", running: "Em andamento", verified: "Conferida", attention: "Atenção", not_run: "Não executada",
-};
-export function column(e: Execution, s: ExecutionStep): Column {
-  if (s.state === null) return e.state === "finished" ? "not_run" : "waiting";
-  if (s.state === "queued" || s.state === "awaiting_review") return "waiting";
-  if (s.state === "claimed" || s.state === "running") return "running";
-  if (s.state === "verified") return "verified";
-  return "attention";
+/** Kanban column of an execution (PROCESS-ACTIONS-20261111 item 4.3), from its aggregate state and canonical result only:
+ *  never a retry, never a promotion. A step not started yet never moves a running execution. */
+export type Column = "waiting" | "running" | "done" | "verified";
+/** Left to right on the board. */
+export const COLUMNS: Column[] = ["waiting", "running", "done", "verified"];
+/** Board and summary labels; the canonical results stay `completed_unverified` and `verified` ("Verificada" elsewhere). */
+export const COLUMN_LABEL: Record<Column, string> = { waiting: "No aguardo", running: "Em andamento", done: "Concluído", verified: "Conferido" };
+/** The step that is now the execution's: the last one that has a state (a later one has not started). */
+export const currentStep = (e: Execution): ExecutionStep | null => [...e.steps].reverse().find((s) => s.state !== null) ?? null;
+const MOVING: (string | null)[] = ["claimed", "running", "verified"]; // preparing, running, or verified and passing to the next one
+export function boardColumn(e: Execution): Column {
+  if (e.state === "finished") return e.outcome === "verified" ? "verified" : e.outcome === "completed_unverified" ? "done" : "waiting";
+  if (e.state === "waiting_review") return "waiting";
+  const s = currentStep(e);
+  return s && MOVING.includes(s.state) ? "running" : "waiting"; // queued at the station, or a failure the Core is about to close
+}
+/** What the summary says the execution is now, with the board's words for the two good endings and the real ones otherwise. */
+export function boardStateLabel(e: Execution): string {
+  if (e.state === "finished") return e.outcome === "verified" ? "Conferido" : e.outcome === "completed_unverified" ? "Concluído, sem conferência"
+    : JOB_STATE[e.outcome ?? ""] ?? "Encerrada";
+  if (e.state === "waiting_review") return "Aguardando revisão";
+  const s = currentStep(e);
+  if (!s || s.state === "queued") return "Na fila da estação";
+  return MOVING.includes(s.state) ? (s.state === "claimed" ? "Preparando" : "Em andamento") : JOB_STATE[s.state ?? ""] ?? "Em andamento";
 }
 
 export function executionLabel(e: Execution): string {
@@ -75,8 +85,9 @@ export function needsAttention(e: Execution): boolean {
   return groupOf(e) === "attention";
 }
 
+/** The process's own name (by id, from the Core); a deleted one says so, so homonyms never look the same. */
 export function title(e: Execution): string {
-  return e.process_name ?? `${e.steps[0]?.name ?? "Rotina"} (avulsa)`;
+  return e.process_name !== null ? `${e.process_name}${e.process_archived ? " (excluído)" : ""}` : `${e.steps[0]?.name ?? "Rotina"} (avulsa)`;
 }
 
 export function finishedState(s: JobState | null): boolean {

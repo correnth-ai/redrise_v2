@@ -92,7 +92,14 @@ export const demoSource: DataSource = {
   })(), last_success_at: executions.filter((y) => y.process_id === x.id && y.state === "finished" && y.outcome === "verified" && y.finished_at)
     .map((y) => y.finished_at!).sort().at(-1) ?? null }))),
   executions: async () => clone(executions),
-  latestExecutions: async () => clone(processes.map((x) => executions.find((y) => y.process_id === x.id)).filter((y): y is Execution => !!y)),
+  async kanban(day) { // the demonstration's day is the browser's
+    const today = new Date().toLocaleDateString("sv-SE");
+    const d = day ?? today;
+    const seen = new Set<number>();
+    const rows = executions.filter((e) => e.process_id !== null && new Date(e.created_at).toLocaleDateString("sv-SE") === d)
+      .filter((e) => !seen.has(e.process_id!) && !!seen.add(e.process_id!));
+    return { day: d, today, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, since: d, until: d, executions: clone(rows) };
+  },
   async executionSummary() { // same groups as the Core, over the demonstration records
     const since = Date.now() - 30 * 86400000;
     const shown = executions.filter((e) => Date.parse(e.created_at) >= since);
@@ -137,6 +144,13 @@ export const demoSource: DataSource = {
   },
   async archiveRoutine(id) {
     routines = routines.filter((x) => x.id !== id);
+  },
+  async archiveProcess(id, confirm) {
+    if (confirm.trim().toLowerCase() !== "confirmado") throw new Error("Confirmação incorreta.");
+    const target = processes.find((x) => x.id === id);
+    processes = processes.filter((x) => x.id !== id);
+    return { archived: true, already: !target, process_id: id, name: target?.name ?? "", routines: target?.items.map((i) => i.routine_id) ?? [],
+      schedules_disabled: 0, changes_cancelled: 0 };
   },
   async saveProcess(id, name, items) {
     const pid = id ?? Math.max(0, ...processes.map((x) => x.id)) + 1;

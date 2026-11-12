@@ -1110,6 +1110,32 @@
       "next": "Wait for the execution to end and try again.",
       "details": "Step 1 changes only while the process is not running."
     },
+    "PROCESS-DELETE-UNCONFIRMED": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The deletion of the process was not confirmed.",
+      "completed": "The request was refused. The process was not changed.",
+      "pending": "The process, its routines and its schedules stay as they are.",
+      "next": "Type Confirmado in the confirmation box and choose Delete.",
+      "details": "The confirmation word prevents a slip; access is checked by the session."
+    },
+    "PROCESS-BUSY": {
+      "category": "precondition",
+      "modules": [
+        "RR-CORE"
+      ],
+      "effect_state": "none",
+      "retry": "after_fix",
+      "what": "The process {process} has an execution in progress or waiting for review.",
+      "completed": "The request was refused. The process was not deleted.",
+      "pending": "The execution goes on as it is; nothing was cancelled.",
+      "next": "Wait for it to end, approve the review (Processo > Marcado para mim) or cancel the step (Rotina > Atividade), and try again.",
+      "details": "A process is deleted only with no execution running or waiting for review."
+    },
     "CHANGE-PENDING-EXISTS": {
       "category": "precondition",
       "modules": [

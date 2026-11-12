@@ -154,7 +154,7 @@ export function RoutineWizard({ id }: { id?: number }) {
 
   if (id && !existing) return <p className="text-sm text-muted-foreground">{routines ? "Rotina não encontrada." : "Carregando…"}</p>;
 
-  const free = (processes ?? []).filter((p) => !p.items.length && !p.system_key);
+  const free = (processes ?? []).filter((p) => !p.items.length); // any empty process, a ready-made one too (PROCESS-ACTIONS-20261111)
   const inProcess = (processes ?? []).filter((p) => p.items.some((i) => i.routine_id === routineId));
   const startsProcess = mode === "start" || (processes ?? []).some((p) => p.items.some((i) => i.routine_id === routineId && i.position === 1));
 
@@ -185,7 +185,7 @@ export function RoutineWizard({ id }: { id?: number }) {
   const notifyReady = validMail && !!mailDest;
   const step2 = mode === "followup" ? (action === "report" || (action === "review" ? !!assignee : notifyReady)) : !!dest && !!station && !wrongCategory && (dest.kind !== "browser" || validUrl(url));
   // Every step of every process, found by process or routine name and shown with its number.
-  const stepsToFollow = (processes ?? []).filter((p) => !p.system_key).flatMap((p) => p.items.map((i) => ({
+  const stepsToFollow = (processes ?? []).flatMap((p) => p.items.map((i) => ({
     value: `${p.id}:${i.position}`, label: `${p.name} · Etapa ${i.position}`, hint: i.routine_name })));
 
   async function saveFollowUp() {

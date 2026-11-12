@@ -14,8 +14,9 @@ import { DataTable, type DataColumn } from "@/components/data-table";
 import { ErrorView } from "@/components/diagnostic";
 import { ActivityFeed, activityOf, ExecutionBadge, ExecutionLog, ExecutionReports, StateBadge, Timeline } from "@/components/blocks";
 import { JobsSection } from "@/features/legacy";
-import { COLUMN_LABEL, COLUMNS, column, END_REASON, executionLabel, groupOf, JOB_STATE, title } from "@/data/status";
-import type { Execution, ExecutionStep } from "@/data/types";
+import { boardColumn, boardStateLabel, COLUMN_LABEL, COLUMNS, currentStep, END_REASON, executionLabel, groupOf, title } from "@/data/status";
+import type { Execution, KanbanDay, Process } from "@/data/types";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { userText } from "@/lib/locale";
 import { useStore } from "@/state";
@@ -43,70 +44,92 @@ export function ActivityPage() {
   );
 }
 
-/** The board's cards: the most recent execution of every process (read for the board, whatever its age, so the general
- *  list's limit never hides a process) plus the standalone routines among the recent executions. A newer execution in the
- *  store wins over an older read; the cards are steps, identified by execution id and position. */
-export function boardExecutions(latest: Execution[] | null, recent: Execution[] | null): Execution[] {
-  const byKey = new Map<string, Execution>();
-  const keep = (e: Execution) => {
-    const k = e.process_id ? `p${e.process_id}` : `r${e.id}`;
-    const cur = byKey.get(k);
-    if (!cur || e.created_at > cur.created_at || (e.created_at === cur.created_at && e.id === cur.id)) byKey.set(k, e);
-  };
-  for (const e of latest ?? []) keep(e);
-  for (const e of recent ?? []) keep(e);
-  return [...byKey.values()].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : a.id.localeCompare(b.id)));
+/** Processes to filter by, BY ID: the registered ones and those of the given executions (a deleted one says so); equal
+ *  names get their number, so homonyms are never merged (PROCESS-ACTIONS-20261111 item 2). */
+export function processChoices(processes: Process[] | null, rows: Execution[] | null): { id: number; label: string }[] {
+  const m = new Map<number, string>();
+  for (const p of processes ?? []) m.set(p.id, p.name);
+  for (const e of rows ?? []) if (e.process_id !== null && !m.has(e.process_id)) m.set(e.process_id, title(e));
+  const names = [...m.values()];
+  return [...m.entries()].map(([id, name]) => ({ id, label: names.filter((n) => n === name).length > 1 ? `${name} · nº ${id}` : name }));
 }
 
-const STEP_STATE = (e: Execution, s: ExecutionStep) => s.state === null ? (e.state === "finished" ? "Não executada" : "Aguardando a etapa anterior") : JOB_STATE[s.state] ?? s.state;
+/** dd/mm/aaaa of a calendar day "YYYY-MM-DD" (no time zone involved: it is the team's day as the Core gave it). */
+export const dayLabel = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
 
+/** Kanban of one day (PROCESS-ACTIONS-20261111 item 4.3): one card per process, its latest execution STARTED that day in the
+ *  team zone, read from the Core for that day (never the general list). Hoje follows the team's day; a chosen day stays.
+ *  Read again with every store read (change feed or periodic) and every minute; an answer for another day never shows. */
 export function KanbanPage({ process }: { process?: number }) {
   const { executions, processes, go, src, error } = useStore();
   const [proc, setProc] = useState(process ? String(process) : "all");
-  const [latest, setLatest] = useState<Execution[] | null>(null);
-  const [latestError, setLatestError] = useState<unknown>(null);
-  const [open, setOpen] = useState<{ id: string; position: number } | null>(null);
+  const [pick, setPick] = useState<string | null>(null); // null: Hoje (never kept from an earlier visit)
+  const [board, setBoard] = useState<KanbanDay | null>(null);
+  const [boardError, setBoardError] = useState<unknown>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const [minute, setMinute] = useState(0);
   const reads = useRef(0);
   useEffect(() => {
-    // Read again with every store read (change feed or periodic): the board follows the Core without F5. An older answer
-    // never overwrites a newer one; a failure keeps the cards on screen, marked as possibly out of date.
+    if (pick !== null) return;
+    const t = window.setInterval(() => setMinute((m) => m + 1), 60_000); // the day may turn while nothing changes
+    return () => window.clearInterval(t);
+  }, [pick]);
+  useEffect(() => {
     const mine = ++reads.current;
-    src.latestExecutions().then((r) => { if (mine === reads.current) { setLatest(r); setLatestError(null); } },
-      (e) => { if (mine === reads.current) setLatestError(e); });
-  }, [src, executions]);
-  const shown = useMemo(() => boardExecutions(latest, executions).filter((e) => proc === "all" || String(e.process_id) === proc), [latest, executions, proc]);
-  const stale = !!(error || latestError);
+    src.kanban(pick).then((r) => {
+      if (mine !== reads.current || (pick !== null && r.day !== pick)) return; // an older or other-day answer is dropped
+      setBoard(r); setBoardError(null);
+    }, (e) => { if (mine === reads.current) setBoardError(e); });
+  }, [src, executions, pick, minute]);
+  const choose = (d: string | null) => {
+    if (d === pick) return;
+    reads.current++; // any answer still on its way belongs to the previous day
+    setBoard(null); setBoardError(null); setOpen(null); setPick(d);
+  };
+  const shown = useMemo(() => (board?.executions ?? []).filter((e) => proc === "all" || String(e.process_id) === proc), [board, proc]);
+  const options = useMemo(() => processChoices(processes, board?.executions ?? null), [processes, board]);
+  const day = pick ?? board?.day ?? null;
+  const stale = !!(error || boardError);
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-2">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1"><Label htmlFor="k-day" className="text-xs">Dia</Label>
+          <div className="flex items-center gap-2">
+            <Input id="k-day" type="date" required value={day ?? ""} className="h-8 w-40" aria-describedby="k-day-help"
+              onChange={(ev) => { if (ev.target.value) choose(ev.target.value); }} />
+            <Button size="sm" variant={pick === null ? "secondary" : "outline"} aria-pressed={pick === null} onClick={() => choose(null)}>Hoje</Button>
+          </div></div>
         <div className="space-y-1"><Label htmlFor="k-proc" className="text-xs">Processo</Label>
           <Select value={proc} onValueChange={setProc}>
             <SelectTrigger id="k-proc" size="sm" className="w-64"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Todos os processos</SelectItem>{(processes ?? []).map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
+            <SelectContent><SelectItem value="all">Todos os processos</SelectItem>{options.map((o) => <SelectItem key={o.id} value={String(o.id)}>{o.label}</SelectItem>)}</SelectContent>
           </Select></div>
-        <p className="pb-1 text-xs text-muted-foreground">Mostra a execução mais recente de cada processo e atualiza sozinho. Somente leitura.</p>
+        <p id="k-day-help" className="pb-1 text-xs text-muted-foreground">
+          {day ? `Execuções iniciadas em ${dayLabel(day)}${board && day === board.today ? " (hoje)" : ""}` : "Execuções iniciadas hoje"}
+          {board ? `, no fuso da equipe (${board.timezone})` : ""}. A mais recente de cada processo; atualiza sozinho. Somente leitura.</p>
       </div>
       {stale && <div role="status" className="space-y-2 rounded-md border border-warn/40 bg-warn-soft px-3 py-2 text-sm text-warn">
         <p>Os dados podem estar desatualizados: não foi possível ler o servidor agora. O quadro mostra a última leitura e tenta de novo sozinho.</p>
-        <ErrorView error={latestError ?? error} />
+        <ErrorView error={boardError ?? error} />
       </div>}
-      {/* Five columns share the width; under ~11rem each, the board scrolls sideways instead of cutting cards. */}
-      <div role="region" aria-label="Quadro de etapas" tabIndex={0} className="overflow-x-auto rounded-md pb-2 outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <div className="grid grid-cols-[repeat(5,minmax(11rem,1fr))] gap-3">
+      {board && !shown.length && <p role="status" className="text-sm text-muted-foreground">Nenhuma execução iniciada em {dayLabel(board.day)}{proc !== "all" ? " para este processo" : ""}.</p>}
+      {!board && !boardError && <p className="text-sm text-muted-foreground">Carregando o quadro…</p>}
+      {/* Four columns share the width; under ~12rem each, the board scrolls sideways instead of cutting cards. */}
+      <div role="region" aria-label="Quadro de processos" tabIndex={0} className="overflow-x-auto rounded-md pb-2 outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <div className="grid grid-cols-[repeat(4,minmax(12rem,1fr))] gap-3">
           {COLUMNS.map((c) => {
-            const cards = shown.flatMap((e) => e.steps.filter((s) => column(e, s) === c).map((s) => ({ e, s })));
+            const cards = shown.filter((e) => boardColumn(e) === c);
             return (
               <section key={c} aria-label={COLUMN_LABEL[c]} className="min-w-0 rounded-lg border bg-muted/40 p-2">
                 <h3 className="mb-2 flex items-center justify-between gap-2 px-1 text-sm font-medium">{COLUMN_LABEL[c]}<span className="text-xs tabular-nums text-muted-foreground">{cards.length}</span></h3>
                 <ul className="space-y-2">
-                  {cards.map(({ e, s }) => (
-                    <li key={`${e.id}-${s.position}`}>
-                      <button type="button" data-card={`${e.id}-${s.position}`} onClick={() => setOpen({ id: e.id, position: s.position })}
+                  {cards.map((e) => (
+                    <li key={e.id}>
+                      <button type="button" data-card={e.id} onClick={() => setOpen(e.id)}
                         className="w-full rounded-md border bg-card p-2 text-left text-sm shadow-2xs outline-none hover:border-muted-foreground focus-visible:ring-2 focus-visible:ring-ring">
-                        <p className="break-words font-medium">{s.position}. {s.name}</p>
-                        <p className="break-words text-xs text-muted-foreground">{title(e)}</p>
-                        <p className="break-words text-xs text-muted-foreground">{e.station_name} · {e.requested_by}</p>
-                        {s.state && c === "attention" && <div className="mt-1"><StateBadge state={s.state} /></div>}
+                        <p className="break-words font-medium">{title(e)}</p>
+                        <p className="break-words text-xs text-muted-foreground">{e.station_name}</p>
+                        <p className="break-words text-xs text-muted-foreground">{e.requested_by}</p>
                       </button>
                     </li>
                   ))}
@@ -116,60 +139,59 @@ export function KanbanPage({ process }: { process?: number }) {
           })}
         </div>
       </div>
-      <StepSummary target={open} board={shown} onClose={() => setOpen(null)}
+      <ExecutionSummary target={open} board={shown} onClose={() => setOpen(null)}
         onMore={(id) => { setOpen(null); go({ menu: "processo", page: "historico", id }); }} />
     </div>
   );
 }
 
-/** Summary of one card over the board: the same execution and step while open, followed with the current data. A newer
- *  execution of the process replacing the cards never swaps it; the execution is then read by its id. Reading only. */
-function StepSummary({ target, board, onClose, onMore }: { target: { id: string; position: number } | null; board: Execution[];
+/** Summary of one card over the board: the same execution while open (by its id), followed with the current data. A newer
+ *  execution of the process replacing the card never swaps it: off the board it is read by its id. Reading only. */
+function ExecutionSummary({ target, board, onClose, onMore }: { target: string | null; board: Execution[];
   onClose: () => void; onMore: (id: string) => void }) {
   const { src, executions } = useStore();
   const [fetched, setFetched] = useState<Execution | null>(null);
   const [gone, setGone] = useState<unknown>(null);
   const last = useRef(target); // the card to focus again once closed (the target is cleared before that)
   if (target) last.current = target;
-  const onBoard = target ? board.find((e) => e.id === target.id) ?? null : null;
+  const onBoard = target ? board.find((e) => e.id === target) ?? null : null;
   useEffect(() => {
     setFetched(null); setGone(null);
-  }, [target?.id]);
+  }, [target]);
   useEffect(() => {
     if (!target || onBoard) return;
     let on = true; // off the board: read it by its id with each store read
-    src.execution(target.id).then((e) => { if (on) { setFetched(e); setGone(null); } }, (err) => { if (on) setGone(err); });
+    src.execution(target).then((e) => { if (on) { setFetched(e); setGone(null); } }, (err) => { if (on) setGone(err); });
     return () => { on = false; };
   }, [target, onBoard, src, executions]);
-  const e = onBoard ?? (fetched?.id === target?.id ? fetched : null);
-  const s = e?.steps.find((x) => x.position === target?.position) ?? null;
-  const reason = e && s ? (s.state === null && e.state === "finished" ? (e.end_reason ? END_REASON[e.end_reason] ?? e.end_reason : null)
-    : s.review && s.state === "awaiting_review" ? `Aguardando revisão de ${s.review.assignee_name}` : s.diagnostic ? userText(s.diagnostic, "what") : s.error_code ? s.error_code : null) : null;
+  const e = onBoard ?? (fetched?.id === target ? fetched : null);
+  const s = e ? currentStep(e) : null;
+  const notRun = e && e.state === "finished" ? e.steps.filter((x) => x.state === null) : [];
+  const reason = !e ? null : e.state === "waiting_review" || s?.state === "awaiting_review"
+    ? (s?.review ? `Aguardando revisão de ${s.review.assignee_name}` : "Aguardando revisão")
+    : s?.diagnostic ? userText(s.diagnostic, "what") : s?.error_code ? s.error_code
+    : e.state === "finished" && e.end_reason && e.outcome !== "verified" ? END_REASON[e.end_reason] ?? e.end_reason : null;
   return (
     <Dialog open={target !== null} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent onCloseAutoFocus={(ev) => {
-        const t = last.current;
-        const card = t && document.querySelector<HTMLElement>(`[data-card="${t.id}-${t.position}"]`);
+        const card = last.current && document.querySelector<HTMLElement>(`[data-card="${last.current}"]`);
         if (card) { ev.preventDefault(); card.focus(); } // back to the card, while it is still on the board
       }}>
         <DialogHeader>
-          <DialogTitle>{s ? `${s.position}. ${s.name}` : "Etapa"}</DialogTitle>
-          <DialogDescription>{e ? title(e) : "Resumo da etapa"}</DialogDescription>
+          <DialogTitle>{e ? title(e) : "Execução"}</DialogTitle>
+          <DialogDescription>{e ? `Execução mais recente do processo no dia, iniciada em ${when(e.created_at)}` : "Resumo da execução"}</DialogDescription>
         </DialogHeader>
-        {!e || !s ? (gone ? <div className="space-y-2 text-sm"><p>Esta etapa não está mais disponível.</p><ErrorView error={gone} /></div>
+        {!e ? (gone ? <div className="space-y-2 text-sm"><p>Esta execução não está mais disponível.</p><ErrorView error={gone} /></div>
           : <p className="text-sm text-muted-foreground">Carregando…</p>) : (
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-            <dt className="text-muted-foreground">Etapa</dt><dd>{s.position} de {e.steps.length}</dd>
-            <dt className="text-muted-foreground">Situação</dt><dd className="flex flex-wrap items-center gap-2">{s.state ? <StateBadge state={s.state} /> : STEP_STATE(e, s)}
-              <span className="text-xs text-muted-foreground">({COLUMN_LABEL[column(e, s)]})</span></dd>
-            <dt className="text-muted-foreground">Execução</dt><dd><ExecutionBadge e={e} /></dd>
+            <dt className="text-muted-foreground">Situação</dt><dd>{boardStateLabel(e)} <span className="text-xs text-muted-foreground">({COLUMN_LABEL[boardColumn(e)]})</span></dd>
+            {s && <><dt className="text-muted-foreground">Etapa</dt><dd>{s.position} de {e.steps.length}: {s.name}</dd></>}
             <dt className="text-muted-foreground">Estação</dt><dd>{e.station_name}</dd>
             <dt className="text-muted-foreground">Pedida por</dt><dd>{e.requested_by}</dd>
-            <dt className="text-muted-foreground">Início da execução</dt><dd>{when(e.created_at)}</dd>
-            {s.started_at && <><dt className="text-muted-foreground">Início da etapa</dt><dd>{when(s.started_at)}</dd></>}
-            {s.finished_at && <><dt className="text-muted-foreground">Fim da etapa</dt><dd>{when(s.finished_at)}</dd></>}
-            {e.finished_at && <><dt className="text-muted-foreground">Fim da execução</dt><dd>{when(e.finished_at)}</dd></>}
+            <dt className="text-muted-foreground">Início</dt><dd>{when(e.created_at)}</dd>
+            {e.finished_at && <><dt className="text-muted-foreground">Fim</dt><dd>{when(e.finished_at)}</dd></>}
             {reason && <><dt className="text-muted-foreground">Motivo</dt><dd>{reason}</dd></>}
+            {!!notRun.length && <><dt className="text-muted-foreground">Não executadas</dt><dd>{notRun.map((x) => x.name).join(", ")}</dd></>}
           </dl>
         )}
         <DialogFooter>
@@ -234,7 +256,7 @@ export function HistoryPage({ focus, days }: { focus?: string; days?: number }) 
           { id: "waiting", label: "Aguardando revisão", icon: Hourglass, match: (e) => groupOf(e) === "waiting" },
           { id: "attention", label: "Precisam de atenção", icon: CircleAlert, match: (e) => groupOf(e) === "attention" },
           { id: "verified", label: "Verificadas", icon: CheckCircle2, match: (e) => groupOf(e) === "verified" }]}
-        filters={[{ id: "process", label: "Processo", options: (processes ?? []).map((p) => ({ value: String(p.id), label: p.name, match: (e: Execution) => e.process_id === p.id })) }]} />}
+        filters={[{ id: "process", label: "Processo", options: processChoices(processes, rows).map((o) => ({ value: String(o.id), label: o.label, match: (e: Execution) => e.process_id === o.id })) }]} />}
       <Sheet open={sel !== null} onOpenChange={(o) => { if (!o) setOpen(null); }}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           {sel && <>

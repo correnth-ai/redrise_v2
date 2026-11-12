@@ -7,7 +7,9 @@
 //! shortcut + HKCU uninstall entry. Data under %LOCALAPPDATA%\RedRise is never
 //! touched, except the non-secret setup intent of a new install
 //! (`install/setup-intent.json`, role server|station, consumed by the app).
-//! Any failure or cancellation before the swap leaves the existing install unchanged.
+//! Any failure or cancellation before the swap leaves the existing install unchanged. A failure is reported with its
+//! phase (`Failure`): before the swap nothing changed; at the swap the previous version is put back and that is
+//! CHECKED before saying so; after the swap the new version is installed and the message says which step failed.
 //!
 //! Opened by a person (no `--quiet`), the InstallRS wizard (`wizard.rs`) shows
 //! the pages and runs `install` with its progress and Cancel; `--quiet` (the
@@ -146,6 +148,9 @@ pub struct Opts {
     pub role: Option<String>,
     /// False for an isolated test root without `--data-root`: it never writes into the real data folder.
     intent_allowed: bool,
+    /// `--test-fail-at <point>`, honoured only with `--install-root` (copies in the lab): before-swap, swap, restore,
+    /// after-swap or intent. Proves each failure report on a copy; a real install never reads it.
+    fail_at: Option<String>,
 }
 
 pub const INTENT_SCHEMA: &str = "redrise.setup-intent/1";
@@ -183,6 +188,95 @@ pub struct Progress<'a> {
 }
 
 const CANCELLED: &str = "installation cancelled before any change";
+
+/// A failed install, by phase, as it really ended (PROCESS-ACTIONS-20261111 item 4.2): the JSON record and the person's
+/// message say the same thing. `installed_now` is the version found in the install folder afterwards (read from its
+/// manifest, never assumed); `previous_kept` is the folder of the previous version when it still exists.
+#[derive(Clone, Debug)]
+pub struct Failure {
+    pub phase: &'static str, // "before_swap" | "swap" | "after_swap"
+    pub step: &'static str,  // what failed: "check", "swap", "shortcut", "uninstall_entry", "setup_intent", "cancelled"
+    pub error: String,
+    pub recovery_error: Option<String>,
+    pub installed_now: Option<String>,
+    pub previous_kept: Option<PathBuf>,
+    pub root: PathBuf,
+}
+
+fn installed_version(root: &Path) -> Option<String> {
+    let v: Value = serde_json::from_slice(&fs::read(root.join("manifest.json")).ok()?).ok()?;
+    v["app_version"].as_str().map(str::to_string)
+}
+
+impl Failure {
+    fn before(o: &Opts, error: String) -> Self {
+        let step = if error == CANCELLED { "cancelled" } else { "check" };
+        Failure { phase: "before_swap", step, error, recovery_error: None, installed_now: installed_version(&o.root), previous_kept: None, root: o.root.clone() }
+    }
+    pub fn to_json(&self) -> Value {
+        json!({"phase": self.phase, "step": self.step, "error": self.error, "recovery_error": self.recovery_error,
+               "installed_now": self.installed_now, "previous_kept": self.previous_kept, "install_root": self.root,
+               "data_touched": self.step == "setup_intent"})
+    }
+    /// English, for the JSON record and logs.
+    pub fn message(&self) -> String {
+        let now = self.installed_now.as_deref();
+        match (self.phase, &self.recovery_error) {
+            ("before_swap", _) if self.step == "cancelled" => format!("{CANCELLED}"),
+            ("before_swap", _) => format!("{}. Nothing was changed: {}; your data were not touched.", self.error,
+                                          now.map(|v| format!("version {v} stays installed")).unwrap_or("nothing was installed".into())),
+            ("swap", None) => format!("version swap failed: {}. {}; your data were not touched.", self.error,
+                                      now.map(|v| format!("The previous version {v} was put back and checked")).unwrap_or("Nothing was installed".into())),
+            ("swap", Some(r)) => format!("version swap failed: {}; putting the previous version back also failed: {r}. Nothing is installed in {} now;                                           the previous version is kept in {}. Your data were not touched. Run this installer again.",
+                                         self.error, self.root.display(), self.previous_kept.as_deref().unwrap_or(Path::new("?")).display()),
+            _ => format!("version {} is installed, but {} failed: {}. {}Your data were not touched{}.", now.unwrap_or("?"), self.step_en(), self.error,
+                         self.previous_kept.as_ref().map(|p| format!("The previous version is kept in {} for a rollback. ", p.display())).unwrap_or_default(),
+                         if self.step == "setup_intent" { ", except the setup intent file that was not saved" } else { "" }),
+        }
+    }
+    fn step_en(&self) -> &'static str {
+        match self.step { "shortcut" => "the Start Menu shortcut", "uninstall_entry" => "the uninstall entry", _ => "saving the server/station choice" }
+    }
+    /// pt-BR, for the person: what happened, what is installed now, the data, and what to do next.
+    pub fn pt(&self) -> String {
+        let now = self.installed_now.as_deref();
+        match (self.phase, &self.recovery_error) {
+            ("before_swap", _) if self.step == "cancelled" => pt_error(CANCELLED),
+            ("before_swap", _) => format!("{}.
+
+Nada foi alterado: {}. Seus dados não foram tocados.
+
+Corrija o motivo acima e abra o instalador de novo.",
+                                          pt_error(&self.error), now.map(|v| format!("a versão {v} continua instalada")).unwrap_or("nada foi instalado".into())),
+            ("swap", None) => format!("A troca de versão falhou: {}.
+
+{}. Seus dados não foram tocados.
+
+Feche o que estiver usando a pasta do RedRise e abra o instalador de novo.",
+                                      pt_error(&self.error), now.map(|v| format!("A versão anterior ({v}) foi recolocada e conferida")).unwrap_or("Nada foi instalado".into())),
+            ("swap", Some(r)) => format!("A troca de versão falhou: {}.
+Recolocar a versão anterior também falhou: {r}.
+
+Não há RedRise instalado em {} agora; a versão                                           anterior está guardada em {}. Seus dados não foram tocados.
+
+Abra este instalador de novo para instalar a versão nova.",
+                                         pt_error(&self.error), self.root.display(), self.previous_kept.as_deref().unwrap_or(Path::new("?")).display()),
+            _ => {
+                let (what, next) = match self.step {
+                    "shortcut" => ("o atalho no menu Iniciar", format!("Abra o RedRise por {}, ou abra o instalador de novo para criar o atalho.", self.root.join(APP_EXE).display())),
+                    "uninstall_entry" => ("o registro de desinstalação", "Abra o instalador de novo para criar o registro.".to_string()),
+                    _ => ("gravar a escolha servidor/estação", "Abra o RedRise: ele pergunta de novo como este computador será usado.".to_string()),
+                };
+                format!("A versão {} foi instalada, mas {what} falhou: {}.
+
+{}Seus dados não foram tocados.
+
+{next}", now.unwrap_or("?"), self.error,
+                        self.previous_kept.as_ref().map(|p| format!("A versão anterior continua guardada em {} para voltar, se precisar. ", p.display())).unwrap_or_default())
+            }
+        }
+    }
+}
 
 fn now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
@@ -309,7 +403,74 @@ fn shortcut(root: &Path) -> Result<PathBuf, String> {
     Ok(lnk)
 }
 
-pub fn install(o: &Opts, stub_len: usize, me: &[u8], zip: &[u8], pr: &Progress) -> Result<Value, String> {
+pub fn install(o: &Opts, stub_len: usize, me: &[u8], zip: &[u8], pr: &Progress) -> Result<Value, Failure> {
+    let staged = prepare(o, stub_len, me, zip, pr).map_err(|e| Failure::before(o, e))?;
+    let (staging, manifest) = staged;
+    let fail = |point: &str| o.fail_at.as_deref() == Some(point);
+    (pr.report)("Trocando a versão instalada", 0.92);
+    let parent = o.root.parent().unwrap().to_path_buf();
+    let previous = parent.join(format!("{DIR_NAME}.previous"));
+    let had_previous = o.root.exists();
+    if had_previous {
+        if previous.exists() {
+            if let Err(e) = fs::remove_dir_all(&previous) {
+                let _ = fs::remove_dir_all(&staging);
+                return Err(Failure::before(o, format!("old previous version: {e}")));
+            }
+        }
+        if let Err(e) = fs::rename(&o.root, &previous) {
+            let _ = fs::remove_dir_all(&staging);
+            return Err(Failure::before(o, format!("could not replace the current installation (file in use?): {e}")));
+        }
+    }
+    let swapped = if fail("swap") || fail("restore") { Err(std::io::Error::other("injected failure (test)")) } else { fs::rename(&staging, &o.root) };
+    if let Err(e) = swapped {
+        // Put the previous version back, and only say so once its manifest is read again from the install folder.
+        let recovery_error = if !had_previous { None } else if fail("restore") { Some("injected failure (test)".to_string()) } else {
+            fs::rename(&previous, &o.root).err().map(|r| r.to_string())
+        };
+        let _ = fs::remove_dir_all(&staging);
+        let installed_now = installed_version(&o.root);
+        let recovery_error = recovery_error.or_else(|| (had_previous && installed_now.is_none()).then(|| "previous version not found after restoring".to_string()));
+        return Err(Failure { phase: "swap", step: "swap", error: e.to_string(), recovery_error, installed_now,
+                             previous_kept: previous.is_dir().then(|| previous.clone()), root: o.root.clone() });
+    }
+    let version = manifest["app_version"].as_str().unwrap_or("0.0.0").to_string();
+    let after = |step: &'static str, error: String| Failure { phase: "after_swap", step, error, recovery_error: None,
+        installed_now: installed_version(&o.root), previous_kept: previous.is_dir().then(|| previous.clone()), root: o.root.clone() };
+    (pr.report)("Criando o atalho e o registro de desinstalação", 0.96);
+    if fail("after-swap") {
+        return Err(after("shortcut", "injected failure (test)".into()));
+    }
+    // An isolated test root never touches the real Start Menu entry or uninstall key.
+    let lnk = if o.isolated { None } else { Some(shortcut(&o.root).map_err(|e| after("shortcut", e))?) };
+    if !o.isolated {
+        let uninstall = format!("\"{}\" --uninstall", o.root.join("uninstall.exe").display());
+        win::reg_set(&[("DisplayName", "RedRise"), ("DisplayVersion", &version), ("Publisher", "Correnth"),
+                       ("InstallLocation", &o.root.to_string_lossy()), ("UninstallString", &uninstall),
+                       ("DisplayIcon", &o.root.join(APP_EXE).to_string_lossy())],
+                     &[("NoModify", 1), ("NoRepair", 1)]).map_err(|e| after("uninstall_entry", e))?;
+    }
+    // Setup intent: only for a computer without a team configuration. An update or a reinstall keeps the role it has
+    // (server or station) and never asks or converts it. Written after the swap: a cancelled install leaves none.
+    let existing = configured(&o.data);
+    let intent = match (&o.role, existing) {
+        (Some(r), false) if ROLES.contains(&r.as_str()) && o.intent_allowed => {
+            let w = if fail("intent") { Err("injected failure (test)".to_string()) } else { write_intent(&o.data, r, &version) };
+            w.map_err(|e| after("setup_intent", e))?;
+            Some(r.clone())
+        }
+        _ => None,
+    };
+    (pr.report)("Concluído", 1.0);
+    Ok(json!({"installed": version, "install_root": o.root, "previous_kept": had_previous, "shortcut": lnk,
+              "files": manifest["file_count"], "data_root_untouched": o.data,
+              "configuration": if !o.intent_allowed { "not checked (isolated test root without --data-root)" }
+                               else if existing { "existing (role kept)" } else { "none yet" }, "setup_intent": intent}))
+}
+
+/// Everything before the swap: nothing in the install folder changes here. Returns the verified staging folder.
+fn prepare(o: &Opts, stub_len: usize, me: &[u8], zip: &[u8], pr: &Progress) -> Result<(PathBuf, Value), String> {
     let parent = o.root.parent().ok_or("invalid target")?.to_path_buf();
     fs::create_dir_all(&parent).map_err(|e| e.to_string())?;
     (pr.report)("Verificando se o RedRise está fechado", 0.02);
@@ -328,55 +489,11 @@ pub fn install(o: &Opts, stub_len: usize, me: &[u8], zip: &[u8], pr: &Progress) 
         return Err(e.to_string());
     }
     // Last point where Cancelar is honored: from here the swap is completed or rolled back, never left half done.
-    if (pr.cancelled)() {
+    if (pr.cancelled)() || o.fail_at.as_deref() == Some("before-swap") {
         let _ = fs::remove_dir_all(&staging);
-        return Err(CANCELLED.into());
+        return Err(if (pr.cancelled)() { CANCELLED.into() } else { "injected failure (test)".into() });
     }
-    (pr.report)("Trocando a versão instalada", 0.92);
-    let previous = parent.join(format!("{DIR_NAME}.previous"));
-    let had_previous = o.root.exists();
-    if had_previous {
-        if previous.exists() {
-            fs::remove_dir_all(&previous).map_err(|e| format!("old previous version: {e}"))?;
-        }
-        if let Err(e) = fs::rename(&o.root, &previous) {
-            let _ = fs::remove_dir_all(&staging);
-            return Err(format!("could not replace the current installation (file in use?): {e}"));
-        }
-    }
-    if let Err(e) = fs::rename(&staging, &o.root) {
-        if had_previous {
-            let _ = fs::rename(&previous, &o.root); // rollback
-        }
-        let _ = fs::remove_dir_all(&staging);
-        return Err(format!("version swap failed; previous version restored: {e}"));
-    }
-    let version = manifest["app_version"].as_str().unwrap_or("0.0.0").to_string();
-    (pr.report)("Criando o atalho e o registro de desinstalação", 0.96);
-    // An isolated test root never touches the real Start Menu entry or uninstall key.
-    let lnk = if o.isolated { None } else { Some(shortcut(&o.root).map_err(|e| format!("instalado, mas o atalho falhou: {e}"))?) };
-    if !o.isolated {
-        let uninstall = format!("\"{}\" --uninstall", o.root.join("uninstall.exe").display());
-        win::reg_set(&[("DisplayName", "RedRise"), ("DisplayVersion", &version), ("Publisher", "Correnth"),
-                       ("InstallLocation", &o.root.to_string_lossy()), ("UninstallString", &uninstall),
-                       ("DisplayIcon", &o.root.join(APP_EXE).to_string_lossy())],
-                     &[("NoModify", 1), ("NoRepair", 1)])?;
-    }
-    // Setup intent: only for a computer without a team configuration. An update or a reinstall keeps the role it has
-    // (server or station) and never asks or converts it. Written after the swap: a cancelled install leaves none.
-    let existing = configured(&o.data);
-    let intent = match (&o.role, existing) {
-        (Some(r), false) if ROLES.contains(&r.as_str()) && o.intent_allowed => {
-            write_intent(&o.data, r, &version).map_err(|e| format!("installed, but the setup intent was not saved: {e}"))?;
-            Some(r.clone())
-        }
-        _ => None,
-    };
-    (pr.report)("Concluído", 1.0);
-    Ok(json!({"installed": version, "install_root": o.root, "previous_kept": had_previous, "shortcut": lnk,
-              "files": manifest["file_count"], "data_root_untouched": o.data,
-              "configuration": if !o.intent_allowed { "not checked (isolated test root without --data-root)" }
-                               else if existing { "existing (role kept)" } else { "none yet" }, "setup_intent": intent}))
+    Ok((staging, manifest))
 }
 
 fn uninstall(o: &Opts) -> Result<Value, String> {
@@ -434,7 +551,6 @@ pub fn pt_error(e: &str) -> String {
         ("invalid target", "destino inválido"),
         ("old previous version", "versão anterior antiga"),
         ("could not replace the current installation (file in use?)", "não foi possível substituir a instalação atual (arquivo em uso?)"),
-        ("version swap failed; previous version restored", "troca de versão falhou; versão anterior restaurada"),
         ("no previous version kept", "não há versão anterior guardada"),
         ("this file does not contain a RedRise package", "este arquivo não contém um pacote do RedRise"),
         ("installation cancelled before any change", "instalação cancelada antes de qualquer alteração; a instalação anterior, se havia, continua como estava"),
@@ -506,6 +622,7 @@ fn main() {
         isolated,
         role: val("--role").filter(|r| ROLES.contains(&r.as_str())),
         intent_allowed: !isolated || val("--data-root").is_some(),
+        fail_at: val("--test-fail-at").filter(|_| isolated),
     };
     let me = std::env::current_exe().and_then(fs::read).unwrap_or_default();
     // Opened by a person: the wizard owns the whole run (pages, progress, result, opening the app).
@@ -516,6 +633,7 @@ fn main() {
             std::process::exit(code);
         }
     }
+    let mut failure: Option<Failure> = None;
     let result: Result<Value, String> = if has("--uninstall") {
         if o.quiet || win::ask("RedRise", "Remover o RedRise deste usuário? Seus dados e rotinas em %LOCALAPPDATA%\\RedRise são mantidos.") {
             uninstall(&o)
@@ -529,10 +647,14 @@ fn main() {
             Err(e) => Err(e),
             Ok(None) => Err("this file does not contain a RedRise package".into()),
             // Quiet (in-app update, tests): no window, the same contract as before the wizard.
-            Ok(Some((stub, zip))) => install(&o, stub, &me, &zip, &Progress { report: &|_, _| {}, cancelled: &|| false }),
+            Ok(Some((stub, zip))) => install(&o, stub, &me, &zip, &Progress { report: &|_, _| {}, cancelled: &|| false })
+                .map_err(|f| { let m = f.message(); failure = Some(f); m }),
         }
     };
-    let record = match &result { Ok(v) => json!({"ok": true, "at": now(), "result": v}), Err(e) => json!({"ok": false, "at": now(), "error": e}) };
+    let record = match &result {
+        Ok(v) => json!({"ok": true, "at": now(), "result": v}),
+        Err(e) => json!({"ok": false, "at": now(), "error": e, "failure": failure.as_ref().map(Failure::to_json)}),
+    };
     log_result(&o, &record);
     println!("{record}");
     match result {
@@ -546,7 +668,8 @@ fn main() {
         }
         Err(e) => {
             if !o.quiet {
-                win::tell("RedRise", &format!("A instalação não foi concluída.\n\n{}\n\nA instalação anterior, se havia, foi mantida.", pt_error(&e)), true);
+                let text = failure.as_ref().map(Failure::pt).unwrap_or_else(|| pt_error(&e));
+                win::tell("RedRise", &format!("A instalação não foi concluída como esperado.\n\n{text}"), true);
             }
             // Update path: the app closed for the update; reopen the version still installed.
             if o.relaunch && o.root.join(APP_EXE).is_file() {

@@ -77,8 +77,13 @@ class ReviewTest(unittest.TestCase):
         sid, _, _ = self.station("rv-first")
         self.admin().call("PUT", f"/api/v1/processes/{pid}", {"name": "x", "items": [{"routine_id": rv, "continue_next": True}]})
         self.expect("PROCESS-START-INVALID", lambda: self.start(sid, pid), 409)
+        # A review step can follow a step of the ready-made process too (PROCESS-ACTIONS-20261111 item 1.1); undone after.
         ready_made = next(x for x in self.admin().call("GET", "/api/v1/processes") if x["system_key"])
-        self.expect("VALIDATION", lambda: self.review_step(ready_made["id"], 1, uid), 400)
+        self.review_step(ready_made["id"], 1, uid)
+        grown = next(x for x in self.admin().call("GET", "/api/v1/processes") if x["id"] == ready_made["id"])
+        self.assertEqual((len(grown["items"]), grown["items"][1]["kind"]), (len(ready_made["items"]) + 1, "followup"))
+        self.admin().call("PUT", f"/api/v1/processes/{ready_made['id']}", {"name": ready_made["name"], "items": [
+            {"routine_id": i["routine_id"], "continue_next": i["continue_next"]} for i in ready_made["items"]]})
         row = next(r for r in self.admin().call("GET", "/api/v1/routines") if r["id"] == rv)
         self.assertEqual((row["kind"], row["assignee_name"]), ("followup", "Ana"))
 

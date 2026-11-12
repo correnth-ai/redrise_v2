@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render as rtl, screen, waitFor, within } from "@testing-library/react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ScheduleDialog, SchedulesSection, scheduleNote } from "@/features/schedules";
@@ -17,6 +18,7 @@ const src = {
   deleteSchedule: vi.fn(async () => undefined),
 };
 const store: any = {};
+const render = (ui: React.ReactNode) => rtl(<TooltipProvider>{ui}</TooltipProvider>);
 vi.mock("@/state", () => ({ useStore: () => store }));
 
 beforeEach(() => {
@@ -35,16 +37,39 @@ describe("Agendamentos", () => {
     expect(screen.getByText("Quem agendou não é mais administrador ativo")).toBeTruthy();
   });
 
-  it("administrators pause, resume and delete; the list is read again after each action", async () => {
+  it("administrators pause, resume and delete by icons; deleting asks first; the list is read again after each action", async () => {
     const user = userEvent.setup();
     render(<SchedulesSection />);
-    await user.click(await screen.findByRole("button", { name: "Pausar" }));
+    await user.click(await screen.findByRole("button", { name: "Pausar agendamento de Fechamento" }));
     expect(src.updateSchedule).toHaveBeenCalledWith(7, { enabled: false });
-    await user.click(screen.getByRole("button", { name: "Retomar" }));
+    await user.click(screen.getByRole("button", { name: "Retomar agendamento de Conferência" }));
     expect(src.updateSchedule).toHaveBeenLastCalledWith(8, { enabled: true });
-    await user.click(screen.getAllByRole("button", { name: "Excluir" })[0]);
+    await user.click(screen.getByRole("button", { name: "Excluir agendamento de Fechamento" }));
+    let dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    expect(src.deleteSchedule).not.toHaveBeenCalled(); // the icon alone deletes nothing
+    await user.click(screen.getByRole("button", { name: "Excluir agendamento de Fechamento" }));
+    dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText(/Seg, Ter, Qua, Qui, Sex às 08:05, st1/)).toBeTruthy();
+    await user.click(within(dialog).getByRole("button", { name: "Excluir agendamento" }));
     expect(src.deleteSchedule).toHaveBeenCalledWith(7);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() => expect(src.schedules.mock.calls.length).toBeGreaterThanOrEqual(4));
+  });
+
+  it("a failed pause keeps the row and shows the diagnostic; the icon is busy while it waits", async () => {
+    const user = userEvent.setup();
+    let fail!: (e: unknown) => void;
+    src.updateSchedule.mockImplementationOnce(() => new Promise((_, r) => { fail = r; }) as any);
+    render(<SchedulesSection />);
+    await user.click(await screen.findByRole("button", { name: "Pausar agendamento de Fechamento" }));
+    const busy = screen.getByRole("button", { name: "Pausar agendamento de Fechamento" });
+    expect(busy.getAttribute("aria-busy")).toBe("true");
+    expect((screen.getByRole("button", { name: "Excluir agendamento de Fechamento" }) as HTMLButtonElement).disabled).toBe(true);
+    fail(new Error("servidor indisponível"));
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(screen.getByText("Fechamento")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pausar agendamento de Fechamento" }).getAttribute("aria-busy")).toBeNull();
   });
 
   it("operators see the list without actions", async () => {

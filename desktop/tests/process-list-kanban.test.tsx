@@ -1,11 +1,11 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ProcessTable } from "@/features/processos";
-import { boardExecutions, KanbanPage } from "@/features/fluxos";
+import { KanbanPage } from "@/features/fluxos";
 import { TeamPage } from "@/features/configuracoes";
-import { COLUMN_LABEL, COLUMNS } from "@/data/status";
+import { boardColumn, boardStateLabel, COLUMN_LABEL, COLUMNS } from "@/data/status";
 import { AppError, type Diagnostic } from "@/lib/api";
 import { shortWhen } from "@/lib/utils";
 
@@ -97,7 +97,7 @@ describe("Processo › Ação: processos paginados (item 1)", () => {
     const list = screen.getByRole("list", { name: "Rotinas de Processo 001" });
     expect(within(list).getAllByRole("listitem").map((li) => li.textContent?.split("App")[0]))
       .toEqual(["1. Rotina 1.1", "2. Rotina 1.2"].map((x) => expect.stringContaining(x)) as any);
-    await u.click(within(screen.getByText("Processo 002").closest("tr")!).getByRole("button", { name: "Executar processo" }));
+    await u.click(within(screen.getByText("Processo 002").closest("tr")!).getByRole("button", { name: "Executar Processo 002" }));
     expect(store.run).toHaveBeenCalledWith({ kind: "process", id: 2 });
     expect(screen.queryByRole("list", { name: "Rotinas de Processo 002" })).toBeNull(); // the action did not expand
     screen.getByRole("button", { name: "Mostrar as rotinas de Processo 002" }).focus();
@@ -169,106 +169,185 @@ describe("Configuração › Equipe: a própria conta (item 3)", () => {
   });
 });
 
-// ---------------------------------------------------------------- Kanban
+// ---------------------------------------------------------------- Kanban of one day (PROCESS-ACTIONS-20261111 item 4.3)
 const step = (position: number, name: string, state: string | null, over = {}) => ({ position, routine_id: position, routine_version_id: position, name, continue_next: true,
   job_id: state ? `j${position}` : null, state, verified: state === "verified", error_code: null, started_at: state ? "2026-11-10T10:00:00Z" : null, finished_at: null, ...over });
 const exe = (id: string, process_id: number | null, created: string, steps: any[], over = {}) => ({ id, request_id: id, process_id, process_name: process_id ? `Processo ${process_id}` : null,
   station_id: 1, station_name: "servidor-teste", requested_by: "pessoa.a", state: "running", outcome: null, end_reason: null, context: {}, correlation_id: "c",
   created_at: created, finished_at: null, steps, ...over });
+const TODAY = "2026-11-12";
+const dayOf = (day: string, executions: any[], today = TODAY) => ({ day, today, timezone: "America/Sao_Paulo", since: `${day}T03:00:00Z`, until: "x", executions });
+const column = (label: string) => screen.getByRole("region", { name: label });
+const cardsIn = (label: string) => within(column(label)).queryAllByRole("button").map((b) => b.textContent);
 
-describe("Processo › Kanban (item 4)", () => {
-  let latest: any[];
+describe("Processo › Kanban de um dia (PROCESS-ACTIONS-20261111 item 4.3)", () => {
+  let boards: Record<string, any[]>;
   beforeEach(() => {
-    latest = [];
+    boards = {};
     store.processes = [{ id: 1, name: "Processo 1" }, { id: 2, name: "Processo 2" }];
-    store.src = { mode: "real", latestExecutions: vi.fn(async () => latest), execution: vi.fn() };
+    store.src = { mode: "real", execution: vi.fn(), kanban: vi.fn(async (day: string | null) => dayOf(day ?? TODAY, boards[day ?? TODAY] ?? [])) };
   });
 
-  it("columns left to right, Conferida for verified, sharing the width with a horizontal scroll when narrow", async () => {
+  it("four columns in order, sharing the width, scrolling sideways when narrow", async () => {
     page(<KanbanPage />);
-    const sections = await screen.findAllByRole("region");
-    const board = sections.find((s) => s.getAttribute("aria-label") === "Quadro de etapas")!;
-    expect(COLUMNS.map((c) => COLUMN_LABEL[c])).toEqual(["Aguardando", "Em andamento", "Atenção", "Não executada", "Conferida"]);
-    expect(within(board).getAllByRole("heading").map((h) => h.textContent?.replace(/\d+$/, ""))).toEqual(["Aguardando", "Em andamento", "Atenção", "Não executada", "Conferida"]);
+    expect(COLUMNS.map((c) => COLUMN_LABEL[c])).toEqual(["No aguardo", "Em andamento", "Concluído", "Conferido"]);
+    const board = await screen.findByRole("region", { name: "Quadro de processos" });
+    expect(within(board).getAllByRole("heading").map((h) => h.textContent?.replace(/\d+$/, ""))).toEqual(["No aguardo", "Em andamento", "Concluído", "Conferido"]);
     expect(board.className).toContain("overflow-x-auto");
-    expect(board.firstElementChild!.className).toContain("grid-cols-[repeat(5,minmax(11rem,1fr))]");
-    expect(board.innerHTML).not.toContain("w-60");
+    expect(board.firstElementChild!.className).toContain("grid-cols-[repeat(4,minmax(12rem,1fr))]");
   });
 
-  it("a process whose latest execution is beyond the general list still has its cards (read for the board)", async () => {
-    latest = [exe("old-1", 2, "2026-01-01T00:00:00Z", [step(1, "Velha", "verified")], { state: "finished", outcome: "verified" })];
-    store.executions = [exe("new-1", 1, "2026-11-10T10:00:00Z", [step(1, "Nova", "running")])];
+  it("every aggregate state goes to its column, with no retry and no promotion", () => {
+    const fin = (outcome: string) => exe(outcome, 1, "t", [step(1, "a", outcome)], { state: "finished", outcome });
+    const cases: [any, string][] = [
+      [exe("q", 1, "t", [step(1, "a", "queued")]), "waiting"],
+      [exe("c", 1, "t", [step(1, "a", "claimed")]), "running"],
+      [exe("r", 1, "t", [step(1, "a", "running"), step(2, "b", null)]), "running"], // a step not started never moves it
+      [exe("v", 1, "t", [step(1, "a", "verified"), step(2, "b", null)]), "running"], // passing to step 2
+      [exe("v2", 1, "t", [step(1, "a", "verified"), step(2, "b", "queued")]), "waiting"],
+      [exe("w", 1, "t", [step(1, "a", "verified"), step(2, "b", "awaiting_review")], { state: "waiting_review" }), "waiting"],
+      [exe("f", 1, "t", [step(1, "a", "failed")]), "waiting"],
+      [fin("verified"), "verified"], [fin("completed_unverified"), "done"],
+      [fin("failed"), "waiting"], [fin("uncertain"), "waiting"], [fin("refused"), "waiting"], [fin("cancelled"), "waiting"], [fin("error"), "waiting"],
+      [exe("n", 1, "t", [step(1, "a", "verified"), step(2, "b", null)], { state: "finished", outcome: "verified", end_reason: "continuation_off" }), "verified"],
+    ];
+    for (const [e, c] of cases) expect([e.id, boardColumn(e)]).toEqual([e.id, c]);
+    expect(boardStateLabel(fin("failed"))).toBe("Falhou"); // the real state, not the column
+    expect(boardStateLabel(fin("verified"))).toBe("Conferido");
+    expect(boardStateLabel(fin("completed_unverified"))).toBe("Concluído, sem conferência");
+    expect(boardStateLabel(exe("q", 1, "t", [step(1, "a", "queued")]))).toBe("Na fila da estação");
+  });
+
+  it("Hoje is the default: the Core's day is shown and asked with no date; a card has only process, station and person", async () => {
+    boards[TODAY] = [exe("e1", 1, "2026-11-12T10:00:00Z", [step(1, "Abrir", "running"), step(2, "Salvar", null)])];
     page(<KanbanPage />);
-    expect(await screen.findByText("1. Velha")).toBeTruthy();
-    expect(screen.getByText("1. Nova")).toBeTruthy();
-    expect(store.src.latestExecutions).toHaveBeenCalled();
+    expect(await screen.findByText(/Execuções iniciadas em 12\/11\/2026 \(hoje\), no fuso da equipe \(America\/Sao_Paulo\)/)).toBeTruthy();
+    expect(store.src.kanban).toHaveBeenCalledWith(null);
+    expect((screen.getByLabelText("Dia") as HTMLInputElement).value).toBe(TODAY);
+    expect(screen.getByRole("button", { name: "Hoje" }).getAttribute("aria-pressed")).toBe("true");
+    const card = within(column("Em andamento")).getByRole("button");
+    expect([...card.querySelectorAll("p")].map((p) => p.textContent)).toEqual(["Processo 1", "servidor-teste", "pessoa.a"]);
+    expect(card.textContent).not.toMatch(/Abrir|Etapa|\d{2}\/\d{2}/); // no step, number, badge or date on the card
   });
 
-  it("boardExecutions: one per process, the newest wins; standalone routines kept; stable order", () => {
-    const a = exe("a", 1, "2026-11-10T10:00:00Z", []), b = exe("b", 1, "2026-11-10T11:00:00Z", []), r = exe("r", null, "2026-11-10T09:00:00Z", []);
-    expect(boardExecutions([a], [b, r]).map((e) => e.id)).toEqual(["b", "r"]);
-    expect(boardExecutions([b], [a]).map((e) => e.id)).toEqual(["b"]); // an older answer never replaces a newer card
+  it("a chosen day stays fixed, without range; yesterday's success does not show today; an empty day is empty", async () => {
+    boards["2026-11-11"] = [exe("ok", 1, "2026-11-11T12:00:00Z", [step(1, "a", "verified")], { state: "finished", outcome: "verified" })];
+    boards[TODAY] = [exe("bad", 1, "2026-11-12T09:00:00Z", [step(1, "a", "failed", { error_code: "TARGET-NOT-FOUND" })], { state: "finished", outcome: "failed", end_reason: "not_verified" })];
+    page(<KanbanPage />);
+    await waitFor(() => expect(cardsIn("No aguardo")).toEqual(["Processo 1servidor-testepessoa.a"]));
+    expect(cardsIn("Conferido")).toEqual([]); // no inherited success
+    fireEvent.change(screen.getByLabelText("Dia"), { target: { value: "2026-11-11" } });
+    await waitFor(() => expect(cardsIn("Conferido")).toHaveLength(1));
+    expect(store.src.kanban).toHaveBeenLastCalledWith("2026-11-11");
+    expect(cardsIn("No aguardo")).toEqual([]);
+    expect(screen.getByRole("button", { name: "Hoje" }).getAttribute("aria-pressed")).toBe("false");
+    fireEvent.change(screen.getByLabelText("Dia"), { target: { value: "" } }); // the date is never left empty
+    expect((screen.getByLabelText("Dia") as HTMLInputElement).value).toBe("2026-11-11");
+    fireEvent.change(screen.getByLabelText("Dia"), { target: { value: "2026-01-01" } });
+    expect(await screen.findByText("Nenhuma execução iniciada em 01/01/2026.")).toBeTruthy();
+    expect(screen.queryByText(/Todos os períodos|até/)).toBeNull();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Hoje" }));
+    await waitFor(() => expect(store.src.kanban).toHaveBeenLastCalledWith(null));
   });
 
-  it("clicking a card opens its summary without navigating; Escape and X keep the board; Saber mais opens Histórico", async () => {
+  it("a late answer for the previous day never shows after the day changed", async () => {
+    let release!: (v: any) => void;
+    store.src.kanban = vi.fn((day: string | null) => day === null
+      ? new Promise((r) => { release = r; })  // today's answer comes late
+      : Promise.resolve(dayOf(day, [exe("y", 2, `${day}T10:00:00Z`, [step(1, "a", "verified")], { state: "finished", outcome: "verified" })])));
+    page(<KanbanPage />);
+    fireEvent.change(screen.getByLabelText("Dia"), { target: { value: "2026-11-10" } });
+    await waitFor(() => expect(cardsIn("Conferido")).toHaveLength(1));
+    await act(async () => release(dayOf(TODAY, [exe("t", 1, "2026-11-12T10:00:00Z", [step(1, "a", "running")])])));
+    expect(cardsIn("Em andamento")).toEqual([]);
+    expect(screen.getByText(/iniciadas em 10\/11\/2026/)).toBeTruthy();
+  });
+
+  it("Hoje follows the turn of the day: the next read brings the new day", async () => {
+    let today = "2026-11-12";
+    store.src.kanban = vi.fn(async () => dayOf(today, [], today));
+    store.executions = [];
+    const view = page(<KanbanPage />);
+    expect(await screen.findByText(/12\/11\/2026 \(hoje\)/)).toBeTruthy();
+    today = "2026-11-13";
+    store.executions = []; // a store read (change feed or periodic)
+    await act(async () => view.rerender(<TooltipProvider><KanbanPage /></TooltipProvider>));
+    expect(await screen.findByText(/13\/11\/2026 \(hoje\)/)).toBeTruthy();
+  });
+
+  it("homonyms are separate cards by id, a deleted one says so; standalone routines are not cards", async () => {
+    boards[TODAY] = [exe("a", 7, "2026-11-12T10:00:00Z", [step(1, "x", "running")], { process_name: "X", process_archived: true }),
+      exe("b", 8, "2026-11-12T11:00:00Z", [step(1, "x", "running")], { process_name: "X" })];
+    store.processes = [{ id: 8, name: "X" }];
     const u = userEvent.setup();
-    store.executions = [exe("e1", 1, "2026-11-10T10:00:00Z", [step(1, "Abrir", "failed", { error_code: "TARGET-NOT-FOUND", finished_at: "2026-11-10T10:01:00Z" }), step(2, "Salvar", null)],
-      { state: "finished", outcome: "failed", end_reason: "not_verified", finished_at: "2026-11-10T10:01:00Z" })];
     page(<KanbanPage />);
-    const card = await screen.findByRole("button", { name: /1\. Abrir/ });
+    await waitFor(() => expect(cardsIn("Em andamento")).toHaveLength(2));
+    expect(cardsIn("Em andamento").map((t) => t?.replace("servidor-testepessoa.a", ""))).toEqual(["X (excluído)", "X"]);
+    await u.click(screen.getByLabelText("Processo"));
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Todos os processos", "X", "X (excluído)"]);
+  });
+
+  it("the summary: real state and reason, closes by Escape and X keeping the board, Saber mais opens the exact execution", async () => {
+    const u = userEvent.setup();
+    boards[TODAY] = [exe("e1", 1, "2026-11-12T10:00:00Z", [step(1, "Abrir", "failed", { error_code: "TARGET-NOT-FOUND", finished_at: "2026-11-12T10:01:00Z" }), step(2, "Salvar", null)],
+      { state: "finished", outcome: "failed", end_reason: "not_verified", finished_at: "2026-11-12T10:01:00Z" })];
+    page(<KanbanPage />);
+    await waitFor(() => expect(cardsIn("No aguardo")).toHaveLength(1));
+    const card = within(column("No aguardo")).getByRole("button");
     await u.click(card);
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText("servidor-teste")).toBeTruthy();
-    expect(within(dialog).getByText("pessoa.a")).toBeTruthy();
-    expect(within(dialog).getByText("1 de 2")).toBeTruthy();
-    expect(store.go).not.toHaveBeenCalled();
+    expect(within(dialog).getByText(/^Falhou/)).toBeTruthy();
+    expect(within(dialog).getByText("(No aguardo)")).toBeTruthy();
+    expect(within(dialog).getByText("1 de 2: Abrir")).toBeTruthy();
+    expect(within(dialog).getByText("TARGET-NOT-FOUND")).toBeTruthy();
+    expect(within(dialog).getByText("Salvar")).toBeTruthy(); // not run
+    expect(within(dialog).queryByText(/Verificada/)).toBeNull();
     await u.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: /1\. Abrir/ })); // focus back on the card
-    screen.getByRole("button", { name: /2\. Salvar/ }).focus();
-    await u.keyboard("{Enter}");
-    const d2 = await screen.findByRole("dialog");
-    expect(within(d2).getByText("Interrompida: resultado não verificado")).toBeTruthy(); // why it did not run
-    await u.click(d2.querySelector<HTMLElement>("[data-slot=dialog-close]")!); // the X
+    expect(document.activeElement).toBe(card);
+    await u.click(card);
+    await u.click((await screen.findByRole("dialog")).querySelector<HTMLElement>("[data-slot=dialog-close]")!);
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(store.go).not.toHaveBeenCalled();
-    await u.click(screen.getByRole("button", { name: /1\. Abrir/ }));
+    await u.click(card);
     await u.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Saber mais" }));
     expect(store.go).toHaveBeenCalledWith({ menu: "processo", page: "historico", id: "e1" });
   });
 
-  it("an open summary follows its own execution: a newer one replacing the cards does not swap it", async () => {
+  it("an open summary keeps its execution when a newer one replaces the card; changing the day closes it", async () => {
     const u = userEvent.setup();
-    const first = exe("e1", 1, "2026-11-10T10:00:00Z", [step(1, "Abrir", "running")]);
-    store.executions = [first];
+    const first = exe("e1", 1, "2026-11-12T10:00:00Z", [step(1, "Abrir", "running")]);
+    boards[TODAY] = [first];
     store.src.execution = vi.fn(async () => ({ ...first, steps: [step(1, "Abrir", "verified")], state: "finished", outcome: "verified" }));
-    const view = page(<KanbanPage />);
-    await u.click(await screen.findByRole("button", { name: /1\. Abrir/ }));
-    expect(within(await screen.findByRole("dialog")).getByText("(Em andamento)")).toBeTruthy();
-    store.executions = [exe("e2", 1, "2026-11-10T11:00:00Z", [step(1, "Abrir", "queued")]), first].slice(0, 1); // e1 left the store
-    view.rerender(<TooltipProvider><KanbanPage /></TooltipProvider>);
-    await waitFor(() => expect(store.src.execution).toHaveBeenCalledWith("e1"));
-    const dialog = screen.getByRole("dialog");
-    expect(await within(dialog).findByText("(Conferida)")).toBeTruthy(); // the same execution, read by its id
-    expect(within(dialog).queryByText("(Aguardando)")).toBeNull();
-  });
-
-  it("a failed read keeps the cards and says they may be out of date", async () => {
-    store.executions = [exe("e1", 1, "2026-11-10T10:00:00Z", [step(1, "Abrir", "running")])];
-    store.src.latestExecutions = vi.fn(async () => { throw new AppError(diag("CORE-UNREACHABLE")); });
-    page(<KanbanPage />);
-    expect(await screen.findByText(/podem estar desatualizados/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: /1\. Abrir/ })).toBeTruthy();
-    expect(within(screen.getByRole("region", { name: "Em andamento" })).getByText("1")).toBeTruthy(); // counters not zeroed
-  });
-
-  it("each store read reads the board again (change feed or periodic): no F5", async () => {
     store.executions = [];
     const view = page(<KanbanPage />);
-    await waitFor(() => expect(store.src.latestExecutions).toHaveBeenCalledTimes(1));
-    latest = [exe("e9", 2, "2026-11-10T12:00:00Z", [step(1, "Chegou", "queued")])];
+    await waitFor(() => expect(cardsIn("Em andamento")).toHaveLength(1));
+    await u.click(within(column("Em andamento")).getByRole("button"));
+    expect(within(await screen.findByRole("dialog")).getByText("(Em andamento)")).toBeTruthy();
+    boards[TODAY] = [exe("e2", 1, "2026-11-12T11:00:00Z", [step(1, "Abrir", "queued")])];
     store.executions = [];
     await act(async () => view.rerender(<TooltipProvider><KanbanPage /></TooltipProvider>));
-    expect(await screen.findByText("1. Chegou")).toBeTruthy();
+    await waitFor(() => expect(store.src.execution).toHaveBeenCalledWith("e1"));
+    expect(await within(screen.getByRole("dialog")).findByText("(Conferido)")).toBeTruthy(); // the same execution, read by id
+    fireEvent.change(screen.getByLabelText("Dia"), { target: { value: "2026-11-11" } });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("a failed read keeps the cards and says they may be out of date; each store read reads again", async () => {
+    boards[TODAY] = [exe("e1", 1, "2026-11-12T10:00:00Z", [step(1, "Abrir", "running")])];
+    store.executions = [];
+    const view = page(<KanbanPage />);
+    await waitFor(() => expect(cardsIn("Em andamento")).toHaveLength(1));
+    store.src.kanban.mockRejectedValueOnce(new AppError(diag("CORE-UNREACHABLE")));
+    store.executions = [];
+    await act(async () => view.rerender(<TooltipProvider><KanbanPage /></TooltipProvider>));
+    expect(await screen.findByText(/podem estar desatualizados/)).toBeTruthy();
+    expect(cardsIn("Em andamento")).toHaveLength(1);
+    expect(within(column("Em andamento")).getByText("1")).toBeTruthy(); // counters not zeroed
+    boards[TODAY] = [...boards[TODAY], exe("e9", 2, "2026-11-12T12:00:00Z", [step(1, "Chegou", "queued")])];
+    store.executions = [];
+    await act(async () => view.rerender(<TooltipProvider><KanbanPage /></TooltipProvider>));
+    await waitFor(() => expect(cardsIn("No aguardo")).toHaveLength(1));
+    expect(screen.queryByText(/podem estar desatualizados/)).toBeNull();
   });
 });
